@@ -21,6 +21,11 @@ import { START_MS, testClock, testContext } from './helpers';
 
 const DAY = 86_400_000;
 
+function slotIdOf(days: DayTemplate[]): string {
+  for (const d of days) for (const b of d.blocks) if (b.kind === 'choice') return b.choiceSlot.id;
+  throw new Error('no choice slot');
+}
+
 /** Program C active, two finished sessions, a test day, an active session with a rest timer. */
 async function realisticData(ctx = testContext()) {
   await seedIfNeeded(ctx);
@@ -56,7 +61,7 @@ async function realisticData(ctx = testContext()) {
     results: [
       { exerciseId: 'planche-hold', progressionLevel: 'Tuck', bestHoldSec: 9, note: 'Hips sag.' },
     ],
-    choice: { slotId: 'unused', optionIndex: 0 },
+    choice: { slotId: slotIdOf(dayTemplates), optionIndex: 0 },
   });
 
   ctx.clock.set(START_MS + 42 * DAY);
@@ -78,17 +83,18 @@ const tables = (b: BackupFile) => b.data;
 describe('test results', () => {
   it('saves results and next cycle pick, for cycle 2 after a cycle 1 test', async () => {
     const { ctx, program } = await realisticData();
+    const loaded = (await getProgram(ctx, program.id))?.dayTemplates ?? [];
     const results = await listTestResults(ctx);
     expect(results).toEqual([
       expect.objectContaining({
         exerciseId: 'planche-hold',
         date: '2026-12-12',
         bestHoldSec: 9,
-        nextCycleChoice: { slotId: 'unused', optionIndex: 0 },
+        nextCycleChoice: { slotId: slotIdOf(loaded), optionIndex: 0 },
       }),
     ]);
     expect((await getProgram(ctx, program.id))?.program.choiceSelections).toEqual([
-      { cycleNumber: 2, slotId: 'unused', optionIndex: 0 },
+      { cycleNumber: 2, slotId: slotIdOf(loaded), optionIndex: 0 },
     ]);
   });
 
@@ -109,13 +115,22 @@ describe('test results', () => {
       results: [
         { exerciseId: 'front-lever-hold', progressionLevel: null, bestHoldSec: null, note: '' },
       ],
-      choice: { slotId: 's', optionIndex: 1 },
+      choice: { slotId: slotIdOf(dayTemplates), optionIndex: 1 },
     };
     await saveTestResults(ctx, input);
     await saveTestResults(ctx, input);
     expect(await listTestResults(ctx)).toHaveLength(1);
+    await expect(
+      saveTestResults(ctx, { ...input, choice: { slotId: 'nope', optionIndex: 0 } }),
+    ).rejects.toThrow('This program has no such choice.');
+    await expect(
+      saveTestResults(ctx, {
+        ...input,
+        choice: { slotId: slotIdOf(dayTemplates), optionIndex: 3 },
+      }),
+    ).rejects.toThrow('This program has no such choice.');
     expect((await getProgram(ctx, program.id))?.program.choiceSelections).toEqual([
-      { cycleNumber: 1, slotId: 's', optionIndex: 1 },
+      { cycleNumber: 1, slotId: slotIdOf(dayTemplates), optionIndex: 1 },
     ]);
   });
 });

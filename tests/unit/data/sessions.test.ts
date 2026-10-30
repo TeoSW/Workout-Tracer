@@ -291,3 +291,52 @@ describe('rest timer and reloads', () => {
     await expect(extendRestTimer(after, 15)).rejects.toThrow();
   });
 });
+
+describe('review fixes', () => {
+  it('refuses a rotation index that does not point at the day', async () => {
+    const { ctx, program, day } = await setup(PROGRAM_A);
+    await expect(
+      startPlannedSession(ctx, {
+        programId: program.id,
+        dayTemplateId: day('Lower A').id,
+        rotationIndex: 2,
+      }),
+    ).rejects.toThrow('This day is not at that place in the rotation.');
+    const ok = await startPlannedSession(ctx, {
+      programId: program.id,
+      dayTemplateId: day('Lower A').id,
+      rotationIndex: 1,
+    });
+    expect(ok.session.rotationIndex).toBe(1);
+  });
+
+  it('keeps choice positions free when exercises are added before the pick', async () => {
+    const { ctx, program, day } = await setup();
+    const view = await startPlannedSession(ctx, {
+      programId: program.id,
+      dayTemplateId: day('Heavy (planche first)').id,
+    });
+    const block = view.session.planSnapshot?.blocks.find((b) => b.kind === 'choice');
+    if (block?.kind !== 'choice') throw new Error('missing choice block');
+    for (const e of view.exercises.filter((x) => x.order > block.order))
+      await removeExercise(ctx, e.id);
+    const plank = await addExercise(ctx, view.session.id, 'plank');
+    expect(plank.order).toBeGreaterThan(block.order);
+    const after = await pickChoice(ctx, view.session.id, block.id, 0);
+    const orders = after.exercises.map((e) => e.order);
+    expect(new Set(orders).size).toBe(orders.length);
+    expect(after.exercises.map((e) => e.exerciseId).slice(-2)).toEqual(['planche-lean', 'plank']);
+  });
+
+  it('does not change the program when a choice is picked while editing a finished session', async () => {
+    const { ctx, program, day } = await setup();
+    const view = await startPlannedSession(ctx, {
+      programId: program.id,
+      dayTemplateId: day('Heavy (planche first)').id,
+    });
+    await finishSession(ctx, view.session.id);
+    const block = view.session.planSnapshot?.blocks.find((b) => b.kind === 'choice');
+    await pickChoice(ctx, view.session.id, block?.id ?? '', 1);
+    expect((await getProgram(ctx, program.id))?.program.choiceSelections).toEqual([]);
+  });
+});

@@ -105,6 +105,9 @@ export async function startPlannedSession(
       let rotationIndex: number | null = null;
       if (program.schedule.kind === 'rotation') {
         if (input.rotationIndex !== undefined) {
+          if (program.schedule.sequence[input.rotationIndex] !== dayTemplate.id) {
+            throw new Error('This day is not at that place in the rotation.');
+          }
           rotationIndex = input.rotationIndex;
         } else {
           const finished = await db.sessions.where('programId').equals(program.id).toArray();
@@ -235,33 +238,37 @@ export async function addExercise(
   exerciseId: string,
 ): Promise<SessionExerciseView> {
   return ctx.db.transaction('rw', [...sessionTables(ctx), ctx.db.exercises], async () => {
-    await requireSession(ctx, sessionId);
+    const session = await requireSession(ctx, sessionId);
     if (!(await ctx.db.exercises.get(exerciseId))) throw new Error(`No exercise ${exerciseId}`);
     const existing = await ctx.db.sessionExercises.where('sessionId').equals(sessionId).toArray();
-    const order = existing.reduce((max, e) => Math.max(max, e.order + 1), 0);
-    const { sessionExercise, sets } = buildRowsForBlock({
+    // Orders of plan blocks stay reserved, so a choice picked later still gets its own place.
+    const used = [
+      ...existing.map((e) => e.order),
+      ...(session.planSnapshot?.blocks.map((b) => b.order) ?? []),
+    ];
+    const se = SessionExerciseSchema.parse({
+      id: ctx.newId(),
       sessionId,
-      block: {
-        kind: 'exercise',
-        id: 'added',
-        order,
-        exerciseId,
-        setsMin: 1,
-        target: {},
-        warmupSets: 0,
-      },
-      order,
-      newId: ctx.newId,
+      exerciseId,
+      order: used.reduce((max, o) => Math.max(max, o + 1), 0),
+      blockId: null,
+      swappedFromExerciseId: null,
+      note: '',
     });
-    const se = SessionExerciseSchema.parse({ ...sessionExercise, blockId: null });
-    const rows = sets.map((s) => {
-      const copy = { ...s };
-      delete copy.target;
-      return copy;
+    const set = LoggedSetSchema.parse({
+      id: ctx.newId(),
+      sessionId,
+      sessionExerciseId: se.id,
+      exerciseId,
+      order: 0,
+      kind: 'working',
+      rir: null,
+      done: false,
+      completedAt: null,
     });
     await ctx.db.sessionExercises.add(se);
-    await ctx.db.sets.bulkAdd(clean(rows));
-    return { ...se, sets: rows };
+    await ctx.db.sets.add(set);
+    return { ...se, sets: [set] };
   });
 }
 
@@ -358,7 +365,8 @@ export async function pickChoice(
     await db.sessionExercises.add(clean(rows.sessionExercise));
     await db.sets.bulkAdd(clean(rows.sets));
 
-    if (session.programId !== null && session.cycleNumber !== null) {
+    // Editing a finished session from History must not change the program's picks.
+    if (session.status === 'active' && session.programId !== null && session.cycleNumber !== null) {
       const program = await db.programs.get(session.programId);
       if (program) {
         await db.programs.put(
@@ -389,14 +397,18 @@ async function prsFor(ctx: DataContext, view: SessionView): Promise<SessionPr[]>
     session: view.session,
     sets: view.exercises.flatMap((e) => e.sets),
   };
+  // detectPrs picks out the sets of its own exercise, so one grouping by session serves all.
+  const bySession = new Map<string, LoggedSet[]>();
+  for (const set of history) {
+    const list = bySession.get(set.sessionId);
+    if (list) list.push(set);
+    else bySession.set(set.sessionId, [set]);
+  }
+  const previous = sessions.map((session) => ({ session, sets: bySession.get(session.id) ?? [] }));
   const out: SessionPr[] = [];
   for (const exerciseId of exerciseIds) {
     const exercise = exercises.get(exerciseId);
     if (!exercise) continue;
-    const previous = sessions.map((session) => ({
-      session,
-      sets: history.filter((s) => s.sessionId === session.id && s.exerciseId === exerciseId),
-    }));
     for (const pr of detectPrs({ exercise, previous, current, bandsById, bodyweight })) {
       out.push({ ...pr, exerciseId });
     }

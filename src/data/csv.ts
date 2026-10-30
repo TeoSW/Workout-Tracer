@@ -4,6 +4,16 @@ import { loadBandMap } from './bands';
 import type { DataContext } from './context';
 import { loadExerciseMap } from './exercises';
 
+function groupBy<T>(items: readonly T[], key: (item: T) => string): Map<string, T[]> {
+  const groups = new Map<string, T[]>();
+  for (const item of items) {
+    const list = groups.get(key(item));
+    if (list) list.push(item);
+    else groups.set(key(item), [item]);
+  }
+  return groups;
+}
+
 /** Done sets of finished sessions, oldest first, as CSV for a spreadsheet. */
 export async function exportCsv(ctx: DataContext): Promise<string> {
   const { db } = ctx;
@@ -18,15 +28,17 @@ export async function exportCsv(ctx: DataContext): Promise<string> {
   const programNames = new Map(programs.map((p) => [p.id, p.name]));
   sessions.sort((a, b) => a.date.localeCompare(b.date) || a.startedAt - b.startedAt);
 
+  const exercisesBySession = groupBy(sessionExercises, (e) => e.sessionId);
+  const doneByExercise = groupBy(
+    sets.filter((s) => s.done),
+    (s) => s.sessionExerciseId,
+  );
+
   const rows: CsvSetRow[] = [];
   for (const session of sessions) {
-    const ses = sessionExercises
-      .filter((e) => e.sessionId === session.id)
-      .sort((a, b) => a.order - b.order);
+    const ses = (exercisesBySession.get(session.id) ?? []).sort((a, b) => a.order - b.order);
     for (const se of ses) {
-      const done = sets
-        .filter((s) => s.sessionExerciseId === se.id && s.done)
-        .sort((a, b) => a.order - b.order);
+      const done = (doneByExercise.get(se.id) ?? []).sort((a, b) => a.order - b.order);
       done.forEach((set, i) => {
         rows.push({
           date: session.date,

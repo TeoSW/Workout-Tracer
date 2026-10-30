@@ -39,10 +39,9 @@ export function planProgramImport(input: {
   const { share, newId } = input;
   const existingById = new Map(input.existingExercises.map((e) => [e.id, e]));
   const existingByName = new Map<string, Exercise>();
+  // Archived exercises are hidden from the library, so a program must not quietly use them.
   for (const e of input.existingExercises) {
-    const key = nameKey(e.name);
-    const current = existingByName.get(key);
-    if (!current || (current.archived && !e.archived)) existingByName.set(key, e);
+    if (!e.archived && !existingByName.has(nameKey(e.name))) existingByName.set(nameKey(e.name), e);
   }
 
   const exerciseIds = new Map<string, string>();

@@ -181,3 +181,18 @@ describe('acceptance 12: program share and import', () => {
     expect(await receiver.db.programs.count()).toBe(0);
   });
 });
+
+describe('import review fixes', () => {
+  it('names two imports started together distinctly', async () => {
+    const sender = await seeded('s');
+    const receiver = await seeded('r');
+    const { program } = await createProgramFromTemplate(sender, PROGRAM_A);
+    const { code } = await shareProgram(sender, program.id);
+    const results = await Promise.all([
+      importProgram(receiver, code),
+      importProgram(receiver, code),
+    ]);
+    const names = results.map((r) => (r.ok ? r.program.name : r.error)).sort();
+    expect(names).toEqual(['ULU/LUL', 'ULU/LUL (2)']);
+  });
+});

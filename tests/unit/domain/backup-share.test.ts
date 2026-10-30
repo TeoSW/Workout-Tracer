@@ -97,6 +97,16 @@ describe('backup file', () => {
     if (!result.ok) expect(result.error).toMatch(/^The backup file is damaged: data\.sets\.0/);
   });
 
+  it('rejects a backup with more than one active workout or program', () => {
+    const second = makeSession({ date: '2026-11-03', status: 'active', finishedAt: null });
+    const first = { ...second, id: 'other' };
+    const twoActive = createBackup({ ...data, sessions: [first, second] }, 1);
+    expect(parseBackup(twoActive)).toEqual({
+      ok: false,
+      error: 'The backup file is damaged: it has more than one unfinished workout.',
+    });
+  });
+
   it('runs migrations in order from older schema versions', () => {
     const old = { app: 'workout-tracker', schemaVersion: -1, exportedAt: 1, legacy: true };
     const calls: number[] = [];

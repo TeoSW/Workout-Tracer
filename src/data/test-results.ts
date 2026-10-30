@@ -21,34 +21,48 @@ export async function saveTestResults(
   },
 ): Promise<TestResult[]> {
   const { db } = ctx;
-  return db.transaction('rw', [db.sessions, db.testResults, db.programs], async () => {
-    const session = await db.sessions.get(input.sessionId);
-    if (!session) throw new Error(`No session ${input.sessionId}`);
-    const results = input.results.map((r) =>
-      TestResultSchema.parse(
-        clean({
-          ...r,
-          id: ctx.newId(),
-          sessionId: session.id,
-          date: session.date,
-          nextCycleChoice: input.choice ?? null,
-        }),
-      ),
-    );
-    await db.testResults.where('sessionId').equals(session.id).delete();
-    await db.testResults.bulkAdd(results);
-
-    if (input.choice && session.programId !== null) {
-      const program = await db.programs.get(session.programId);
-      if (program) {
-        const cycle = testFlowTargetCycle(session.cycleNumber ?? 0);
-        await db.programs.put(
-          saveChoice(program, input.choice.slotId, cycle, input.choice.optionIndex),
-        );
+  return db.transaction(
+    'rw',
+    [db.sessions, db.testResults, db.programs, db.dayTemplates],
+    async () => {
+      const session = await db.sessions.get(input.sessionId);
+      if (!session) throw new Error(`No session ${input.sessionId}`);
+      const results = input.results.map((r) =>
+        TestResultSchema.parse(
+          clean({
+            ...r,
+            id: ctx.newId(),
+            sessionId: session.id,
+            date: session.date,
+            nextCycleChoice: input.choice ?? null,
+          }),
+        ),
+      );
+      if (input.choice && session.programId !== null) {
+        const { slotId, optionIndex } = input.choice;
+        const days = await db.dayTemplates.where('programId').equals(session.programId).toArray();
+        const slot = days
+          .flatMap((d) => d.blocks)
+          .find((b) => b.kind === 'choice' && b.choiceSlot.id === slotId);
+        if (slot?.kind !== 'choice' || !slot.choiceSlot.options[optionIndex]) {
+          throw new Error('This program has no such choice.');
+        }
       }
-    }
-    return results;
-  });
+      await db.testResults.where('sessionId').equals(session.id).delete();
+      await db.testResults.bulkAdd(results);
+
+      if (input.choice && session.programId !== null) {
+        const program = await db.programs.get(session.programId);
+        if (program) {
+          const cycle = testFlowTargetCycle(session.cycleNumber ?? 0);
+          await db.programs.put(
+            saveChoice(program, input.choice.slotId, cycle, input.choice.optionIndex),
+          );
+        }
+      }
+      return results;
+    },
+  );
 }
 
 /** Oldest first. */

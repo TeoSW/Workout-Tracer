@@ -134,6 +134,39 @@ describe('planProgramImport', () => {
     expect(ids).not.toContain('sender-row');
   });
 
+  it('does not match archived exercises by name', () => {
+    const base = SEED_EXERCISES[0] as Exercise;
+    const sender: Exercise = { ...base, id: 'sender-row', name: 'Ring Row', isCustom: true };
+    const { program, dayTemplates } = shareOf(PROGRAM_A, (days) => {
+      days[0]?.blocks.push({
+        kind: 'exercise',
+        id: 'x1',
+        order: 9,
+        exerciseId: 'sender-row',
+        setsMin: 2,
+        target: {},
+        warmupSets: 0,
+      });
+    });
+    const share = buildProgramShare(
+      program,
+      dayTemplates,
+      new Map([...exercisesById, [sender.id, sender]]),
+      bandsById,
+    );
+    const archived: Exercise = { ...sender, id: 'old-row', archived: true };
+    const result = planProgramImport({
+      share,
+      existingExercises: [...SEED_EXERCISES, archived],
+      existingBands: SEED_BANDS,
+      existingProgramNames: [],
+      newId: counterIds('imp'),
+    });
+    if (!result.ok) throw new Error(result.error);
+    expect(result.plan.newExercises.map((e) => e.name)).toEqual(['Ring Row']);
+    expect(blockExerciseIds(result.plan.dayTemplates)).not.toContain('old-row');
+  });
+
   it('matches bands by rated kg and creates missing ones once', () => {
     const custom: Band = { id: 'sender-5', label: '5kg', ratedKg: 5 };
     const senderBands = new Map([...bandsById, [custom.id, custom]]);
