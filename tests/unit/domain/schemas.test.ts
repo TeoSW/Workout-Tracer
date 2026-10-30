@@ -163,3 +163,36 @@ describe('schemas', () => {
     });
   });
 });
+
+describe('program deload weeks', () => {
+  const rest = { mon: null, tue: null, wed: null, thu: null, fri: null, sat: null, sun: null };
+  const program = (
+    cycleWeeks: number | null,
+    deloadWeeks: number[],
+    kind: 'weekday' | 'rotation',
+  ) => ({
+    id: 'p1',
+    name: 'P',
+    splitType: 'custom',
+    cycleWeeks,
+    deloadWeeks,
+    anchorDate: null,
+    choiceSelections: [],
+    manualDeloadWeeks: [],
+    note: '',
+    active: false,
+    archived: false,
+    schedule:
+      kind === 'weekday'
+        ? { kind, weeks: Array.from({ length: cycleWeeks ?? 1 }, () => rest) }
+        : { kind, sequence: ['d1'], sessionsPerWeek: 3 },
+  });
+
+  it('must fall inside the cycle', () => {
+    expect(ProgramSchema.safeParse(program(6, [6], 'weekday')).success).toBe(true);
+    expect(ProgramSchema.safeParse(program(4, [6], 'weekday')).success).toBe(false);
+    expect(ProgramSchema.safeParse(program(4, [3], 'rotation')).success).toBe(true);
+    expect(ProgramSchema.safeParse(program(null, [1], 'rotation')).success).toBe(false);
+    expect(ProgramSchema.safeParse(program(null, [], 'rotation')).success).toBe(true);
+  });
+});

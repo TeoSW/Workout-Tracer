@@ -1,4 +1,4 @@
-import { e1rmLoad, setE1rm } from './e1rm';
+import { setE1rm } from './e1rm';
 import { bandLevel } from './load';
 import type { Band, BodyweightEntry, Exercise, LoggedSet, Session } from './schemas';
 import { countsForStats } from './sets';
@@ -50,8 +50,8 @@ function repsKey(set: LoggedSet, ctx: Ctx): string {
 function hitEveryPart(set: LoggedSet): boolean {
   const targets = set.target?.parts ?? [];
   if (targets.length === 0 || !set.parts) return false;
-  return targets.every((t, i) => {
-    const logged = set.parts?.find((p) => p.name === t.name) ?? set.parts?.[i];
+  return targets.every((t) => {
+    const logged = set.parts?.find((p) => p.name === t.name);
     return logged !== undefined && logged.value >= t.target;
   });
 }
@@ -73,8 +73,7 @@ function candidates(entry: SessionSets, ctx: Ctx): Candidate[] {
         const e1rm = setE1rm(set, exercise, ctx.bodyweight, entry.session.date);
         if (e1rm !== null) out.push({ kind: 'best_e1rm', key: '', setId: set.id, value: e1rm });
         if (set.reps !== undefined && set.reps > 0) {
-          const load = e1rmLoad(set, exercise, ctx.bodyweight, entry.session.date);
-          if (exercise.trackingType === 'bodyweight_reps' || load !== null) {
+          if (exercise.trackingType === 'bodyweight_reps' || set.kg !== undefined) {
             out.push({ kind: 'most_reps', key: repsKey(set, ctx), setId: set.id, value: set.reps });
           }
         }

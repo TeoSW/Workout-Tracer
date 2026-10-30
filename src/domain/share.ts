@@ -15,6 +15,11 @@ import {
 
 export const SHARE_SCHEMA_VERSION = 1;
 export const SHARE_CODE_PREFIX = 'WT1.';
+/**
+ * Deflate expands at most about 1000 times, so this caps an inflated code near 50 MB. Real codes
+ * are under 5,000 characters.
+ */
+export const MAX_SHARE_CODE_LENGTH = 64_000;
 
 export const ProgramShareSchema = z.object({
   app: z.literal(APP_ID),
@@ -43,10 +48,20 @@ export function buildProgramShare(
   dayTemplates: readonly DayTemplate[],
   exercisesById: ReadonlyMap<string, Exercise>,
 ): ProgramShare {
-  const used = new Set(dayTemplates.flatMap((d) => d.blocks.flatMap(exerciseIdsOf)));
-  const exercises = [...used]
-    .map((id) => exercisesById.get(id))
-    .filter((e): e is Exercise => e !== undefined && e.isCustom);
+  // Custom exercises used in blocks, plus custom alternatives they point at, so no
+  // alternativeId dangles on the receiving phone.
+  const pending = dayTemplates.flatMap((d) => d.blocks.flatMap(exerciseIdsOf));
+  const seen = new Set<string>();
+  const exercises: Exercise[] = [];
+  for (let id = pending.pop(); id !== undefined; id = pending.pop()) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const exercise = exercisesById.get(id);
+    if (!exercise?.isCustom) continue;
+    exercises.push(exercise);
+    pending.push(...exercise.alternativeIds);
+  }
+  exercises.sort((a, b) => a.name.localeCompare(b.name));
   return {
     app: APP_ID,
     kind: 'program',
@@ -98,6 +113,8 @@ export function parseShareInput(text: string): Result<ProgramShare, 'share'> {
   if (!code.startsWith(SHARE_CODE_PREFIX)) {
     return { ok: false, error: 'Paste a share code that starts with WT1. or a program file.' };
   }
+  if (code.length > MAX_SHARE_CODE_LENGTH)
+    return { ok: false, error: 'This share code is too long.' };
   let raw: unknown;
   try {
     raw = JSON.parse(strFromU8(inflateSync(fromBase64Url(code.slice(SHARE_CODE_PREFIX.length)))));

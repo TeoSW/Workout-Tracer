@@ -16,7 +16,9 @@ function setsBySession(input: SeriesInput): { session: Session; sets: LoggedSet[
     ) {
       continue;
     }
-    grouped.set(set.sessionId, [...(grouped.get(set.sessionId) ?? []), set]);
+    const list = grouped.get(set.sessionId);
+    if (list) list.push(set);
+    else grouped.set(set.sessionId, [set]);
   }
   return [...grouped.entries()]
     .map(([id, sets]) => ({ session: sessions.get(id) as Session, sets }))

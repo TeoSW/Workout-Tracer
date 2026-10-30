@@ -34,6 +34,7 @@ export default tseslint.config(
           'btoa',
           'atob',
           'fetch',
+          'performance',
         ].map((name) => ({ name, message: 'src/domain must not use browser APIs.' })),
       ],
       'no-restricted-syntax': [
@@ -44,6 +45,10 @@ export default tseslint.config(
         },
         {
           selector: "NewExpression[callee.name='Date'][arguments.length=0]",
+          message: 'src/domain must not read the clock. Pass dates in.',
+        },
+        {
+          selector: "CallExpression[callee.name='Date']",
           message: 'src/domain must not read the clock. Pass dates in.',
         },
       ],

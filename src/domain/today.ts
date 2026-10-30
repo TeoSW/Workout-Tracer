@@ -49,8 +49,10 @@ export function todayPlan(input: {
   if (program.schedule.kind === 'rotation') {
     const latest = latestFinishedSession(sessions, program.id);
     const pointer = nextRotationIndex(program, latest?.rotationIndex ?? null);
+    const dayTemplateId = program.schedule.sequence[pointer];
+    if (dayTemplateId === undefined) throw new Error(`No rotation entry at ${pointer}`);
     const day: PlannedDay = {
-      dayTemplateId: program.schedule.sequence[pointer] ?? '',
+      dayTemplateId,
       date: null,
       rotationIndex: pointer,
     };

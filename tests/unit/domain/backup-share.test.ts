@@ -200,3 +200,45 @@ describe('program share codec', () => {
     });
   });
 });
+
+describe('program share review fixes', () => {
+  it('includes custom exercises reached through alternatives', () => {
+    const { program, dayTemplates } = instantiateTemplate(PROGRAM_A, { newId: counterIds('r') });
+    const base = SEED_EXERCISES[0];
+    const firstDay = dayTemplates[0];
+    if (!base || !firstDay) throw new Error('missing fixtures');
+    const alt: Exercise = { ...base, id: 'my-cable-row', name: 'My Cable Row', isCustom: true };
+    const altAlt: Exercise = { ...base, id: 'my-band-row', name: 'My Band Row', isCustom: true };
+    const row: Exercise = {
+      ...base,
+      id: 'my-row',
+      name: 'My Row',
+      isCustom: true,
+      alternativeIds: ['my-cable-row', 'lateral-raise'],
+    };
+    alt.alternativeIds = ['my-band-row', 'my-row'];
+    firstDay.blocks.push({
+      kind: 'exercise',
+      id: 'extra',
+      order: 9,
+      exerciseId: 'my-row',
+      setsMin: 2,
+      target: {},
+      warmupSets: 0,
+    });
+    const byId = new Map([...exercisesById, ...[row, alt, altAlt].map((e) => [e.id, e] as const)]);
+    const share = buildProgramShare(program, dayTemplates, byId);
+    expect(share.exercises.map((e) => e.id).sort()).toEqual([
+      'my-band-row',
+      'my-cable-row',
+      'my-row',
+    ]);
+  });
+
+  it('refuses share codes that are too long to be a real program', () => {
+    expect(parseShareInput(`WT1.${'A'.repeat(70_000)}`)).toEqual({
+      ok: false,
+      error: 'This share code is too long.',
+    });
+  });
+});

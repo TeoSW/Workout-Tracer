@@ -2,11 +2,15 @@ import { addDays, mondayOf, type DateStr } from './dates';
 import { cyclePosition } from './schedule';
 import type { Program, Session } from './schemas';
 
-/** Non-rest grid entries for weekday programs, `sessionsPerWeek` for rotations. */
-export function plannedSessionsInWeek(program: Program, weekStart: DateStr): number {
+/**
+ * Non-rest grid entries for weekday programs, `sessionsPerWeek` for rotations. Null for a weekday
+ * program that has no anchor yet, since its weeks are not placed on the calendar.
+ */
+export function plannedSessionsInWeek(program: Program, weekStart: DateStr): number | null {
   if (program.schedule.kind === 'rotation') return program.schedule.sessionsPerWeek;
   const position = cyclePosition(program, weekStart);
-  const week = program.schedule.weeks[(position?.cycleWeek ?? 1) - 1];
+  if (position === null) return null;
+  const week = program.schedule.weeks[position.cycleWeek - 1];
   return week ? Object.values(week).filter((id) => id !== null).length : 0;
 }
 

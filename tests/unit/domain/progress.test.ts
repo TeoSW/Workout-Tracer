@@ -160,3 +160,11 @@ describe('rest timer', () => {
     expect(extendRest(timer, 15)).toMatchObject({ endsAt: 106_000, durationSec: 105 });
   });
 });
+
+describe('consistency review fixes', () => {
+  it('has no planned count for a weekday program that is not activated', () => {
+    const { program } = activeProgram(PROGRAM_C, null);
+    expect(plannedSessionsInWeek(program, D)).toBeNull();
+    expect(plannedSessionsInWeek(activeProgram(PROGRAM_A, null).program, D)).toBe(3);
+  });
+});

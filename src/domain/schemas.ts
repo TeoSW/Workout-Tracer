@@ -242,6 +242,10 @@ export const ProgramSchema = z
   .refine((p) => p.schedule.kind !== 'weekday' || p.schedule.weeks.length === p.cycleWeeks, {
     message: 'A weekday grid needs one week per cycle week',
     path: ['schedule'],
+  })
+  .refine((p) => p.deloadWeeks.every((w) => p.cycleWeeks !== null && w <= p.cycleWeeks), {
+    message: 'Deload weeks must be inside the cycle',
+    path: ['deloadWeeks'],
   });
 
 export const PlanSnapshotSchema = z.object({
