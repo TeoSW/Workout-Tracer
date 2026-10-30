@@ -121,7 +121,7 @@ describe('backup file', () => {
 describe('program share codec', () => {
   const templates = [...BUILT_IN_TEMPLATES, ...SPLIT_TYPES.map(blankTemplate)];
 
-  it('round trips every built-in template through a share code', () => {
+  it('acceptance 12 (codec): round trips every built-in template through a share code', () => {
     for (const template of templates) {
       const { program, dayTemplates } = instantiateTemplate(template, { newId: counterIds('s') });
       const share = buildProgramShare(

@@ -29,6 +29,7 @@ Section 4 says the field lists are a guide. These are the refinements, with reas
 7. **Lowest band level PR on complexes is tracked per progression level**, like the hold PR. Moving up a progression usually means a thicker band again, and a single all-time lowest band would block PRs after every progression change.
 8. **No PR on the first log of an exercise.** A PR needs a previous value to beat, otherwise every first session flags everything.
 9. **Deload note is skipped on `checklist` blocks.** The note is about stopping before your limit, which does not apply to a warm-up. Their set count is unchanged anyway (1 stays 1).
+10. **Notes that say "Same." are written out in full.** The spec's "Same.", "Same band rule." and "Same rule." point at the row above. Once the Heavy and Light days swap blocks 2 and 3, the row above is a different exercise, so each block gets the full note.
 
 Open question for Milestone 2 (not blocking): program targets reference band ids. A friend's band list may differ, so share import needs a way to map them. Proposal: include the referenced bands in the share payload as an optional `bands` field and match them by `ratedKg` on import. I will ask before changing the share format.
 
@@ -155,7 +156,7 @@ Files: `package.json`, `tsconfig.json`, `vitest.config.ts`, `eslint.config.js`, 
 - `bodyweight.ts`: `movingAverage7(entries)` over a calendar window of 7 days ending on each entry.
 - `skills.ts`: `bestCleanHoldByLevel(...)` series, `complexBandSeries(...)` with share of clean sets, `bestCleanHoldInSession(sets)` for the test flow prefill.
 - `rest.ts`: `restRemainingMs(timer, nowMs)`, `extendRest(timer, sec)`.
-- Tests for each, including Program C planned count (6 in a normal week) and Program A (3).
+- Tests for each, including Program C planned count (5 in every week) and Program A (3).
 - Commit: `feat(domain): add consistency, bodyweight and skill stats`.
 
 ### Task 11: backup schema
