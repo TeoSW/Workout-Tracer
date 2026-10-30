@@ -21,6 +21,7 @@ import { instantiateTemplate } from '../../../src/domain/templates';
 import { counterIds, makeSession, makeSet } from './helpers';
 
 const exercisesById = new Map(SEED_EXERCISES.map((e) => [e.id, e]));
+const bandsById = new Map(SEED_BANDS.map((b) => [b.id, b]));
 
 describe('base64url', () => {
   it('round trips random bytes of every length', () => {
@@ -128,6 +129,7 @@ describe('program share codec', () => {
         { ...program, active: true, anchorDate: '2026-11-02' },
         dayTemplates,
         exercisesById,
+        bandsById,
       );
       const code = encodeShareCode(share);
       expect(code.startsWith('WT1.')).toBe(true);
@@ -162,6 +164,7 @@ describe('program share codec', () => {
       },
       dayTemplates,
       new Map([...exercisesById, ['my-row', custom]]),
+      bandsById,
     );
     expect(share).toMatchObject({ app: 'workout-tracker', kind: 'program', schemaVersion: 1 });
     expect(share.program).toMatchObject({
@@ -171,11 +174,22 @@ describe('program share codec', () => {
       choiceSelections: [],
     });
     expect(share.exercises).toEqual([custom]);
+    expect(share.bands?.map((b) => b.id)).toEqual(['band-15', 'band-35']);
+  });
+
+  it('still reads share files from before the bands field', () => {
+    const { program, dayTemplates } = instantiateTemplate(PROGRAM_A, { newId: counterIds('o') });
+    const old = buildProgramShare(program, dayTemplates, exercisesById, bandsById);
+    delete old.bands;
+    const parsed = parseShareInput(JSON.stringify(old));
+    expect(parsed.ok && parsed.share.bands).toBeUndefined();
   });
 
   it('tolerates whitespace and line breaks in a pasted code', () => {
     const { program, dayTemplates } = instantiateTemplate(PROGRAM_A, { newId: counterIds('s') });
-    const code = encodeShareCode(buildProgramShare(program, dayTemplates, exercisesById));
+    const code = encodeShareCode(
+      buildProgramShare(program, dayTemplates, exercisesById, bandsById),
+    );
     const pasted = `  ${code.slice(0, 40)}\n${code.slice(40, 90)} \r\n${code.slice(90)}  `;
     expect(parseShareInput(pasted).ok).toBe(true);
   });
@@ -227,7 +241,7 @@ describe('program share review fixes', () => {
       warmupSets: 0,
     });
     const byId = new Map([...exercisesById, ...[row, alt, altAlt].map((e) => [e.id, e] as const)]);
-    const share = buildProgramShare(program, dayTemplates, byId);
+    const share = buildProgramShare(program, dayTemplates, byId, bandsById);
     expect(share.exercises.map((e) => e.id).sort()).toEqual([
       'my-band-row',
       'my-cable-row',
