@@ -24,7 +24,7 @@ export type CardActions = {
   deleteSet: (set: LoggedSet) => void;
   toggleWarmup: (set: LoggedSet) => void;
   addSet: (entry: SessionExerciseView) => void;
-  openInfo: (entry: SessionExerciseView) => void;
+  openInfo?: (entry: SessionExerciseView) => void;
   openMenu: (entry: SessionExerciseView) => void;
 };
 
@@ -92,14 +92,16 @@ function ExerciseRows(props: {
           {entry.swappedFromExerciseId !== null && <p>Swapped for this workout</p>}
           {entry.note !== '' && <p>{entry.note}</p>}
         </IonLabel>
-        <IonButton
-          slot="end"
-          fill="clear"
-          aria-label={`About ${exercise.name}`}
-          onClick={() => actions.openInfo(entry)}
-        >
-          <IonIcon slot="icon-only" icon={informationCircleOutline} aria-hidden="true" />
-        </IonButton>
+        {actions.openInfo && (
+          <IonButton
+            slot="end"
+            fill="clear"
+            aria-label={`About ${exercise.name}`}
+            onClick={() => actions.openInfo?.(entry)}
+          >
+            <IonIcon slot="icon-only" icon={informationCircleOutline} aria-hidden="true" />
+          </IonButton>
+        )}
         <IonButton
           slot="end"
           fill="clear"

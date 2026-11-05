@@ -2,6 +2,8 @@ import { IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs } 
 import { barbell, barChart, calendar, settings, today } from 'ionicons/icons';
 import { Navigate, Route } from 'react-router-dom';
 import { HistoryPage } from '../features/history/HistoryPage';
+import { SessionEditPage } from '../features/history/SessionEditPage';
+import { SessionPage } from '../features/history/SessionPage';
 import { ExerciseDetailPage } from '../features/library/ExerciseDetailPage';
 import { ExerciseEditPage, ExerciseNewPage } from '../features/library/ExerciseFormPage';
 import { LibraryPage } from '../features/library/LibraryPage';
@@ -42,6 +44,8 @@ export function Tabs() {
         <Route path="today/summary/:id" element={<SummaryPage />} />
         <Route path="today/test/:id" element={<TestFlowPage />} />
         <Route path="today" element={<TodayPage />} />
+        <Route path="history/:id/edit" element={<SessionEditPage />} />
+        <Route path="history/:id" element={<SessionPage />} />
         <Route path="history" element={<HistoryPage />} />
         <Route path="progress" element={<ProgressPage />} />
         <Route path="programs/library/new" element={<ExerciseNewPage />} />
