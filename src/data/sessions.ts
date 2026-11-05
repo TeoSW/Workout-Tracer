@@ -1,7 +1,7 @@
 import { resolveChoiceBlock, saveChoice } from '../domain/choice';
 import { resolvePlan } from '../domain/plan';
 import { detectPrs, type PrFlag, type SessionSets } from '../domain/prs';
-import { latestFinishedSession, nextRotationIndex, rotationIndexForPick } from '../domain/schedule';
+import { lastRotationIndex, nextRotationIndex, rotationIndexForPick } from '../domain/schedule';
 import {
   LoggedSetSchema,
   SessionExerciseSchema,
@@ -109,14 +109,12 @@ export async function startPlannedSession(
             throw new Error('This day is not at that place in the rotation.');
           }
           rotationIndex = input.rotationIndex;
-        } else {
-          const finished = await db.sessions.where('programId').equals(program.id).toArray();
-          const pointer = nextRotationIndex(
-            program,
-            latestFinishedSession(finished, program.id)?.rotationIndex ?? null,
-          );
+        } else if (program.schedule.sequence.includes(dayTemplate.id)) {
+          const sessions = await db.sessions.where('programId').equals(program.id).toArray();
+          const pointer = nextRotationIndex(program, lastRotationIndex(sessions, program.id));
           rotationIndex = rotationIndexForPick(program, pointer, dayTemplate.id);
         }
+        // A day outside the sequence has no index, and the rotation carries on where it was.
       }
 
       const session = SessionSchema.parse(
@@ -310,6 +308,10 @@ export async function swapExercise(
     async () => {
       const se = await requireSessionExercise(ctx, sessionExerciseId);
       if (!(await ctx.db.exercises.get(exerciseId))) throw new Error(`No exercise ${exerciseId}`);
+      const sets = await ctx.db.sets.where('sessionExerciseId').equals(sessionExerciseId).toArray();
+      if (sets.some((s) => s.done)) {
+        throw new Error('Logged sets stay on their exercise. Add the other exercise instead.');
+      }
       const original = se.swappedFromExerciseId ?? se.exerciseId;
       await ctx.db.sessionExercises.put({
         ...se,
@@ -378,6 +380,46 @@ export async function pickChoice(
   return (await getSessionView(ctx, sessionId)) as SessionView;
 }
 
+/**
+ * For each exercise, its sets in the latest finished session that logged it, on any program.
+ * The logger reads this for the "last time" hints and prefills.
+ */
+export async function lastSetsByExercise(
+  ctx: DataContext,
+  exerciseIds: readonly string[],
+  excludeSessionId: string,
+): Promise<Map<string, LoggedSet[]>> {
+  const result = new Map<string, LoggedSet[]>();
+  if (exerciseIds.length === 0) return result;
+  const sets = await ctx.db.sets
+    .where('exerciseId')
+    .anyOf([...exerciseIds])
+    .toArray();
+  const done = sets.filter((s) => s.done && s.sessionId !== excludeSessionId);
+  const sessionIds = [...new Set(done.map((s) => s.sessionId))];
+  const sessions = await ctx.db.sessions.bulkGet(sessionIds);
+  const finishedAt = new Map(
+    sessions.flatMap((s) => (s?.finishedAt ? [[s.id, s.finishedAt] as const] : [])),
+  );
+
+  const latest = new Map<string, string>();
+  for (const set of done) {
+    const at = finishedAt.get(set.sessionId);
+    if (at === undefined) continue;
+    const best = latest.get(set.exerciseId);
+    if (best === undefined || at > (finishedAt.get(best) ?? 0)) {
+      latest.set(set.exerciseId, set.sessionId);
+    }
+  }
+  for (const set of done) {
+    if (latest.get(set.exerciseId) !== set.sessionId) continue;
+    const list = result.get(set.exerciseId);
+    if (list) list.push(set);
+    else result.set(set.exerciseId, [set]);
+  }
+  return result;
+}
+
 async function prsFor(ctx: DataContext, view: SessionView): Promise<SessionPr[]> {
   const exerciseIds = [...new Set(view.exercises.map((e) => e.exerciseId))];
   if (exerciseIds.length === 0) return [];
@@ -390,8 +432,10 @@ async function prsFor(ctx: DataContext, view: SessionView): Promise<SessionPr[]>
   const sessionIds = [...new Set(history.map((s) => s.sessionId))].filter(
     (id) => id !== view.session.id,
   );
+  // Only earlier sessions count, so a summary reads the same when it is opened again later.
+  const cutoff = view.session.finishedAt ?? Number.MAX_SAFE_INTEGER;
   const sessions = (await ctx.db.sessions.bulkGet(sessionIds)).filter(
-    (s): s is Session => s !== undefined && s.status === 'finished',
+    (s): s is Session => s !== undefined && s.status === 'finished' && (s.finishedAt ?? 0) < cutoff,
   );
   const current: SessionSets = {
     session: view.session,
@@ -414,6 +458,12 @@ async function prsFor(ctx: DataContext, view: SessionView): Promise<SessionPr[]>
     }
   }
   return out;
+}
+
+/** The records a session beat. The finish summary reads this. */
+export async function sessionPrs(ctx: DataContext, sessionId: string): Promise<SessionPr[]> {
+  const view = await getSessionView(ctx, sessionId);
+  return view ? prsFor(ctx, view) : [];
 }
 
 /** Finishes the active session, stops the rest timer and returns the records it beat. */

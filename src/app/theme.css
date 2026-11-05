@@ -30,6 +30,87 @@ ion-list.list-inset ion-list-header {
   color: var(--ion-color-medium);
 }
 
+.page-subtitle {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ion-color-medium);
+}
+
+.stepper-input {
+  width: 64px;
+  text-align: center;
+}
+
+.set-sheet {
+  padding-bottom: 32px;
+}
+
+ion-modal ion-content {
+  --background: var(--grouped-card);
+}
+
+ion-modal ion-list {
+  --ion-item-background: var(--grouped-card);
+  background: var(--grouped-card);
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 12px;
+}
+
+.chip-row ion-chip {
+  min-height: 44px;
+  margin: 0;
+}
+
+.stopwatch {
+  padding: 16px;
+  text-align: center;
+  font-size: 44px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Fullscreen content runs behind the bottom bars, so this one has to stack above it. */
+.rest-bar-slot {
+  position: relative;
+  z-index: 10;
+}
+
+.rest-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: var(--grouped-card);
+  border-top: 1px solid var(--ion-color-step-150, #d9d9d9);
+}
+
+.rest-bar ion-button {
+  min-width: 44px;
+  height: 44px;
+  margin: 0;
+}
+
+.rest-bar-time {
+  flex: 1;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rest-bar-over {
+  animation: rest-flash 0.6s ease-in-out 3;
+}
+
+@keyframes rest-flash {
+  50% {
+    background: var(--ion-color-success);
+    color: var(--ion-color-success-contrast);
+  }
+}
+
 .empty-note {
   padding: 32px 24px;
   text-align: center;

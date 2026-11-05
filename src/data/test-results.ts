@@ -1,4 +1,4 @@
-import { saveChoice, testFlowTargetCycle } from '../domain/choice';
+import { programChoiceSlots, saveChoice, testFlowTargetCycle } from '../domain/choice';
 import { TestResultSchema, type TestResult } from '../domain/schemas';
 import { clean } from './clean';
 import type { DataContext } from './context';
@@ -17,10 +17,11 @@ export async function saveTestResults(
   input: {
     sessionId: string;
     results: TestResultInput[];
-    choice?: { slotId: string; optionIndex: number };
+    choices?: { slotId: string; optionIndex: number }[];
   },
 ): Promise<TestResult[]> {
   const { db } = ctx;
+  const choices = input.choices ?? [];
   return db.transaction(
     'rw',
     [db.sessions, db.testResults, db.programs, db.dayTemplates],
@@ -34,30 +35,30 @@ export async function saveTestResults(
             id: ctx.newId(),
             sessionId: session.id,
             date: session.date,
-            nextCycleChoice: input.choice ?? null,
+            nextCycleChoice: choices[0] ?? null,
           }),
         ),
       );
-      if (input.choice && session.programId !== null) {
-        const { slotId, optionIndex } = input.choice;
+      if (choices.length > 0 && session.programId !== null) {
         const days = await db.dayTemplates.where('programId').equals(session.programId).toArray();
-        const slot = days
-          .flatMap((d) => d.blocks)
-          .find((b) => b.kind === 'choice' && b.choiceSlot.id === slotId);
-        if (slot?.kind !== 'choice' || !slot.choiceSlot.options[optionIndex]) {
-          throw new Error('This program has no such choice.');
+        const slots = programChoiceSlots(days);
+        for (const { slotId, optionIndex } of choices) {
+          const slot = slots.find((s) => s.id === slotId);
+          if (!slot?.options[optionIndex]) throw new Error('This program has no such choice.');
         }
       }
       await db.testResults.where('sessionId').equals(session.id).delete();
       await db.testResults.bulkAdd(results);
 
-      if (input.choice && session.programId !== null) {
+      if (choices.length > 0 && session.programId !== null) {
         const program = await db.programs.get(session.programId);
         if (program) {
           const cycle = testFlowTargetCycle(session.cycleNumber ?? 0);
-          await db.programs.put(
-            saveChoice(program, input.choice.slotId, cycle, input.choice.optionIndex),
+          const updated = choices.reduce(
+            (p, c) => saveChoice(p, c.slotId, cycle, c.optionIndex),
+            program,
           );
+          await db.programs.put(updated);
         }
       }
       return results;

@@ -51,6 +51,12 @@ export function latestFinishedSession(sessions: Session[], programId: string): S
   return latest;
 }
 
+/** The rotation index of the latest finished session that has one. */
+export function lastRotationIndex(sessions: Session[], programId: string): number | null {
+  const placed = sessions.filter((s) => s.rotationIndex !== null);
+  return latestFinishedSession(placed, programId)?.rotationIndex ?? null;
+}
+
 function rotationSequence(program: Program): string[] {
   if (program.schedule.kind !== 'rotation') throw new Error('Not a rotation program');
   return program.schedule.sequence;

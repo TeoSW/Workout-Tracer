@@ -13,3 +13,4 @@ export * from './sessions';
 export * from './settings';
 export * from './share';
 export * from './test-results';
+export * from './today';

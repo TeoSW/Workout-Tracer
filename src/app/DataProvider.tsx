@@ -35,6 +35,25 @@ export function useData(): DataContext {
   return ctx;
 }
 
+/**
+ * Today's date, kept current. An installed app can sit in memory overnight, so the date is read
+ * again whenever the app comes back and once a minute while it is open.
+ */
+export function useToday(): string {
+  const ctx = useData();
+  const [today, setToday] = useState(() => ctx.clock.today());
+  useEffect(() => {
+    const refresh = () => setToday(ctx.clock.today());
+    const tick = setInterval(refresh, 60_000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      clearInterval(tick);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [ctx]);
+  return today;
+}
+
 /** A repository read that updates when the data changes. Undefined until the first result. */
 export function useLive<T>(
   query: (ctx: DataContext) => Promise<T>,

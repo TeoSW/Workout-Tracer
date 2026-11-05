@@ -1,4 +1,4 @@
-import type { Block, ChoiceBlock, Program } from './schemas';
+import type { Block, ChoiceBlock, ChoiceSlot, DayTemplate, Program } from './schemas';
 
 export type ChoiceResolution = { status: 'picked'; optionIndex: number } | { status: 'needs_pick' };
 
@@ -78,4 +78,15 @@ export function resolveChoiceBlock(block: ChoiceBlock, optionIndex: number): Blo
     fromSlotId: block.choiceSlot.id,
     optionIndex,
   };
+}
+
+/** The distinct choice slots of a program. Days can share one slot. */
+export function programChoiceSlots(days: readonly DayTemplate[]): ChoiceSlot[] {
+  const slots = new Map<string, ChoiceSlot>();
+  for (const day of days) {
+    for (const block of day.blocks) {
+      if (block.kind === 'choice') slots.set(block.choiceSlot.id, block.choiceSlot);
+    }
+  }
+  return [...slots.values()];
 }

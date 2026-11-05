@@ -2,6 +2,7 @@ import { addDays, type DateStr } from './dates';
 import { isDeloadWeek } from './deload';
 import {
   cyclePosition,
+  lastRotationIndex,
   latestFinishedSession,
   nextRotationIndex,
   plannedDayTemplateId,
@@ -48,7 +49,7 @@ export function todayPlan(input: {
 
   if (program.schedule.kind === 'rotation') {
     const latest = latestFinishedSession(sessions, program.id);
-    const pointer = nextRotationIndex(program, latest?.rotationIndex ?? null);
+    const pointer = nextRotationIndex(program, lastRotationIndex(sessions, program.id));
     const dayTemplateId = program.schedule.sequence[pointer];
     if (dayTemplateId === undefined) throw new Error(`No rotation entry at ${pointer}`);
     const day: PlannedDay = {

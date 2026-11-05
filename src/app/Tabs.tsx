@@ -16,7 +16,13 @@ import { ShareProgramPage } from '../features/programs/ShareProgramPage';
 import { ProgressPage } from '../features/progress/ProgressPage';
 import { BandsPage } from '../features/settings/BandsPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
+import { PickDayPage } from '../features/today/PickDayPage';
+import { RestBar } from '../features/rest/RestBar';
 import { TodayPage } from '../features/today/TodayPage';
+import { AddExercisePage } from '../features/workout/AddExercisePage';
+import { SummaryPage } from '../features/workout/SummaryPage';
+import { TestFlowPage } from '../features/workout/TestFlowPage';
+import { WorkoutPage } from '../features/workout/WorkoutPage';
 
 const TABS = [
   { tab: 'today', label: 'Today', icon: today },
@@ -30,6 +36,11 @@ export function Tabs() {
   return (
     <IonTabs>
       <IonRouterOutlet>
+        <Route path="today/pick-day" element={<PickDayPage />} />
+        <Route path="today/workout/add" element={<AddExercisePage />} />
+        <Route path="today/workout" element={<WorkoutPage />} />
+        <Route path="today/summary/:id" element={<SummaryPage />} />
+        <Route path="today/test/:id" element={<TestFlowPage />} />
         <Route path="today" element={<TodayPage />} />
         <Route path="history" element={<HistoryPage />} />
         <Route path="progress" element={<ProgressPage />} />
@@ -50,6 +61,9 @@ export function Tabs() {
         <Route path="settings" element={<SettingsPage />} />
         <Route index element={<Navigate to="today" replace />} />
       </IonRouterOutlet>
+      <div slot="bottom" className="rest-bar-slot">
+        <RestBar />
+      </div>
       <IonTabBar slot="bottom">
         {TABS.map(({ tab, label, icon }) => (
           <IonTabButton key={tab} tab={tab} href={`/tabs/${tab}`}>

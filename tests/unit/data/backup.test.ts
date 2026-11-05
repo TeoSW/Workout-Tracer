@@ -61,7 +61,7 @@ async function realisticData(ctx = testContext()) {
     results: [
       { exerciseId: 'planche-hold', progressionLevel: 'Tuck', bestHoldSec: 9, note: 'Hips sag.' },
     ],
-    choice: { slotId: slotIdOf(dayTemplates), optionIndex: 0 },
+    choices: [{ slotId: slotIdOf(dayTemplates), optionIndex: 0 }],
   });
 
   ctx.clock.set(START_MS + 42 * DAY);
@@ -115,18 +115,18 @@ describe('test results', () => {
       results: [
         { exerciseId: 'front-lever-hold', progressionLevel: null, bestHoldSec: null, note: '' },
       ],
-      choice: { slotId: slotIdOf(dayTemplates), optionIndex: 1 },
+      choices: [{ slotId: slotIdOf(dayTemplates), optionIndex: 1 }],
     };
     await saveTestResults(ctx, input);
     await saveTestResults(ctx, input);
     expect(await listTestResults(ctx)).toHaveLength(1);
     await expect(
-      saveTestResults(ctx, { ...input, choice: { slotId: 'nope', optionIndex: 0 } }),
+      saveTestResults(ctx, { ...input, choices: [{ slotId: 'nope', optionIndex: 0 }] }),
     ).rejects.toThrow('This program has no such choice.');
     await expect(
       saveTestResults(ctx, {
         ...input,
-        choice: { slotId: slotIdOf(dayTemplates), optionIndex: 3 },
+        choices: [{ slotId: slotIdOf(dayTemplates), optionIndex: 3 }],
       }),
     ).rejects.toThrow('This program has no such choice.');
     expect((await getProgram(ctx, program.id))?.program.choiceSelections).toEqual([
