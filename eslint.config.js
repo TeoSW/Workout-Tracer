@@ -11,6 +11,22 @@ export default tseslint.config(
     },
   },
   {
+    files: ['src/features/**/*.{ts,tsx}', 'src/ui/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['dexie', 'dexie-react-hooks', '**/data/db'],
+              message: 'Screens go through src/data repositories.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['src/data/**/*.ts'],
     rules: {
       'no-restricted-imports': [

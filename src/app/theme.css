@@ -1,0 +1,76 @@
+/* Inset grouped lists sit on the system grouped background, large title included. */
+:root {
+  --grouped-background: #f2f2f7;
+  --grouped-card: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --grouped-background: #000000;
+    --grouped-card: #1c1c1e;
+  }
+}
+
+ion-content.grouped {
+  --background: var(--grouped-background);
+}
+
+ion-content.grouped ion-toolbar {
+  --background: var(--grouped-background);
+}
+
+ion-content.grouped ion-list.list-inset {
+  --ion-item-background: var(--grouped-card);
+}
+
+ion-list.list-inset ion-list-header {
+  min-height: 34px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ion-color-medium);
+}
+
+.empty-note {
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--ion-color-medium);
+}
+
+.section-note {
+  padding: 0 32px 16px;
+  font-size: 13px;
+  color: var(--ion-color-medium);
+}
+
+.error-note {
+  padding: 0 32px 16px;
+  font-size: 13px;
+  color: var(--ion-color-danger);
+}
+
+.share-code {
+  margin: 0 32px 24px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* 44pt touch targets for buttons inside rows and in the header. */
+ion-item ion-button {
+  min-width: 44px;
+  height: 44px;
+  margin: 0;
+  --padding-start: 8px;
+  --padding-end: 8px;
+}
+
+ion-toolbar ion-button,
+ion-toolbar ion-back-button {
+  min-height: 44px;
+}
+
+ion-item ion-badge {
+  margin-inline-start: 8px;
+}

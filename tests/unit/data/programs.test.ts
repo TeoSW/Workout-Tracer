@@ -6,6 +6,8 @@ import {
   createProgramFromTemplate,
   deleteDayTemplate,
   deleteProgram,
+  editDayTemplate,
+  editProgram,
   getActiveProgram,
   getProgram,
   listPrograms,
@@ -122,5 +124,40 @@ describe('programs', () => {
     await deleteProgram(ctx, program.id);
     expect(await getProgram(ctx, program.id)).toBeUndefined();
     expect(await ctx.db.dayTemplates.count()).toBe(0);
+  });
+});
+
+describe('editing at the same time', () => {
+  it('keeps both of two day edits made in a row', async () => {
+    const ctx = testContext();
+    const { program, dayTemplates } = await createProgramFromTemplate(ctx, PROGRAM_B);
+    const day = dayTemplates[0];
+    if (!day) throw new Error('missing day');
+    await Promise.all([
+      editDayTemplate(ctx, day.id, (d) => ({ ...d, note: 'First.' })),
+      editDayTemplate(ctx, day.id, (d) => ({ ...d, name: 'Second' })),
+    ]);
+    const loaded = (await getProgram(ctx, program.id))?.dayTemplates.find((d) => d.id === day.id);
+    expect(loaded).toMatchObject({ note: 'First.', name: 'Second' });
+  });
+
+  it('keeps both of two program edits made in a row', async () => {
+    const ctx = testContext();
+    const { program } = await createProgramFromTemplate(ctx, PROGRAM_B);
+    await Promise.all([
+      editProgram(ctx, program.id, (p) => ({ ...p, note: 'First.' })),
+      editProgram(ctx, program.id, (p) => ({ ...p, name: 'Second' })),
+    ]);
+    expect((await getProgram(ctx, program.id))?.program).toMatchObject({
+      note: 'First.',
+      name: 'Second',
+    });
+  });
+
+  it('refuses an edit that breaks the program rules and keeps the old data', async () => {
+    const ctx = testContext();
+    const { program } = await createProgramFromTemplate(ctx, PROGRAM_C);
+    await expect(editProgram(ctx, program.id, (p) => ({ ...p, cycleWeeks: 4 }))).rejects.toThrow();
+    expect((await getProgram(ctx, program.id))?.program.cycleWeeks).toBe(6);
   });
 });

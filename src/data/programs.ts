@@ -1,10 +1,13 @@
 import { addDays, mondayOf, WEEKDAYS } from '../domain/dates';
+import { removeOptionFromSelections } from '../domain/choice';
 import { addManualDeloadWeek, removeManualDeloadWeek } from '../domain/deload';
 import type { BuiltInTemplate } from '../domain/fixtures/templates';
+import { updateChoiceSlot } from '../domain/program-edit';
 import { setCurrentWeek } from '../domain/schedule';
 import {
   DayTemplateSchema,
   ProgramSchema,
+  type ChoiceSlot,
   type DayTemplate,
   type DayType,
   type Program,
@@ -134,7 +137,11 @@ export async function updateProgram(ctx: DataContext, program: Program): Promise
   });
 }
 
-async function editProgram(
+/**
+ * Applies a change to the stored program in one transaction. Editors use this, so two quick
+ * edits build on each other instead of the second overwriting the first.
+ */
+export async function editProgram(
   ctx: DataContext,
   id: string,
   change: (program: Program) => Program,
@@ -196,6 +203,59 @@ export async function saveDayTemplate(ctx: DataContext, day: DayTemplate): Promi
     }
     await ctx.db.dayTemplates.put(parsed);
     return parsed;
+  });
+}
+
+/** Applies a change to the stored day in one transaction, for the same reason as editProgram. */
+export async function editDayTemplate(
+  ctx: DataContext,
+  id: string,
+  change: (day: DayTemplate) => DayTemplate,
+): Promise<DayTemplate> {
+  return ctx.db.transaction('rw', ctx.db.dayTemplates, async () => {
+    const day = await ctx.db.dayTemplates.get(id);
+    if (!day) throw new Error(`No day ${id}`);
+    const saved = DayTemplateSchema.parse(clean(change(day)));
+    await ctx.db.dayTemplates.put(saved);
+    return saved;
+  });
+}
+
+/** Changes a choice slot on every day of the program that uses it. */
+export async function editChoiceSlot(
+  ctx: DataContext,
+  programId: string,
+  slotId: string,
+  change: (slot: ChoiceSlot) => ChoiceSlot,
+): Promise<void> {
+  await ctx.db.transaction('rw', ctx.db.dayTemplates, async () => {
+    const days = await ctx.db.dayTemplates.where('programId').equals(programId).toArray();
+    for (const day of days) {
+      for (const block of day.blocks) {
+        if (block.kind !== 'choice' || block.choiceSlot.id !== slotId) continue;
+        const changed = updateChoiceSlot(days, change(block.choiceSlot));
+        await ctx.db.dayTemplates.bulkPut(changed.map((d) => DayTemplateSchema.parse(clean(d))));
+        return;
+      }
+    }
+    throw new Error(`No choice slot ${slotId}`);
+  });
+}
+
+/** Removes one option of a choice slot, keeping the program's saved picks right. */
+export async function removeChoiceOption(
+  ctx: DataContext,
+  programId: string,
+  slotId: string,
+  optionIndex: number,
+): Promise<void> {
+  await ctx.db.transaction('rw', [ctx.db.programs, ctx.db.dayTemplates], async () => {
+    await editChoiceSlot(ctx, programId, slotId, (slot) => ({
+      ...slot,
+      options: slot.options.filter((_, i) => i !== optionIndex),
+    }));
+    const program = await requireProgram(ctx, programId);
+    await ctx.db.programs.put(removeOptionFromSelections(program, slotId, optionIndex));
   });
 }
 

@@ -36,6 +36,24 @@ export function saveChoice(
   };
 }
 
+/**
+ * Keeps saved picks right after an option is removed from a slot: picks of that option go, so
+ * the logger asks again, and picks of later options move down one.
+ */
+export function removeOptionFromSelections(
+  program: Program,
+  slotId: string,
+  optionIndex: number,
+): Program {
+  return {
+    ...program,
+    choiceSelections: program.choiceSelections.flatMap((s) => {
+      if (s.slotId !== slotId || s.optionIndex < optionIndex) return [s];
+      return s.optionIndex === optionIndex ? [] : [{ ...s, optionIndex: s.optionIndex - 1 }];
+    }),
+  };
+}
+
 /** The test flow picks for the next cycle. A test before the first week counts for cycle 1. */
 export function testFlowTargetCycle(cycleNumber: number): number {
   return Math.max(cycleNumber, 0) + 1;
