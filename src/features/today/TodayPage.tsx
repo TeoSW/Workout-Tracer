@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { useData, useLive, useToday } from '../../app/DataProvider';
 import { setBodyweight } from '../../data/bodyweight';
 import { getTodayOverview, type TodayOverview } from '../../data/today';
+import { parseBodyweight } from '../../domain/bodyweight';
 import { isDeloadDay } from '../../domain/deload';
 import { formatCycleWeek, formatKg } from '../../domain/format';
 import type { PlannedDay } from '../../domain/today';
@@ -103,8 +104,8 @@ function Bodyweight({ overview }: { overview: TodayOverview }) {
   const { error, guard, setError } = useGuard();
 
   function save() {
-    const kg = Number(text.trim().replace(',', '.'));
-    if (text.trim() === '' || !Number.isFinite(kg) || kg <= 0) {
+    const kg = parseBodyweight(text);
+    if (kg === null) {
       setError('Enter your weight in kg.');
       return;
     }

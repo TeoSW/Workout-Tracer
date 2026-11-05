@@ -15,7 +15,10 @@ import { NewProgramPage } from '../features/programs/NewProgramPage';
 import { ProgramEditorPage } from '../features/programs/ProgramEditorPage';
 import { ProgramsPage } from '../features/programs/ProgramsPage';
 import { ShareProgramPage } from '../features/programs/ShareProgramPage';
+import { BodyweightPage } from '../features/progress/BodyweightPage';
+import { EXERCISES, ExercisesPage } from '../features/progress/ExercisesPage';
 import { ProgressPage } from '../features/progress/ProgressPage';
+import { SkillsPage } from '../features/progress/SkillsPage';
 import { BandsPage } from '../features/settings/BandsPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { PickDayPage } from '../features/today/PickDayPage';
@@ -47,6 +50,13 @@ export function Tabs() {
         <Route path="history/:id/edit" element={<SessionEditPage />} />
         <Route path="history/:id" element={<SessionPage />} />
         <Route path="history" element={<HistoryPage />} />
+        <Route path="progress/bodyweight" element={<BodyweightPage />} />
+        <Route path="progress/skills" element={<SkillsPage />} />
+        <Route
+          path="progress/exercises/:exerciseId"
+          element={<ExerciseDetailPage base={EXERCISES} />}
+        />
+        <Route path="progress/exercises" element={<ExercisesPage />} />
         <Route path="progress" element={<ProgressPage />} />
         <Route path="programs/library/new" element={<ExerciseNewPage />} />
         <Route path="programs/library/:exerciseId/edit" element={<ExerciseEditPage />} />

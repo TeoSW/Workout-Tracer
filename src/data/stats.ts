@@ -80,3 +80,19 @@ export async function loadExerciseStats(
     bodyweight,
   };
 }
+
+/** Exercises with a done set in a finished session, by name. */
+export async function listLoggedExercises(ctx: DataContext): Promise<Exercise[]> {
+  const [sets, sessions, exercises] = await Promise.all([
+    ctx.db.sets.toArray(),
+    ctx.db.sessions.where('status').equals('finished').primaryKeys(),
+    loadExerciseMap(ctx),
+  ]);
+  const finished = new Set(sessions);
+  const logged = new Set(
+    sets.filter((s) => s.done && finished.has(s.sessionId)).map((s) => s.exerciseId),
+  );
+  return [...logged]
+    .flatMap((id) => exercises.get(id) ?? [])
+    .sort((a, b) => a.name.localeCompare(b.name));
+}

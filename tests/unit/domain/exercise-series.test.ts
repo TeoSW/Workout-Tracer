@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { averageDuration, consistencyWeeks } from '../../../src/domain/consistency';
 import { dayNumber } from '../../../src/domain/dates';
-import { exerciseCharts, recentPrs } from '../../../src/domain/exercise-series';
+import { bodyweightChart, exerciseCharts, recentPrs } from '../../../src/domain/exercise-series';
 import { SEED_BANDS } from '../../../src/domain/fixtures/bands';
 import { SEED_EXERCISES } from '../../../src/domain/fixtures/exercises';
 import { PROGRAM_A, PROGRAM_C } from '../../../src/domain/fixtures/templates';
@@ -252,6 +252,22 @@ describe('charts by tracking type', () => {
     expect(formatChartValue(50, 'band')).toBe('50kg');
     expect(formatChartValue(0.75, 'share')).toBe('75%');
     expect(formatChartValue(4, 'count')).toBe('4');
+  });
+});
+
+describe('bodyweight chart', () => {
+  it('plots raw entries as points under the 7-day average', () => {
+    const chart = bodyweightChart([
+      { date: '2026-10-05', kg: 70 },
+      { date: '2026-10-06', kg: 71 },
+    ]);
+    expect(chart?.series.map((s) => [s.label, s.dotsOnly])).toEqual([
+      ['Weight', true],
+      ['7-day average', undefined],
+    ]);
+    expect(chart?.rows[1]).toEqual({ day: dayNumber('2026-10-06'), kg: 71, average: 70.5 });
+    expect(chart?.readout).toBe('Latest 71kg, 7-day average 70.5kg');
+    expect(bodyweightChart([])).toBeNull();
   });
 });
 

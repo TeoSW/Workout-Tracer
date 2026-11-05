@@ -87,6 +87,9 @@ export const formatCycleWeek = (week: number, total: number) => `Week ${week} of
 /** "3 Nov". */
 export const formatShortDate = (date: DateStr) => format(parseDateStr(date), 'd MMM');
 
+/** "3 Nov 2026", for lists that run across years. */
+export const formatDateWithYear = (date: DateStr) => format(parseDateStr(date), 'd MMM yyyy');
+
 /** "Tuesday 3 November". */
 export const formatLongDate = (date: DateStr) => format(parseDateStr(date), 'EEEE d MMMM');
 
@@ -97,6 +100,8 @@ export const formatMonth = (month: string) => format(parseDateStr(`${month}-01`)
 export function formatDayLabel(date: DateStr, sessions: readonly { name: string }[]): string {
   return [formatLongDate(date), ...sessions.map((s) => s.name)].join(', ');
 }
+
+export const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 export type ChartUnit = 'kg' | 'seconds' | 'reps' | 'band' | 'share' | 'count';
 

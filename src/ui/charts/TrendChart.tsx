@@ -9,28 +9,17 @@ import {
   type TooltipContentProps,
 } from 'recharts';
 import { dateOfDayNumber } from '../../domain/dates';
+import type { ChartRow, ChartSeries } from '../../domain/exercise-series';
 import { formatShortDate } from '../../domain/format';
 import { ChartTooltip } from './ChartTooltip';
 import { AXIS_TICK, GRID_STROKE, chartColor } from './tokens';
-
-export type TrendSeries = {
-  key: string;
-  label: string;
-  /** Categorical color slot, kept by the series whatever else is showing. */
-  slot: number;
-  /** Plots points without a line, for raw values under an average. */
-  dotsOnly?: boolean;
-};
-
-/** One point in time. `day` comes from dayNumber, so gaps between sessions show as gaps. */
-export type TrendRow = { day: number } & Record<string, number | null>;
 
 const formatDay = (day: number | string) => formatShortDate(dateOfDayNumber(Number(day)));
 
 /** Change over real time on one Y axis. Only series with the same unit share a chart. */
 export function TrendChart(props: {
-  rows: readonly TrendRow[];
-  series: readonly TrendSeries[];
+  rows: readonly ChartRow[];
+  series: readonly ChartSeries[];
   formatValue: (value: number) => string;
   /** For band levels, where a lower number is harder and up should mean progress. */
   reversed?: boolean;

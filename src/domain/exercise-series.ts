@@ -1,3 +1,4 @@
+import { movingAverage7 } from './bodyweight';
 import { dayNumber, type DateStr } from './dates';
 import { bestE1rmPerSession } from './e1rm';
 import { formatChartValue, type ChartUnit } from './format';
@@ -260,6 +261,24 @@ export function exerciseCharts(input: Input): ChartSpec[] {
     }
   };
   return charts().filter((chart) => chart !== null);
+}
+
+/** Raw entries as points under the line of their 7-day average. */
+export function bodyweightChart(entries: readonly BodyweightEntry[]): ChartSpec | null {
+  const points = movingAverage7(entries);
+  const latest = points.at(-1);
+  if (!latest) return null;
+  return {
+    id: 'bodyweight',
+    title: 'Bodyweight',
+    unit: 'kg',
+    readout: `Latest ${formatChartValue(latest.kg, 'kg')}, 7-day average ${formatChartValue(latest.average, 'kg')}`,
+    series: [
+      { key: 'kg', label: 'Weight', slot: 2, dotsOnly: true },
+      { key: 'average', label: '7-day average', slot: 1 },
+    ],
+    rows: points.map((p) => ({ day: dayNumber(p.date), kg: p.kg, average: p.average })),
+  };
 }
 
 /** Logged sets by session, newest first, warm-ups included. This is the full set history. */

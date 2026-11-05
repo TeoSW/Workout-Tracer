@@ -330,3 +330,15 @@ ion-item > .day-dot {
   flex: 1;
   text-align: center;
 }
+
+.chart-note {
+  margin: 4px 4px 0;
+  font-size: 13px;
+  color: var(--ion-color-medium);
+}
+
+.section-heading {
+  margin: 16px 32px 0;
+  font-size: 20px;
+  font-weight: 600;
+}

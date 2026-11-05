@@ -1,4 +1,5 @@
 import { IonButton, IonItem, IonLabel, IonList, IonListHeader, IonNote } from '@ionic/react';
+import { Suspense, lazy } from 'react';
 import { useParams } from 'react-router-dom';
 import { useData, useLive } from '../../app/DataProvider';
 import { archiveExercise, getExercise, loadExerciseMap } from '../../data/exercises';
@@ -7,16 +8,20 @@ import { useGoBack } from '../../ui/navigation';
 import { PageShell } from '../../ui/PageShell';
 
 const LOAD_UNIT_LABELS = { total: 'Total', per_hand: 'Per hand', per_side: 'Per side' };
+const LIBRARY = '/tabs/programs/library';
 
-export function ExerciseDetailPage() {
+// Charts stay out of the first load, here as on the Progress tab.
+const ExerciseStats = lazy(() => import('../progress/ExerciseStats'));
+
+/** One exercise. It opens from the library, or from Progress with `base` set to that list. */
+export function ExerciseDetailPage({ base = LIBRARY }: { base?: string }) {
   const { exerciseId = '' } = useParams();
   const ctx = useData();
-  const goBack = useGoBack('/tabs/programs/library');
+  const goBack = useGoBack(base);
   const exercise = useLive((c) => getExercise(c, exerciseId), [exerciseId]);
   const all = useLive(loadExerciseMap);
 
-  if (!exercise)
-    return <PageShell title="Exercise" back="/tabs/programs/library" children={null} />;
+  if (!exercise) return <PageShell title="Exercise" back={base} children={null} />;
 
   const muscleList = (muscles: typeof exercise.primaryMuscles) =>
     muscles.length > 0 ? muscles.map((m) => MUSCLE_LABELS[m]).join(', ') : 'None';
@@ -24,10 +29,8 @@ export function ExerciseDetailPage() {
   return (
     <PageShell
       title={exercise.name}
-      back="/tabs/programs/library"
-      actions={
-        <IonButton routerLink={`/tabs/programs/library/${exercise.id}/edit`}>Edit</IonButton>
-      }
+      back={base}
+      actions={<IonButton routerLink={`${LIBRARY}/${exercise.id}/edit`}>Edit</IonButton>}
     >
       <IonList inset>
         <IonItem>
@@ -69,12 +72,16 @@ export function ExerciseDetailPage() {
             <IonLabel>Alternatives</IonLabel>
           </IonListHeader>
           {exercise.alternativeIds.map((id) => (
-            <IonItem key={id} routerLink={`/tabs/programs/library/${id}`} detail>
+            <IonItem key={id} routerLink={`${base}/${id}`} detail>
               <IonLabel>{all?.get(id)?.name ?? id}</IonLabel>
             </IonItem>
           ))}
         </IonList>
       )}
+
+      <Suspense fallback={null}>
+        <ExerciseStats exercise={exercise} />
+      </Suspense>
 
       <IonList inset>
         <IonItem
