@@ -1,0 +1,32 @@
+/* Inset grouped lists sit on the system grouped background. */
+ion-content.grouped {
+  --background: #f2f2f7;
+}
+
+@media (prefers-color-scheme: dark) {
+  ion-content.grouped {
+    --background: #000000;
+  }
+
+  ion-content.grouped ion-list.list-inset {
+    --ion-item-background: #1c1c1e;
+  }
+}
+
+.empty-note {
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--ion-color-medium);
+}
+
+.section-note {
+  padding: 0 32px 16px;
+  font-size: 13px;
+  color: var(--ion-color-medium);
+}
+
+.error-note {
+  padding: 0 32px 16px;
+  font-size: 13px;
+  color: var(--ion-color-danger);
+}
