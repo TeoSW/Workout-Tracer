@@ -2,12 +2,34 @@
 :root {
   --grouped-background: #f2f2f7;
   --grouped-card: #ffffff;
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-6: #008300;
+  --chart-7: #6250d6;
+  --chart-8: #e34948;
+  --chart-grid: #e5e5ea;
+  --chart-axis: #6c6c70;
+  --chart-muted: #c7c7cc;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --grouped-background: #000000;
     --grouped-card: #1c1c1e;
+    --chart-1: #3987e5;
+    --chart-2: #d95926;
+    --chart-3: #199e70;
+    --chart-4: #c98500;
+    --chart-5: #d55181;
+    --chart-6: #008300;
+    --chart-7: #9085e9;
+    --chart-8: #e66767;
+    --chart-grid: #38383a;
+    --chart-axis: #aeaeb2;
+    --chart-muted: #48484a;
   }
 }
 
@@ -154,4 +176,43 @@ ion-toolbar ion-back-button {
 
 ion-item ion-badge {
   margin-inline-start: 8px;
+}
+
+.chart-card {
+  padding: 8px 12px 12px;
+  background: var(--grouped-card);
+}
+
+.chart-readout {
+  margin: 0 4px 8px;
+  font-size: 15px;
+}
+
+/* A tapped chart must not show a focus box around the whole chart. */
+.chart-card .recharts-surface:focus,
+.chart-card .recharts-wrapper:focus {
+  outline: none;
+}
+
+.chart-tooltip {
+  padding: 6px 10px;
+  font-size: 13px;
+  background: var(--grouped-background);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.chart-tooltip-label {
+  color: var(--ion-color-medium);
+}
+
+.chart-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-tooltip-key {
+  width: 12px;
+  height: 2px;
 }

@@ -1,3 +1,5 @@
+import { format } from 'date-fns';
+import { parseDateStr, type DateStr } from './dates';
 import { formatEffort } from './effort';
 import type { PrFlag } from './prs';
 import type { Band, EffortMode, Exercise, ExerciseBlock, LoggedSet, SetTarget } from './schemas';
@@ -81,6 +83,9 @@ export function formatPlanLine(
 }
 
 export const formatCycleWeek = (week: number, total: number) => `Week ${week} of ${total}`;
+
+/** "3 Nov". */
+export const formatShortDate = (date: DateStr) => format(parseDateStr(date), 'd MMM');
 
 /** "48m" or "1h 05m". */
 export function formatDuration(ms: number): string {
