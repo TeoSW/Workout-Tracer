@@ -506,6 +506,24 @@ export async function updateSession(
   });
 }
 
+/** Corrects the length of a finished workout, which matters when it was finished late. */
+export async function setSessionDuration(
+  ctx: DataContext,
+  sessionId: string,
+  minutes: number,
+): Promise<Session> {
+  if (!(minutes >= 1)) throw new Error('A workout lasts at least one minute.');
+  return ctx.db.transaction('rw', ctx.db.sessions, async () => {
+    const current = await requireSession(ctx, sessionId);
+    if (current.status !== 'finished') throw new Error('This workout is still running.');
+    const session = SessionSchema.parse(
+      clean({ ...current, finishedAt: current.startedAt + Math.round(minutes * 60_000) }),
+    );
+    await ctx.db.sessions.put(session);
+    return session;
+  });
+}
+
 /** Deletes a session with its exercises, sets, test results and rest timer. */
 export async function deleteSession(ctx: DataContext, sessionId: string): Promise<void> {
   const { db } = ctx;

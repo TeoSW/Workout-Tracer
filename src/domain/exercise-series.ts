@@ -262,6 +262,24 @@ export function exerciseCharts(input: Input): ChartSpec[] {
   return charts().filter((chart) => chart !== null);
 }
 
+/** Logged sets by session, newest first, warm-ups included. This is the full set history. */
+export function sessionLog(
+  sessions: readonly Session[],
+  sets: readonly LoggedSet[],
+): SessionSets[] {
+  const byId = finishedSessionsById(sessions);
+  const entries = new Map<string, SessionSets>();
+  for (const set of sets) {
+    const session = byId.get(set.sessionId);
+    if (!session || !set.done) continue;
+    const entry = entries.get(session.id);
+    if (entry) entry.sets.push(set);
+    else entries.set(session.id, { session, sets: [set] });
+  }
+  for (const entry of entries.values()) entry.sets.sort((a, b) => a.order - b.order);
+  return [...entries.values()].sort((a, b) => b.session.startedAt - a.session.startedAt);
+}
+
 export type RecentPr = DatedPr & { exerciseId: string };
 
 /** The latest records across all exercises, newest first. */
