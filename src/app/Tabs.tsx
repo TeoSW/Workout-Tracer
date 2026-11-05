@@ -2,6 +2,9 @@ import { IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs } 
 import { barbell, barChart, calendar, settings, today } from 'ionicons/icons';
 import { Navigate, Route } from 'react-router-dom';
 import { HistoryPage } from '../features/history/HistoryPage';
+import { ExerciseDetailPage } from '../features/library/ExerciseDetailPage';
+import { ExerciseEditPage, ExerciseNewPage } from '../features/library/ExerciseFormPage';
+import { LibraryPage } from '../features/library/LibraryPage';
 import { ProgramsPage } from '../features/programs/ProgramsPage';
 import { ProgressPage } from '../features/progress/ProgressPage';
 import { BandsPage } from '../features/settings/BandsPage';
@@ -23,6 +26,10 @@ export function Tabs() {
         <Route path="today" element={<TodayPage />} />
         <Route path="history" element={<HistoryPage />} />
         <Route path="progress" element={<ProgressPage />} />
+        <Route path="programs/library/new" element={<ExerciseNewPage />} />
+        <Route path="programs/library/:exerciseId/edit" element={<ExerciseEditPage />} />
+        <Route path="programs/library/:exerciseId" element={<ExerciseDetailPage />} />
+        <Route path="programs/library" element={<LibraryPage />} />
         <Route path="programs" element={<ProgramsPage />} />
         <Route path="settings/bands" element={<BandsPage />} />
         <Route path="settings" element={<SettingsPage />} />

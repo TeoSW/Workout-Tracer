@@ -14,3 +14,12 @@ export function renderApp(route = '/tabs/today', ctx = testContext()) {
 export function ionEvent(element: Element, name: string, detail: Record<string, unknown>) {
   fireEvent(element, new CustomEvent(name, { detail, bubbles: true }));
 }
+
+/** ion-select keeps its label in its shadow DOM, so it is found by its label property. */
+export function selectLabelled(label: string): Element {
+  const found = [...document.querySelectorAll('ion-select')].find(
+    (el) => (el as HTMLElement & { label?: string }).label === label,
+  );
+  if (!found) throw new Error(`No select labelled ${label}`);
+  return found;
+}

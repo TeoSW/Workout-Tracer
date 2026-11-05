@@ -10,6 +10,7 @@ export * from './deload';
 export * from './e1rm';
 export * from './effort';
 export * from './errors';
+export * from './exercise-filter';
 export * from './format';
 export * from './import';
 export * from './load';
