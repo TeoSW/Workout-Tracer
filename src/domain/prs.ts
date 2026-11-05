@@ -1,3 +1,4 @@
+import type { DateStr } from './dates';
 import { setE1rm } from './e1rm';
 import { bandLevel } from './load';
 import type { Band, BodyweightEntry, Exercise, LoggedSet, Session } from './schemas';
@@ -22,6 +23,8 @@ export type PrFlag = {
 };
 
 export type SessionSets = { session: Session; sets: LoggedSet[] };
+export type DatedPr = PrFlag & { sessionId: string; date: DateStr };
+export type ExerciseRecord = Omit<PrFlag, 'previous'> & { sessionId: string; date: DateStr };
 
 type Candidate = { kind: PrKind; key: string; setId: string | null; value: number };
 type Ctx = {
@@ -122,26 +125,8 @@ function bestByKey(list: Candidate[]): Map<string, Candidate> {
   return best;
 }
 
-/**
- * PRs set by the current session for one exercise. History is limited to finished sessions, and
- * only done working sets count. A record needs a previous value to beat, so a first log gives no
- * PR, and a tie is not a PR.
- */
-export function detectPrs(input: {
-  exercise: Exercise;
-  previous: readonly SessionSets[];
-  current: SessionSets;
-  bandsById: ReadonlyMap<string, Band>;
-  bodyweight: readonly BodyweightEntry[];
-}): PrFlag[] {
-  const ctx: Ctx = input;
-  const history = bestByKey(
-    input.previous
-      .filter((e) => e.session.status === 'finished' && e.session.id !== input.current.session.id)
-      .flatMap((e) => candidates(e, ctx)),
-  );
-  const now = bestByKey(candidates(input.current, ctx));
-
+/** What `now` beats in `history`. A record needs a previous value, and a tie is not a PR. */
+function beaten(now: Map<string, Candidate>, history: Map<string, Candidate>): PrFlag[] {
   const flags: PrFlag[] = [];
   for (const [id, c] of now) {
     const previous = history.get(id);
@@ -156,4 +141,63 @@ export function detectPrs(input: {
     }
   }
   return flags.sort((a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
+}
+
+/**
+ * PRs set by the current session for one exercise. History is limited to finished sessions, and
+ * only done working sets count, so a first log gives no PR.
+ */
+export function detectPrs(input: {
+  exercise: Exercise;
+  previous: readonly SessionSets[];
+  current: SessionSets;
+  bandsById: ReadonlyMap<string, Band>;
+  bodyweight: readonly BodyweightEntry[];
+}): PrFlag[] {
+  const ctx: Ctx = input;
+  const history = bestByKey(
+    input.previous
+      .filter((e) => e.session.status === 'finished' && e.session.id !== input.current.session.id)
+      .flatMap((e) => candidates(e, ctx)),
+  );
+  return beaten(bestByKey(candidates(input.current, ctx)), history);
+}
+
+type ReplayInput = Ctx & { sessions: readonly SessionSets[] };
+type Dated = Candidate & { sessionId: string; date: DateStr };
+
+/**
+ * Walks an exercise's finished sessions in finish order, keeping the best so far. Nothing is
+ * stored, so editing an old session corrects every record after it.
+ */
+function replay(input: ReplayInput): { prs: DatedPr[]; best: Map<string, Dated> } {
+  const ordered = input.sessions
+    .filter((e) => e.session.status === 'finished')
+    .sort((a, b) => (a.session.finishedAt ?? 0) - (b.session.finishedAt ?? 0));
+  const best = new Map<string, Dated>();
+  const prs: DatedPr[] = [];
+  for (const entry of ordered) {
+    const { id: sessionId, date } = entry.session;
+    const now = bestByKey(candidates(entry, input));
+    for (const flag of beaten(now, best)) prs.push({ ...flag, sessionId, date });
+    for (const [id, c] of now) {
+      const current = best.get(id);
+      if (!current || better(c.kind, c.value, current.value)) {
+        best.set(id, { ...c, sessionId, date });
+      }
+    }
+  }
+  return { prs, best };
+}
+
+/** Every PR an exercise has had, oldest first. */
+export function prHistory(input: ReplayInput): DatedPr[] {
+  return replay(input).prs;
+}
+
+/** The standing records of an exercise, with the session that set each one. */
+export function currentRecords(input: ReplayInput): ExerciseRecord[] {
+  return [...replay(input).best.values()].sort(
+    (a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) || a.key.localeCompare(b.key),
+  );
 }

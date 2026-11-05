@@ -48,3 +48,47 @@ export function weekStreak(finishedDates: readonly DateStr[], today: DateStr): n
 export function sessionDurationMs(session: Session): number | null {
   return session.finishedAt === null ? null : session.finishedAt - session.startedAt;
 }
+
+export type ConsistencyWeek = { weekStart: DateStr; planned: number | null; finished: number };
+
+/**
+ * The latest `weeks` weeks, from the first finished session at the earliest. Finished counts
+ * every session, and planned comes from the active program, so a week from before a program
+ * change is compared with the current plan.
+ */
+export function consistencyWeeks(input: {
+  sessions: readonly Session[];
+  program: Program | null;
+  today: DateStr;
+  weeks?: number;
+}): ConsistencyWeek[] {
+  const dates = input.sessions.filter((s) => s.status === 'finished').map((s) => s.date);
+  if (dates.length === 0) return [];
+  const thisWeek = mondayOf(input.today);
+  const earliest = addDays(thisWeek, -7 * ((input.weeks ?? 8) - 1));
+  const first = mondayOf(dates.reduce((a, b) => (a < b ? a : b)));
+  const out: ConsistencyWeek[] = [];
+  for (let week = first > earliest ? first : earliest; week <= thisWeek; week = addDays(week, 7)) {
+    out.push({
+      weekStart: week,
+      planned: input.program ? plannedSessionsInWeek(input.program, week) : null,
+      finished: finishedSessionsInWeek(input.sessions, week),
+    });
+  }
+  return out;
+}
+
+/** Mean duration of finished sessions in the latest `weeks` weeks, or null without any. */
+export function averageDuration(
+  sessions: readonly Session[],
+  today: DateStr,
+  weeks = 4,
+): number | null {
+  const from = addDays(mondayOf(today), -7 * (weeks - 1));
+  const durations = sessions.flatMap((s) => {
+    const ms = s.date >= from ? sessionDurationMs(s) : null;
+    return ms === null ? [] : [ms];
+  });
+  if (durations.length === 0) return null;
+  return durations.reduce((sum, ms) => sum + ms, 0) / durations.length;
+}
