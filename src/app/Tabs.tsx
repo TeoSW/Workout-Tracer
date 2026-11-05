@@ -5,6 +5,8 @@ import { HistoryPage } from '../features/history/HistoryPage';
 import { ExerciseDetailPage } from '../features/library/ExerciseDetailPage';
 import { ExerciseEditPage, ExerciseNewPage } from '../features/library/ExerciseFormPage';
 import { LibraryPage } from '../features/library/LibraryPage';
+import { NewProgramPage } from '../features/programs/NewProgramPage';
+import { ProgramEditorPage } from '../features/programs/ProgramEditorPage';
 import { ProgramsPage } from '../features/programs/ProgramsPage';
 import { ProgressPage } from '../features/progress/ProgressPage';
 import { BandsPage } from '../features/settings/BandsPage';
@@ -30,6 +32,8 @@ export function Tabs() {
         <Route path="programs/library/:exerciseId/edit" element={<ExerciseEditPage />} />
         <Route path="programs/library/:exerciseId" element={<ExerciseDetailPage />} />
         <Route path="programs/library" element={<LibraryPage />} />
+        <Route path="programs/new" element={<NewProgramPage />} />
+        <Route path="programs/:id" element={<ProgramEditorPage />} />
         <Route path="programs" element={<ProgramsPage />} />
         <Route path="settings/bands" element={<BandsPage />} />
         <Route path="settings" element={<SettingsPage />} />

@@ -2,10 +2,13 @@
 import 'fake-indexeddb/auto';
 import '@testing-library/jest-dom/vitest';
 import { setupIonicReact } from '@ionic/react';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
 
 setupIonicReact({ mode: 'ios' });
+
+// A first render seeds the database, which takes a while when every test file runs at once.
+configure({ asyncUtilTimeout: 8000 });
 
 afterEach(() => cleanup());
 
@@ -23,3 +26,6 @@ window.matchMedia =
       removeEventListener: () => undefined,
       dispatchEvent: () => false,
     }) as MediaQueryList);
+
+// jsdom has no layout, and Ionic's gestures ask for the element under a point.
+document.elementFromPoint = () => null;

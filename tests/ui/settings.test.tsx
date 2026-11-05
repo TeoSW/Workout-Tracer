@@ -6,7 +6,7 @@ import { setBodyweight, listBodyweight } from '../../src/data/bodyweight';
 import { seedIfNeeded } from '../../src/data/seed';
 import { getSettings } from '../../src/data/settings';
 import { testContext } from '../unit/data/helpers';
-import { ionEvent, renderApp } from './helpers';
+import { buttonLabelled, ionEvent, renderApp } from './helpers';
 
 vi.mock('../../src/pwa/files', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/pwa/files')>()),
@@ -28,7 +28,7 @@ describe('settings', () => {
 
   it('changes the backup reminder interval', async () => {
     const { ctx, user } = renderApp('/tabs/settings');
-    await user.click(await screen.findByLabelText('More reminder days'));
+    await user.click(await buttonLabelled('More reminder days'));
     await waitFor(async () => expect((await getSettings(ctx)).backupReminderDays).toBe(15));
   });
 
@@ -49,7 +49,7 @@ describe('bands', () => {
     expect(await screen.findByText('Thin')).toBeInTheDocument();
     await waitFor(async () => expect((await listBands(ctx))[0]?.label).toBe('Thin'));
 
-    await user.click(screen.getByLabelText('Archive 15kg'));
+    await user.click(await buttonLabelled('Archive 15kg'));
     await waitFor(async () => expect(await listBands(ctx)).toHaveLength(3));
     await waitFor(() => expect(screen.queryByText('15kg')).not.toBeInTheDocument());
   });

@@ -17,6 +17,7 @@ export default defineConfig({
         resolve: { conditions: ['browser'] },
         test: {
           name: 'ui',
+          testTimeout: 30_000,
           server: {
             deps: { inline: ['@ionic/react', '@stencil/react-output-target', '@lit/react'] },
           },

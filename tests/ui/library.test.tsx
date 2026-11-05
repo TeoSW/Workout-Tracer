@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { getExercise, listExercises } from '../../src/data/exercises';
-import { ionEvent, renderApp, selectLabelled } from './helpers';
+import { buttonLabelled, ionEvent, renderApp, selectLabelled } from './helpers';
 
 const LIST = '/tabs/programs/library';
 
@@ -85,7 +85,7 @@ describe('exercise library', () => {
     expect(await screen.findByLabelText('Cues')).toBeInTheDocument();
     expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
     ionEvent(screen.getByLabelText('Cues'), 'ionInput', { value: 'Knees out.' });
-    await user.click(screen.getByLabelText('More rest seconds'));
+    await user.click(await buttonLabelled('More rest seconds'));
     await user.click(screen.getByText('Save'));
     await waitFor(async () =>
       expect(await getExercise(ctx, 'squat')).toMatchObject({
