@@ -19,11 +19,11 @@ import {
   archiveProgram,
   deactivateProgram,
   deleteProgram,
+  editProgram,
   getProgram,
   removeDeloadThisWeek,
   setDeloadThisWeek,
   setProgramCurrentWeek,
-  updateProgram,
 } from '../../data/programs';
 import { addDays, mondayOf } from '../../domain/dates';
 import { formatCycleWeek } from '../../domain/format';
@@ -58,7 +58,8 @@ export function ProgramEditorPage() {
     }
   }
 
-  const save = (build: () => Program) => void guarded(() => updateProgram(ctx, build()));
+  const save = (change: (p: Program) => Program) =>
+    void guarded(() => editProgram(ctx, id, change));
 
   const today = ctx.clock.today();
   const position = program.active ? cyclePosition(program, today) : null;
@@ -94,7 +95,7 @@ export function ProgramEditorPage() {
             value={program.name}
             onIonChange={(e) => {
               const name = (e.detail.value ?? '').trim();
-              if (name !== '') save(() => ({ ...program, name }));
+              if (name !== '') save((p) => ({ ...p, name }));
             }}
           />
         </IonItem>
@@ -105,7 +106,7 @@ export function ProgramEditorPage() {
             labelPlacement="stacked"
             autoGrow
             value={program.note}
-            onIonChange={(e) => save(() => ({ ...program, note: e.detail.value ?? '' }))}
+            onIonChange={(e) => save((p) => ({ ...p, note: e.detail.value ?? '' }))}
           />
         </IonItem>
       </IonList>

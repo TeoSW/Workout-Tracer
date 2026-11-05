@@ -14,6 +14,7 @@ import {
   setSupersetWithNext,
   toggleDeloadWeek,
   updateBlock,
+  updateBlockTarget,
   updateChoiceSlot,
 } from '../../../src/domain/program-edit';
 import { ProgramSchema, type Block, type DayTemplate } from '../../../src/domain/schemas';
@@ -172,6 +173,11 @@ describe('block edits', () => {
     const edited = updateBlock(legs, legs.blocks[0]?.id ?? '', { setsMin: 5, restSec: 45 });
     expect(edited.blocks[0]).toMatchObject({ setsMin: 5, restSec: 45 });
     expect(legs.blocks[0]?.setsMin).toBe(3);
+  });
+
+  it('patches a block target and keeps its other fields', () => {
+    const edited = updateBlockTarget(legs, legs.blocks[0]?.id ?? '', { repsMin: 12 });
+    expect(edited.blocks[0]?.target).toEqual({ repsMin: 12, loadMinKg: 15 });
   });
 
   it('links a block with the next one as a superset and unlinks it', () => {

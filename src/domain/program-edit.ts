@@ -191,6 +191,19 @@ export function updateBlock(
   };
 }
 
+export function updateBlockTarget(
+  day: DayTemplate,
+  blockId: string,
+  patch: Partial<SetTarget>,
+): DayTemplate {
+  return {
+    ...day,
+    blocks: day.blocks.map((b) =>
+      b.id === blockId ? { ...b, target: { ...b.target, ...patch } } : b,
+    ),
+  };
+}
+
 function withoutGroup(block: Block): Block {
   const copy = { ...block };
   delete copy.supersetGroup;

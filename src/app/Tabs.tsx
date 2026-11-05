@@ -5,6 +5,9 @@ import { HistoryPage } from '../features/history/HistoryPage';
 import { ExerciseDetailPage } from '../features/library/ExerciseDetailPage';
 import { ExerciseEditPage, ExerciseNewPage } from '../features/library/ExerciseFormPage';
 import { LibraryPage } from '../features/library/LibraryPage';
+import { AddBlockPage } from '../features/programs/AddBlockPage';
+import { BlockEditorPage } from '../features/programs/BlockEditorPage';
+import { DayEditorPage } from '../features/programs/DayEditorPage';
 import { NewProgramPage } from '../features/programs/NewProgramPage';
 import { ProgramEditorPage } from '../features/programs/ProgramEditorPage';
 import { ProgramsPage } from '../features/programs/ProgramsPage';
@@ -33,6 +36,10 @@ export function Tabs() {
         <Route path="programs/library/:exerciseId" element={<ExerciseDetailPage />} />
         <Route path="programs/library" element={<LibraryPage />} />
         <Route path="programs/new" element={<NewProgramPage />} />
+        <Route path="programs/:id/days/:dayId/blocks/:blockId" element={<BlockEditorPage />} />
+        <Route path="programs/:id/days/:dayId/add-choice" element={<AddBlockPage asChoice />} />
+        <Route path="programs/:id/days/:dayId/add" element={<AddBlockPage />} />
+        <Route path="programs/:id/days/:dayId" element={<DayEditorPage />} />
         <Route path="programs/:id" element={<ProgramEditorPage />} />
         <Route path="programs" element={<ProgramsPage />} />
         <Route path="settings/bands" element={<BandsPage />} />

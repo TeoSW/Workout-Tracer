@@ -39,8 +39,8 @@ const WEEKDAY_LABELS: Record<Weekday, string> = {
 type Props = {
   program: Program;
   days: DayTemplate[];
-  /** Saves an edit. An edit that breaks a rule throws, and the caller shows the error. */
-  onChange: (build: () => Program) => void;
+  /** Applies an edit to the stored program. One that breaks a rule shows as an error. */
+  onChange: (change: (program: Program) => Program) => void;
 };
 
 function DeloadWeeks({ program, onChange }: Pick<Props, 'program' | 'onChange'>) {
@@ -51,7 +51,7 @@ function DeloadWeeks({ program, onChange }: Pick<Props, 'program' | 'onChange'>)
       <IonToggle
         aria-label={`Deload in week ${week}`}
         checked={program.deloadWeeks.includes(week)}
-        onIonChange={() => onChange(() => toggleDeloadWeek(program, week))}
+        onIonChange={() => onChange((p) => toggleDeloadWeek(p, week))}
       >
         Deload in week {week}
       </IonToggle>
@@ -73,7 +73,7 @@ function WeekdayGrid(props: Props & { schedule: WeekdaySchedule }) {
         value={program.cycleWeeks ?? 1}
         min={1}
         max={26}
-        onChange={(n) => onChange(() => resizeCycle(program, n))}
+        onChange={(n) => onChange((p) => resizeCycle(p, n))}
       />
       <DeloadWeeks program={program} onChange={onChange} />
       <IonItem>
@@ -100,7 +100,7 @@ function WeekdayGrid(props: Props & { schedule: WeekdaySchedule }) {
             value={week?.[weekday] ?? 'rest'}
             onIonChange={(e) => {
               const value = e.detail.value as string;
-              onChange(() => setGridDay(program, shown, weekday, value === 'rest' ? null : value));
+              onChange((p) => setGridDay(p, shown, weekday, value === 'rest' ? null : value));
             }}
           >
             <IonSelectOption value="rest">Rest</IonSelectOption>
@@ -119,10 +119,6 @@ function WeekdayGrid(props: Props & { schedule: WeekdaySchedule }) {
 function Rotation(props: Props & { schedule: RotationSchedule }) {
   const { program, days, schedule, onChange } = props;
   const nameOf = (id: string) => days.find((d) => d.id === id)?.name ?? 'Missing day';
-  const withSessions = (sessionsPerWeek: number): Program => ({
-    ...program,
-    schedule: { ...schedule, sessionsPerWeek },
-  });
   return (
     <>
       {schedule.sequence.map((id, index) => (
@@ -135,7 +131,7 @@ function Rotation(props: Props & { schedule: RotationSchedule }) {
             fill="clear"
             aria-label={`Move ${nameOf(id)} up`}
             disabled={index === 0}
-            onClick={() => onChange(() => moveRotationEntry(program, index, 'up'))}
+            onClick={() => onChange((p) => moveRotationEntry(p, index, 'up'))}
           >
             <IonIcon slot="icon-only" icon={arrowUp} aria-hidden="true" />
           </IonButton>
@@ -144,7 +140,7 @@ function Rotation(props: Props & { schedule: RotationSchedule }) {
             fill="clear"
             aria-label={`Move ${nameOf(id)} down`}
             disabled={index === schedule.sequence.length - 1}
-            onClick={() => onChange(() => moveRotationEntry(program, index, 'down'))}
+            onClick={() => onChange((p) => moveRotationEntry(p, index, 'down'))}
           >
             <IonIcon slot="icon-only" icon={arrowDown} aria-hidden="true" />
           </IonButton>
@@ -153,7 +149,7 @@ function Rotation(props: Props & { schedule: RotationSchedule }) {
             fill="clear"
             color="medium"
             aria-label={`Remove ${nameOf(id)} from the rotation`}
-            onClick={() => onChange(() => removeRotationEntry(program, index))}
+            onClick={() => onChange((p) => removeRotationEntry(p, index))}
           >
             <IonIcon slot="icon-only" icon={close} aria-hidden="true" />
           </IonButton>
@@ -167,7 +163,7 @@ function Rotation(props: Props & { schedule: RotationSchedule }) {
           value={null}
           onIonChange={(e) => {
             const id = e.detail.value as string | null;
-            if (id) onChange(() => addRotationDay(program, id));
+            if (id) onChange((p) => addRotationDay(p, id));
           }}
         >
           {days.map((d) => (
@@ -183,7 +179,13 @@ function Rotation(props: Props & { schedule: RotationSchedule }) {
         value={schedule.sessionsPerWeek}
         min={1}
         max={7}
-        onChange={(n) => onChange(() => withSessions(n))}
+        onChange={(sessionsPerWeek) =>
+          onChange((p) =>
+            p.schedule.kind === 'rotation'
+              ? { ...p, schedule: { ...p.schedule, sessionsPerWeek } }
+              : p,
+          )
+        }
       />
       <Stepper
         label="Cycle length"
@@ -192,7 +194,7 @@ function Rotation(props: Props & { schedule: RotationSchedule }) {
         value={program.cycleWeeks ?? 0}
         min={0}
         max={26}
-        onChange={(n) => onChange(() => resizeCycle(program, n === 0 ? null : n))}
+        onChange={(n) => onChange((p) => resizeCycle(p, n === 0 ? null : n))}
       />
       <DeloadWeeks program={program} onChange={onChange} />
     </>
@@ -213,9 +215,9 @@ export function ScheduleEditor(props: Props) {
           value={schedule.kind}
           onIonChange={(e) => {
             const kind = e.detail.value as Program['schedule']['kind'];
-            onChange(() =>
+            onChange((p) =>
               convertSchedule(
-                program,
+                p,
                 kind,
                 days.map((d) => d.id),
               ),
