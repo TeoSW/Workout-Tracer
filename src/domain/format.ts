@@ -1,4 +1,6 @@
-import type { Band, Exercise, ExerciseBlock, SetTarget } from './schemas';
+import { formatEffort } from './effort';
+import type { PrFlag } from './prs';
+import type { Band, EffortMode, Exercise, ExerciseBlock, LoggedSet, SetTarget } from './schemas';
 
 const range = (min: number, max: number | undefined) =>
   max === undefined || max === min ? `${min}` : `${min}-${max}`;
@@ -85,4 +87,100 @@ export function formatDuration(ms: number): string {
   const minutes = Math.floor(ms / 60_000);
   if (minutes < 60) return `${minutes}m`;
   return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
+}
+
+function loggedLoad(set: LoggedSet, exercise: Exercise): string {
+  if (set.kg === undefined) return '';
+  const suffix =
+    exercise.loadUnit === 'per_hand' ? '/hand' : exercise.loadUnit === 'per_side' ? '/side' : '';
+  return `${formatKg(set.kg)}${suffix}`;
+}
+
+function bandNumbers(bandIds: readonly string[], bandsById: ReadonlyMap<string, Band>): string {
+  return formatBandLevel(bandIds, bandsById).replace(/kg$/, '');
+}
+
+/** The result of a set without its effort: "25kg x 10", "35+15 x 9", "4 of 6 clean". */
+function formatSetValues(
+  set: LoggedSet,
+  exercise: Exercise,
+  bandsById: ReadonlyMap<string, Band>,
+): string {
+  const bands = set.bandIds ?? [];
+  const reps = set.reps ?? 0;
+  switch (exercise.trackingType) {
+    case 'weight_reps':
+      return `${loggedLoad(set, exercise)} x ${reps}`;
+    case 'bodyweight_reps':
+      if (bands.length > 0) return `${bandNumbers(bands, bandsById)} x ${reps}`;
+      if ((set.addedKg ?? 0) > 0) return `+${formatKg(set.addedKg ?? 0)} x ${reps}`;
+      return `${reps} reps`;
+    case 'hold': {
+      const parts = [set.progressionLevel, `${set.seconds ?? 0}s`];
+      if (bands.length > 0) parts.push(`band ${formatBandLevel(bands, bandsById)}`);
+      if (set.clean) parts.push('clean');
+      return parts.filter((p) => p !== undefined).join(' · ');
+    }
+    case 'complex': {
+      const logged = (set.parts ?? []).map((p) => {
+        const name = p.name.toLowerCase();
+        return p.unit === 'seconds' ? `${name} ${p.value}s` : `${name} ${p.value}`;
+      });
+      const parts = [set.progressionLevel, logged.join(', ')];
+      if (bands.length > 0) parts.push(`band ${formatBandLevel(bands, bandsById)}`);
+      if (set.clean) parts.push('clean');
+      return parts.filter((p) => p !== undefined && p !== '').join(' · ');
+    }
+    case 'attempts':
+      return `${set.cleanAttempts ?? 0} of ${set.attempts ?? 0} clean`;
+    case 'checklist':
+      return 'Done';
+  }
+}
+
+/** A done set in the logger: the result plus effort in the active mode. */
+export function formatSetResult(
+  set: LoggedSet,
+  exercise: Exercise,
+  effortMode: EffortMode,
+  bandsById: ReadonlyMap<string, Band>,
+): string {
+  const effort = formatEffort(set.rir, effortMode);
+  const values = formatSetValues(set, exercise, bandsById);
+  return effort === '' ? values : `${values} · ${effort}`;
+}
+
+/** The hint on a pending set: "last: 35+15 x 9". */
+export function formatLastTime(
+  set: LoggedSet,
+  exercise: Exercise,
+  bandsById: ReadonlyMap<string, Band>,
+): string {
+  return `last: ${formatSetValues(set, exercise, bandsById)}`;
+}
+
+function repsKeyLabel(key: string): string {
+  if (key.startsWith('kg:')) return formatKg(Number(key.slice(3)));
+  if (key.startsWith('band:')) return `band ${formatKg(Number(key.slice(5)))}`;
+  if (key.startsWith('added:')) return `+${formatKg(Number(key.slice(6)))}`;
+  return key;
+}
+
+/** One line of the finish summary. */
+export function formatPr(pr: PrFlag, exercise: Exercise): string {
+  const at = pr.key === '' ? '' : ` at ${pr.key}`;
+  switch (pr.kind) {
+    case 'heaviest_load':
+      return `${exercise.name}: heaviest load ${formatKg(pr.value)}`;
+    case 'best_e1rm':
+      return `${exercise.name}: best e1RM trend ${formatKg(pr.value)}`;
+    case 'most_reps':
+      return `${exercise.name}: ${pr.value} reps at ${repsKeyLabel(pr.key)}`;
+    case 'longest_hold':
+      return `${exercise.name}: longest clean hold ${pr.value}s${at}`;
+    case 'lowest_band':
+      return `${exercise.name}: lowest band ${formatKg(pr.value)}${at}`;
+    case 'most_clean_attempts':
+      return `${exercise.name}: ${pr.value} clean attempts`;
+  }
 }
