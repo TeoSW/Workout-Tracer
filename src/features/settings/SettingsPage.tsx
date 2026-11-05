@@ -4,8 +4,8 @@ import {
   IonList,
   IonListHeader,
   IonNote,
-  IonSegment,
-  IonSegmentButton,
+  IonSelect,
+  IonSelectOption,
   IonToggle,
 } from '@ionic/react';
 import { useEffect, useState } from 'react';
@@ -50,25 +50,19 @@ export function SettingsPage() {
               <IonLabel>Logging</IonLabel>
             </IonListHeader>
             <IonItem>
-              <IonLabel>Effort input</IonLabel>
-              <IonSegment
-                slot="end"
+              <IonSelect
                 aria-label="Effort input"
+                label="Effort input"
+                interface="action-sheet"
                 value={settings.effortMode}
                 onIonChange={(e) =>
                   void setSetting(ctx, 'effortMode', e.detail.value as EffortMode)
                 }
               >
-                <IonSegmentButton value="rir">
-                  <IonLabel>RIR</IonLabel>
-                </IonSegmentButton>
-                <IonSegmentButton value="rpe">
-                  <IonLabel>RPE</IonLabel>
-                </IonSegmentButton>
-                <IonSegmentButton value="off">
-                  <IonLabel>Off</IonLabel>
-                </IonSegmentButton>
-              </IonSegment>
+                <IonSelectOption value="rir">RIR</IonSelectOption>
+                <IonSelectOption value="rpe">RPE</IonSelectOption>
+                <IonSelectOption value="off">Off</IonSelectOption>
+              </IonSelect>
             </IonItem>
             <IonItem>
               <IonToggle

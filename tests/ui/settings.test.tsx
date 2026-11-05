@@ -6,7 +6,7 @@ import { setBodyweight, listBodyweight } from '../../src/data/bodyweight';
 import { seedIfNeeded } from '../../src/data/seed';
 import { getSettings } from '../../src/data/settings';
 import { testContext } from '../unit/data/helpers';
-import { buttonLabelled, ionEvent, renderApp } from './helpers';
+import { buttonLabelled, ionEvent, renderApp, selectLabelled } from './helpers';
 
 vi.mock('../../src/pwa/files', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/pwa/files')>()),
@@ -16,7 +16,8 @@ vi.mock('../../src/pwa/files', async (importOriginal) => ({
 describe('settings', () => {
   it('changes the effort input and the toggles', async () => {
     const { ctx } = renderApp('/tabs/settings');
-    ionEvent(await screen.findByLabelText('Effort input'), 'ionChange', { value: 'rpe' });
+    await screen.findByText('Sound');
+    ionEvent(selectLabelled('Effort input'), 'ionChange', { value: 'rpe' });
     await waitFor(async () => expect((await getSettings(ctx)).effortMode).toBe('rpe'));
 
     ionEvent(screen.getByLabelText('Sound'), 'ionChange', { checked: false });
