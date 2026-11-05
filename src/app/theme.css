@@ -216,3 +216,112 @@ ion-item ion-badge {
   width: 12px;
   height: 2px;
 }
+
+.calendar {
+  margin: 0 16px 8px;
+  padding: 4px 8px 8px;
+  background: var(--grouped-card);
+  border-radius: 10px;
+}
+
+.calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calendar-head ion-button {
+  min-width: 44px;
+  height: 44px;
+  margin: 0;
+}
+
+.calendar-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-weekday {
+  padding: 4px 0;
+  font-size: 12px;
+  text-align: center;
+  color: var(--ion-color-medium);
+}
+
+.calendar-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 44px;
+  padding: 0;
+  font-size: 16px;
+  color: var(--ion-text-color);
+  background: none;
+  border: 0;
+  border-radius: 8px;
+}
+
+.calendar-day:disabled {
+  color: var(--ion-color-medium);
+  opacity: 1;
+}
+
+.calendar-day[aria-current='date'] .calendar-number {
+  font-weight: 700;
+  color: var(--ion-color-primary);
+}
+
+.calendar-day[aria-pressed='true'] {
+  background: var(--grouped-background);
+}
+
+.calendar-bars {
+  display: flex;
+  gap: 2px;
+  height: 4px;
+}
+
+.calendar-bar {
+  width: 16px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.calendar-bars .calendar-bar:not(:only-child) {
+  width: 8px;
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0 24px 8px;
+  font-size: 13px;
+  list-style: none;
+}
+
+.calendar-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.day-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+ion-item > .day-dot {
+  margin-inline-end: 12px;
+}
