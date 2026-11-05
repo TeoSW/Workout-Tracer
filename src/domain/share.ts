@@ -4,9 +4,11 @@ import { fromBase64Url, toBase64Url } from './base64url';
 import { APP_ID } from './config';
 import { firstIssue, type Result } from './errors';
 import {
+  BandSchema,
   DayTemplateSchema,
   ExerciseSchema,
   ProgramSchema,
+  type Band,
   type Block,
   type DayTemplate,
   type Exercise,
@@ -29,6 +31,11 @@ export const ProgramShareSchema = z.object({
   dayTemplates: z.array(DayTemplateSchema),
   /** Only custom exercises. Built-in exercises are referenced by their stable ids. */
   exercises: z.array(ExerciseSchema),
+  /**
+   * Every band the targets use, seeded ones included, so import can match them by rated kg.
+   * Optional because codes made before this field existed have none.
+   */
+  bands: z.array(BandSchema).optional(),
 });
 
 export type ProgramShare = z.infer<typeof ProgramShareSchema>;
@@ -47,6 +54,7 @@ export function buildProgramShare(
   program: Program,
   dayTemplates: readonly DayTemplate[],
   exercisesById: ReadonlyMap<string, Exercise>,
+  bandsById: ReadonlyMap<string, Band>,
 ): ProgramShare {
   // Custom exercises used in blocks, plus custom alternatives they point at, so no
   // alternativeId dangles on the receiving phone.
@@ -62,6 +70,18 @@ export function buildProgramShare(
     pending.push(...exercise.alternativeIds);
   }
   exercises.sort((a, b) => a.name.localeCompare(b.name));
+  const bandIds = new Set(
+    dayTemplates.flatMap((d) =>
+      d.blocks.flatMap((b) => [
+        ...(b.target.bandIds ?? []),
+        ...(b.kind === 'choice' ? b.choiceSlot.options.flatMap((o) => o.target.bandIds ?? []) : []),
+      ]),
+    ),
+  );
+  const bands = [...bandIds]
+    .map((id) => bandsById.get(id))
+    .filter((b): b is Band => b !== undefined)
+    .sort((a, b) => a.ratedKg - b.ratedKg);
   return {
     app: APP_ID,
     kind: 'program',
@@ -76,6 +96,7 @@ export function buildProgramShare(
     },
     dayTemplates: structuredClone([...dayTemplates]),
     exercises: structuredClone(exercises),
+    bands: structuredClone(bands),
   };
 }
 

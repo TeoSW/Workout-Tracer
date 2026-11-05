@@ -6,6 +6,28 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.strict,
   {
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
+    },
+  },
+  {
+    files: ['src/data/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['react', 'react-dom', 'react/*'],
+              message: 'src/data must not import React.',
+            },
+            { group: ['@ionic/*'], message: 'src/data must not import Ionic.' },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['src/domain/**/*.ts'],
     rules: {
       'no-restricted-imports': [

@@ -99,6 +99,16 @@ export function parseBackup(
   if (!parsed.success) {
     return { ok: false, error: `The backup file is damaged: ${firstIssue(parsed.error)}` };
   }
+  const { sessions, programs } = parsed.data.data;
+  if (sessions.filter((s) => s.status === 'active').length > 1) {
+    return {
+      ok: false,
+      error: 'The backup file is damaged: it has more than one unfinished workout.',
+    };
+  }
+  if (programs.filter((p) => p.active).length > 1) {
+    return { ok: false, error: 'The backup file is damaged: it has more than one active program.' };
+  }
   return { ok: true, backup: parsed.data };
 }
 
