@@ -1,4 +1,4 @@
-import type { Block, ChoiceBlock, LoggedSet, SessionExercise } from './schemas';
+import type { Block, ChoiceBlock, Exercise, LoggedSet, SessionExercise } from './schemas';
 import { countsForStats } from './sets';
 
 type LogExercise = Pick<SessionExercise, 'id' | 'order' | 'blockId'>;
@@ -59,6 +59,12 @@ export function setLabel(
   return { text: `${set.kind === 'warmup' ? 'Warm-up' : 'Set'} ${number}`, number };
 }
 
-export function workingSetsDone(sets: readonly LoggedSet[]): number {
-  return sets.filter(countsForStats).length;
+/** Done working sets. A checklist item like a warm-up is not a set. */
+export function workingSetsDone(
+  sets: readonly LoggedSet[],
+  exercisesById: ReadonlyMap<string, Exercise>,
+): number {
+  return sets.filter(
+    (s) => countsForStats(s) && exercisesById.get(s.exerciseId)?.trackingType !== 'checklist',
+  ).length;
 }

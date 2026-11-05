@@ -76,8 +76,10 @@ describe('set labels and counts', () => {
     expect(setLabel(sets, sets[2] as LoggedSet)).toEqual({ text: 'Set 2', number: 2 });
   });
 
-  it('counts done working sets', () => {
-    expect(workingSetsDone(sets)).toBe(1);
+  it('counts done working sets, and a checklist item is not one', () => {
+    const byId = new Map(SEED_EXERCISES.map((e) => [e.id, e]));
+    const warmUp = makeSet({ sessionId: 's', exerciseId: 'warm-up' });
+    expect(workingSetsDone([...sets, warmUp], byId)).toBe(1);
   });
 });
 

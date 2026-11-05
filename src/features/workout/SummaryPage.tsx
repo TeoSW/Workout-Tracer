@@ -50,7 +50,12 @@ export function SummaryPage() {
         </IonItem>
         <IonItem>
           <IonLabel>Working sets</IonLabel>
-          <IonNote slot="end">{workingSetsDone(view.exercises.flatMap((e) => e.sets))}</IonNote>
+          <IonNote slot="end">
+            {workingSetsDone(
+              view.exercises.flatMap((e) => e.sets),
+              exercises ?? new Map(),
+            )}
+          </IonNote>
         </IonItem>
       </IonList>
 
