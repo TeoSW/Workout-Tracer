@@ -57,3 +57,13 @@ export async function finishWorkout(page: Page): Promise<void> {
   await page.getByTestId('finish-workout').filter({ visible: true }).click();
   await page.locator('ion-alert button', { hasText: 'Finish' }).click();
 }
+
+/** Page content runs behind the bottom bars, so check what is really on top at the bar. */
+export async function expectRestBarOnTop(page: Page): Promise<void> {
+  const onTop = await page.getByTestId('rest-bar').evaluate((bar) => {
+    const time = bar.querySelector('.rest-bar-time') as HTMLElement;
+    const box = time.getBoundingClientRect();
+    return bar.contains(document.elementFromPoint(box.left + 4, box.top + 4));
+  });
+  expect(onTop).toBe(true);
+}

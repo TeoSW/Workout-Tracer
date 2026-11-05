@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import {
   MONDAY,
   card,
+  expectRestBarOnTop,
   finishWorkout,
   logNextSet,
   logSets,
@@ -39,6 +40,7 @@ test('flow 2: log a full Heavy day with rest, finish and see the summary', async
 
   await logNextSet(page, 'Planche Complex');
   await expect(page.getByTestId('rest-bar')).toContainText(/^[23]:\d\d/);
+  await expectRestBarOnTop(page);
   await visibleText(page, '+15s').click();
   await visibleText(page, 'Skip').click();
   await expect(page.getByTestId('rest-bar')).toBeHidden();

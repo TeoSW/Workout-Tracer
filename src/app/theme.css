@@ -45,6 +45,15 @@ ion-list.list-inset ion-list-header {
   padding-bottom: 32px;
 }
 
+ion-modal ion-content {
+  --background: var(--grouped-card);
+}
+
+ion-modal ion-list {
+  --ion-item-background: var(--grouped-card);
+  background: var(--grouped-card);
+}
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -62,6 +71,12 @@ ion-list.list-inset ion-list-header {
   text-align: center;
   font-size: 44px;
   font-variant-numeric: tabular-nums;
+}
+
+/* Fullscreen content runs behind the bottom bars, so this one has to stack above it. */
+.rest-bar-slot {
+  position: relative;
+  z-index: 10;
 }
 
 .rest-bar {

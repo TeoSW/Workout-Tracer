@@ -61,7 +61,7 @@ export function Tabs() {
         <Route path="settings" element={<SettingsPage />} />
         <Route index element={<Navigate to="today" replace />} />
       </IonRouterOutlet>
-      <div slot="bottom">
+      <div slot="bottom" className="rest-bar-slot">
         <RestBar />
       </div>
       <IonTabBar slot="bottom">
