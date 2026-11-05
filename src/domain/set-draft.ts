@@ -104,3 +104,13 @@ export function draftToPatch(draft: SetDraft, exercise: Exercise): Partial<Logge
       return { rir: null, done: true };
   }
 }
+
+/** Reopens a set that is already logged, with its own values. */
+export function draftFromSet(set: LoggedSet, exercise: Exercise): SetDraft {
+  return {
+    ...draftFor({ exercise, target: set.target ?? {}, last: set }),
+    parts: set.parts ?? [],
+    attempts: set.attempts ?? 0,
+    cleanAttempts: set.cleanAttempts ?? 0,
+  };
+}

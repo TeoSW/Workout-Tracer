@@ -350,6 +350,8 @@ export const AppSettingsSchema = z.object({
   backupReminderDays: z.number().int().min(1),
   muscleReference: z.object({ min: z.number().nonnegative(), max: z.number().nonnegative() }),
   lastBackupAt: EpochMsSchema.nullable(),
+  /** The tip about the screen sleeping, shown once where Wake Lock is missing. */
+  wakeLockTipShown: z.boolean(),
 });
 
 export const SettingRowSchema = z.object({ key: z.string().min(1), value: z.unknown() });
@@ -394,6 +396,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   backupReminderDays: 14,
   muscleReference: { min: 10, max: 20 },
   lastBackupAt: null,
+  wakeLockTipShown: false,
 };
 
 export type ValidationResult = { ok: true } | { ok: false; error: string };

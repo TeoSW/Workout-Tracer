@@ -15,6 +15,7 @@ export * from './format';
 export * from './import';
 export * from './last-time';
 export * from './load';
+export * from './log-layout';
 export * from './plan';
 export * from './program-edit';
 export * from './prs';

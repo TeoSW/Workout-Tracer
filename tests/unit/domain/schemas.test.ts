@@ -148,6 +148,7 @@ describe('schemas', () => {
       backupReminderDays: 14,
       muscleReference: { min: 10, max: 20 },
       lastBackupAt: null,
+      wakeLockTipShown: false,
     });
   });
 

@@ -21,10 +21,12 @@ import {
   finishSession,
   getActiveSession,
   getSessionView,
+  lastSetsByExercise,
   moveExercise,
   pickChoice,
   removeExercise,
   removeSet,
+  sessionPrs,
   startEmptySession,
   startPlannedSession,
   swapExercise,
@@ -338,5 +340,54 @@ describe('review fixes', () => {
     const block = view.session.planSnapshot?.blocks.find((b) => b.kind === 'choice');
     await pickChoice(ctx, view.session.id, block?.id ?? '', 1);
     expect((await getProgram(ctx, program.id))?.program.choiceSelections).toEqual([]);
+  });
+});
+
+describe('last time and summary reads', () => {
+  it('finds each exercise in its own latest finished session, on any program', async () => {
+    const { ctx, program, day } = await setup();
+    const first = await startEmptySession(ctx);
+    const squat1 = await addExercise(ctx, first.session.id, 'squat');
+    await updateSet(ctx, squat1.sets[0]?.id ?? '', { kg: 20, reps: 10, done: true });
+    const curl = await addExercise(ctx, first.session.id, 'bicep-curl');
+    await updateSet(ctx, curl.sets[0]?.id ?? '', { kg: 5, reps: 10, done: true });
+    await finishSession(ctx, first.session.id);
+
+    ctx.clock.advance(1000);
+    const second = await startPlannedSession(ctx, {
+      programId: program.id,
+      dayTemplateId: day('Legs').id,
+    });
+    const squat2 = second.exercises.find((e) => e.exerciseId === 'squat');
+    await updateSet(ctx, squat2?.sets[0]?.id ?? '', { kg: 30, reps: 10, done: true });
+    await finishSession(ctx, second.session.id);
+
+    ctx.clock.advance(1000);
+    const open = await startEmptySession(ctx);
+    const squat3 = await addExercise(ctx, open.session.id, 'squat');
+    await updateSet(ctx, squat3.sets[0]?.id ?? '', { kg: 99, reps: 1, done: true });
+
+    const last = await lastSetsByExercise(ctx, ['squat', 'bicep-curl', 'plank'], open.session.id);
+    expect(last.get('squat')?.map((s) => s.kg)).toEqual([30]);
+    expect(last.get('bicep-curl')?.map((s) => s.kg)).toEqual([5]);
+    expect(last.has('plank')).toBe(false);
+    expect((await lastSetsByExercise(ctx, [], open.session.id)).size).toBe(0);
+  });
+
+  it('gives the same PRs when a summary is reopened after later workouts', async () => {
+    const { ctx } = await setup();
+    const log = async (reps: number) => {
+      ctx.clock.advance(1000);
+      const { session } = await startEmptySession(ctx);
+      const squat = await addExercise(ctx, session.id, 'squat');
+      await updateSet(ctx, squat.sets[0]?.id ?? '', { kg: 25, reps, rir: 2, done: true });
+      await finishSession(ctx, session.id);
+      return session.id;
+    };
+    await log(10);
+    const second = await log(11);
+    expect((await sessionPrs(ctx, second)).map((p) => p.kind)).toEqual(['best_e1rm', 'most_reps']);
+    await log(12);
+    expect((await sessionPrs(ctx, second)).map((p) => p.kind)).toEqual(['best_e1rm', 'most_reps']);
   });
 });

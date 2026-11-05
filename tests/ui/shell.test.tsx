@@ -6,7 +6,7 @@ describe('shell', () => {
   it('seeds the database and opens on Today with five tabs', async () => {
     const { ctx } = renderApp('/');
     await waitFor(() => expect(window.location.hash).toBe('#/tabs/today'));
-    expect(await screen.findByText('No workouts yet.')).toBeInTheDocument();
+    expect(await screen.findByText('Pick a program')).toBeInTheDocument();
     for (const label of ['Today', 'History', 'Progress', 'Programs', 'Settings']) {
       expect(screen.getAllByText(label).length).toBeGreaterThan(0);
     }

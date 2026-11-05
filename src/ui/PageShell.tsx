@@ -15,11 +15,12 @@ import type { ReactNode } from 'react';
  */
 export function PageShell(props: {
   title: string;
+  subtitle?: string;
   back?: string;
   actions?: ReactNode;
   children: ReactNode;
 }) {
-  const { title, back, actions, children } = props;
+  const { title, subtitle, back, actions, children } = props;
   return (
     <IonPage>
       <IonHeader translucent>
@@ -29,7 +30,10 @@ export function PageShell(props: {
               <IonBackButton defaultHref={back} text="Back" />
             </IonButtons>
           )}
-          <IonTitle>{title}</IonTitle>
+          <IonTitle>
+            {title}
+            {subtitle !== undefined && <div className="page-subtitle">{subtitle}</div>}
+          </IonTitle>
           {actions && <IonButtons slot="end">{actions}</IonButtons>}
         </IonToolbar>
       </IonHeader>
