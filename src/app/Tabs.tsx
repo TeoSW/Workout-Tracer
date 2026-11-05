@@ -4,6 +4,7 @@ import { Navigate, Route } from 'react-router-dom';
 import { HistoryPage } from '../features/history/HistoryPage';
 import { ProgramsPage } from '../features/programs/ProgramsPage';
 import { ProgressPage } from '../features/progress/ProgressPage';
+import { BandsPage } from '../features/settings/BandsPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { TodayPage } from '../features/today/TodayPage';
 
@@ -23,6 +24,7 @@ export function Tabs() {
         <Route path="history" element={<HistoryPage />} />
         <Route path="progress" element={<ProgressPage />} />
         <Route path="programs" element={<ProgramsPage />} />
+        <Route path="settings/bands" element={<BandsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route index element={<Navigate to="today" replace />} />
       </IonRouterOutlet>

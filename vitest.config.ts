@@ -13,8 +13,13 @@ export default defineConfig({
       },
       {
         plugins: [react()],
+        // @lit/react, under Ionic's components, ships a server build that never attaches events.
+        resolve: { conditions: ['browser'] },
         test: {
           name: 'ui',
+          server: {
+            deps: { inline: ['@ionic/react', '@stencil/react-output-target', '@lit/react'] },
+          },
           include: ['tests/ui/**/*.test.tsx'],
           environment: 'jsdom',
           setupFiles: ['tests/ui/setup.ts'],
