@@ -16,6 +16,9 @@ import { AXIS_TICK, GRID_STROKE, chartColor } from './tokens';
 
 const formatDay = (day: number | string) => formatShortDate(dateOfDayNumber(Number(day)));
 
+/** Past this many sessions on one line, points only add noise. A tap still marks the nearest. */
+const MAX_POINTS = 24;
+
 /** Change over real time on one Y axis. Only series with the same unit share a chart. */
 export function TrendChart(props: {
   rows: readonly ChartRow[];
@@ -23,9 +26,12 @@ export function TrendChart(props: {
   formatValue: (value: number) => string;
   /** For band levels, where a lower number is harder and up should mean progress. */
   reversed?: boolean;
+  /** Fixed Y ticks, for a scale with known ends such as a share. */
+  yTicks?: readonly number[];
   height?: number;
 }) {
-  const { rows, series, formatValue, reversed = false, height = 200 } = props;
+  const { rows, series, formatValue, reversed = false, yTicks, height = 200 } = props;
+  const dense = series.length === 1 && rows.length > MAX_POINTS;
   const tooltip = (tip: TooltipContentProps) => (
     <ChartTooltip {...tip} formatLabel={formatDay} formatValue={formatValue} />
   );
@@ -49,15 +55,18 @@ export function TrendChart(props: {
       />
       <YAxis
         width="auto"
-        domain={['auto', 'auto']}
+        domain={yTicks ? [yTicks[0] ?? 0, yTicks.at(-1) ?? 1] : ['auto', 'auto']}
         reversed={reversed}
         tick={AXIS_TICK}
         tickLine={false}
         axisLine={false}
         tickCount={4}
+        {...(yTicks ? { ticks: [...yTicks], tickFormatter: formatValue } : {})}
       />
       <Tooltip trigger="click" content={tooltip} />
-      {series.length > 1 && <Legend iconType="plainline" wrapperStyle={{ fontSize: 13 }} />}
+      {series.length > 1 && (
+        <Legend iconType="plainline" itemSorter={null} wrapperStyle={{ fontSize: 13 }} />
+      )}
       {series.map((s) => (
         <Line
           key={s.key}
@@ -65,7 +74,7 @@ export function TrendChart(props: {
           dataKey={s.key}
           stroke={chartColor(s.slot)}
           strokeWidth={s.dotsOnly ? 0 : 2}
-          dot={{ r: 4, fill: chartColor(s.slot), stroke: 'var(--grouped-card)', strokeWidth: 2 }}
+          dot={dense || s.lineOnly ? false : { r: 3, fill: chartColor(s.slot), stroke: 'none' }}
           activeDot={{ r: 6 }}
           connectNulls
           isAnimationActive={false}

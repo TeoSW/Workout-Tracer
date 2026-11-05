@@ -16,7 +16,7 @@ import { deleteBodyweight, listBodyweight, setBodyweight } from '../../data/body
 import { parseBodyweight } from '../../domain/bodyweight';
 import { isDateStr } from '../../domain/dates';
 import { bodyweightChart } from '../../domain/exercise-series';
-import { formatKg, formatLongDate } from '../../domain/format';
+import { formatChartValue, formatLongDate } from '../../domain/format';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
 import { SpecChart } from './SpecChart';
 
@@ -91,7 +91,7 @@ export default function BodyweightContent() {
                 }}
               >
                 <IonLabel>{formatLongDate(entry.date)}</IonLabel>
-                <IonNote slot="end">{formatKg(entry.kg)}</IonNote>
+                <IonNote slot="end">{formatChartValue(entry.kg, 'kg')}</IonNote>
               </IonItem>
               <IonItemOptions side="end">
                 <IonItemOption

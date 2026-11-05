@@ -18,6 +18,8 @@ export type ChartSeries = {
   slot: number;
   /** Plots points without a line, for raw values under an average. */
   dotsOnly?: boolean;
+  /** Plots a line without points, for an average over raw values. */
+  lineOnly?: boolean;
 };
 
 export type ChartSpec = {
@@ -275,7 +277,7 @@ export function bodyweightChart(entries: readonly BodyweightEntry[]): ChartSpec 
     readout: `Latest ${formatChartValue(latest.kg, 'kg')}, 7-day average ${formatChartValue(latest.average, 'kg')}`,
     series: [
       { key: 'kg', label: 'Weight', slot: 2, dotsOnly: true },
-      { key: 'average', label: '7-day average', slot: 1 },
+      { key: 'average', label: '7-day average', slot: 1, lineOnly: true },
     ],
     rows: points.map((p) => ({ day: dayNumber(p.date), kg: p.kg, average: p.average })),
   };

@@ -194,6 +194,11 @@ ion-item ion-badge {
   outline: none;
 }
 
+/* Recharts colors legend text like its series. Text stays readable in the text color. */
+.chart-card .recharts-legend-item-text {
+  color: var(--ion-text-color) !important;
+}
+
 .chart-tooltip {
   padding: 6px 10px;
   font-size: 13px;

@@ -46,7 +46,7 @@ describe('history calendar', () => {
     await logWorkout(ctx, 'Second');
     const { user } = renderApp('/tabs/history', ctx);
 
-    await user.click(await screen.findByRole('button', { name: /Monday 2 November/ }));
+    await user.click(await screen.findByRole('button', { name: 'Monday 2 November, First' }));
     await waitFor(() => expect(screen.queryByRole('heading', { name: 'Second' })).toBeNull());
     expect(screen.getByRole('heading', { name: 'First' })).toBeInTheDocument();
 

@@ -17,12 +17,15 @@ import type { Exercise } from '../../domain/schemas';
 import { SpecChart } from './SpecChart';
 
 const LOG_PAGE = 20;
+/** Most reps gives one record per load, which gets long. The biggest records come first. */
+const FIRST_RECORDS = 6;
 
 /** Records, charts and the full set history of one exercise, loaded with Recharts. */
 export default function ExerciseStats({ exercise }: { exercise: Exercise }) {
   const stats = useLive((c) => loadExerciseStats(c, exercise.id), [exercise.id]);
   const settings = useLive(getSettings);
   const [shown, setShown] = useState(LOG_PAGE);
+  const [allRecords, setAllRecords] = useState(false);
   if (!stats || !settings) return null;
 
   const log = sessionLog(stats.sessions, stats.sets);
@@ -38,12 +41,17 @@ export default function ExerciseStats({ exercise }: { exercise: Exercise }) {
           <IonListHeader>
             <IonLabel>Records</IonLabel>
           </IonListHeader>
-          {records.map((record) => (
+          {(allRecords ? records : records.slice(0, FIRST_RECORDS)).map((record) => (
             <IonItem key={`${record.kind}-${record.key}`}>
               <IonLabel className="ion-text-wrap">{capitalize(formatRecord(record))}</IonLabel>
               <IonNote slot="end">{formatShortDate(record.date)}</IonNote>
             </IonItem>
           ))}
+          {!allRecords && records.length > FIRST_RECORDS && (
+            <IonItem button detail={false} onClick={() => setAllRecords(true)}>
+              <IonLabel color="primary">{`Show all ${records.length} records`}</IonLabel>
+            </IonItem>
+          )}
         </IonList>
       )}
       {charts.map((chart) => (

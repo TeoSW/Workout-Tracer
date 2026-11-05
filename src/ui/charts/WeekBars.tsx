@@ -1,6 +1,9 @@
 import { Bar, BarChart, CartesianGrid, Legend, XAxis, YAxis } from 'recharts';
 import { AXIS_TICK, GRID_STROKE, MUTED_FILL, chartColor } from './tokens';
 
+/** Past this many weeks, every other label is shown so they stay evenly spaced. */
+const LABELLED_WEEKS = 4;
+
 export type WeekBarRow = { label: string; planned: number | null; finished: number };
 
 /** Finished sessions per week, beside the plan when there is one. */
@@ -15,9 +18,15 @@ export function WeekBars({ rows }: { rows: readonly WeekBarRow[] }) {
       margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
     >
       <CartesianGrid vertical={false} stroke={GRID_STROKE} />
-      <XAxis dataKey="label" tick={AXIS_TICK} tickLine={false} stroke={GRID_STROKE} />
+      <XAxis
+        dataKey="label"
+        interval={rows.length > LABELLED_WEEKS ? 1 : 0}
+        tick={AXIS_TICK}
+        tickLine={false}
+        stroke={GRID_STROKE}
+      />
       <YAxis width={24} allowDecimals={false} tick={AXIS_TICK} tickLine={false} axisLine={false} />
-      {hasPlan && <Legend wrapperStyle={{ fontSize: 13 }} />}
+      {hasPlan && <Legend itemSorter={null} wrapperStyle={{ fontSize: 13 }} />}
       {hasPlan && (
         <Bar
           name="Planned"

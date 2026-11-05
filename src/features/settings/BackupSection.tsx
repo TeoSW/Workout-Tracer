@@ -28,6 +28,7 @@ export function BackupSection({ settings }: { settings: AppSettings }) {
   const undo = useLive(hasUndoSnapshot);
   const fileInput = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<BackupFile | null>(null);
+  const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
 
   const say = (text: string, error = false) => setMessage({ text, error });
@@ -69,8 +70,15 @@ export function BackupSection({ settings }: { settings: AppSettings }) {
 
   const replaceAll = () =>
     run(async () => {
-      if (!pending) return;
-      await restoreBackup(ctx, pending);
+      if (!pending || restoring) return;
+      // A long history can take a while, and a second tap must not start it again.
+      setRestoring(true);
+      say('Restoring. Keep the app open until it finishes.');
+      try {
+        await restoreBackup(ctx, pending);
+      } finally {
+        setRestoring(false);
+      }
       setPending(null);
       say('Backup restored.');
     });
@@ -108,7 +116,7 @@ export function BackupSection({ settings }: { settings: AppSettings }) {
                 {`${counts.exercises} exercises, ${counts.sessions} sessions, ${counts.bodyweight} bodyweight entries`}
               </IonLabel>
             </IonItem>
-            <IonItem button detail={false} onClick={() => void replaceAll()}>
+            <IonItem button detail={false} disabled={restoring} onClick={() => void replaceAll()}>
               <IonLabel color="danger">Replace all data</IonLabel>
             </IonItem>
           </>

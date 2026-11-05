@@ -3,6 +3,7 @@ import { parseDateStr, type DateStr } from './dates';
 import { formatEffort } from './effort';
 import type { PrFlag } from './prs';
 import type { Band, EffortMode, Exercise, ExerciseBlock, LoggedSet, SetTarget } from './schemas';
+import { round2 } from './sets';
 
 const range = (min: number, max: number | undefined) =>
   max === undefined || max === min ? `${min}` : `${min}-${max}`;
@@ -108,13 +109,13 @@ export type ChartUnit = 'kg' | 'seconds' | 'reps' | 'band' | 'share' | 'count';
 export function formatChartValue(value: number, unit: ChartUnit, suffix = ''): string {
   switch (unit) {
     case 'kg':
-      return `${formatKg(value)}${suffix}`;
+      return `${formatKg(round2(value))}${suffix}`;
     case 'seconds':
       return `${value}s`;
     case 'reps':
       return `${value} reps`;
     case 'band':
-      return value === 0 ? 'No band' : formatKg(value);
+      return value === 0 ? 'No band' : formatKg(round2(value));
     case 'share':
       return `${Math.round(value * 100)}%`;
     case 'count':

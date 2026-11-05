@@ -246,6 +246,7 @@ describe('charts by tracking type', () => {
 
   it('formats values for tooltips', () => {
     expect(formatChartValue(12.5, 'kg', '/side')).toBe('12.5kg/side');
+    expect(formatChartValue(81.35714285714286, 'kg')).toBe('81.36kg');
     expect(formatChartValue(8, 'seconds')).toBe('8s');
     expect(formatChartValue(6, 'reps')).toBe('6 reps');
     expect(formatChartValue(0, 'band')).toBe('No band');

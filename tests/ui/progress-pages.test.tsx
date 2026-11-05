@@ -169,6 +169,16 @@ describe('exercise pages', () => {
     expect(screen.getByText(/^Set 1 · 20kg x 5/)).toBeInTheDocument();
   });
 
+  it('shows the first records, then all of them', async () => {
+    const ctx = testContext();
+    for (let kg = 20; kg <= 90; kg += 10) await logWorkout(ctx, 'Squats', 'hypertrophy', kg);
+    const { user } = renderApp('/tabs/programs/library/squat', ctx);
+
+    await user.click(await screen.findByText('Show all 10 records'));
+    expect(await screen.findByText('5 reps at 90kg')).toBeInTheDocument();
+    expect(screen.queryByText('Show all 10 records')).toBeNull();
+  });
+
   it('pages through a long history', async () => {
     const ctx = testContext();
     for (let i = 0; i < 21; i += 1) {
