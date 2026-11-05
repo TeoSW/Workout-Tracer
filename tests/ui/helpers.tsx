@@ -1,6 +1,15 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { App } from '../../src/app/App';
+import { seedIfNeeded } from '../../src/data/seed';
+import {
+  addExercise,
+  finishSession,
+  startEmptySession,
+  updateSession,
+  updateSet,
+} from '../../src/data/sessions';
+import type { DayType } from '../../src/domain/schemas';
 import { testContext } from '../unit/data/helpers';
 
 /** Renders the whole app on a fresh database at a route. */
@@ -46,4 +55,24 @@ export async function buttonLabelled(label: string): Promise<Element> {
     if (!found) throw new Error(`No button labelled ${label}`);
     return found;
   });
+}
+
+/** Finishes an hour long workout today with one set of squats. */
+export async function logWorkout(
+  ctx: ReturnType<typeof testContext>,
+  name: string,
+  dayType: DayType = 'hypertrophy',
+  kg = 20,
+) {
+  await seedIfNeeded(ctx);
+  const { session } = await startEmptySession(ctx);
+  const entry = await addExercise(ctx, session.id, 'squat');
+  const set = entry.sets[0];
+  if (!set) throw new Error('No set');
+  await updateSet(ctx, set.id, { kg, reps: 5, rir: 0, done: true });
+  await ctx.db.sessions.update(session.id, { dayType });
+  await updateSession(ctx, session.id, { name });
+  ctx.clock.advance(3_600_000);
+  await finishSession(ctx, session.id);
+  return { sessionId: session.id, setId: set.id };
 }

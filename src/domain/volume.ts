@@ -55,3 +55,11 @@ export function averageWeeklySetsPerMuscle(input: {
   for (const m of MUSCLES) total[m] /= weeks;
   return total;
 }
+
+/** Muscles whose sets fall inside the reference band. */
+export function musclesInBand(
+  volume: MuscleVolume,
+  reference: { min: number; max: number },
+): number {
+  return MUSCLES.filter((m) => volume[m] >= reference.min && volume[m] <= reference.max).length;
+}

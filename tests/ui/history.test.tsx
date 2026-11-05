@@ -1,38 +1,11 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { getRestTimer } from '../../src/data/rest-timer';
-import { seedIfNeeded } from '../../src/data/seed';
-import {
-  addExercise,
-  addSet,
-  finishSession,
-  getSessionView,
-  sessionPrs,
-  startEmptySession,
-  updateSession,
-  updateSet,
-} from '../../src/data/sessions';
-import type { DayType } from '../../src/domain/schemas';
+import { addSet, getSessionView, sessionPrs, startEmptySession } from '../../src/data/sessions';
 import { testContext } from '../unit/data/helpers';
-import { buttonLabelled, confirmAlert, ionEvent, renderApp } from './helpers';
+import { buttonLabelled, confirmAlert, ionEvent, logWorkout, renderApp } from './helpers';
 
 const DAY = 86_400_000;
-type Ctx = ReturnType<typeof testContext>;
-
-/** Finishes a workout today with one set of squats. */
-async function logWorkout(ctx: Ctx, name: string, dayType: DayType = 'hypertrophy', kg = 20) {
-  await seedIfNeeded(ctx);
-  const { session } = await startEmptySession(ctx);
-  const entry = await addExercise(ctx, session.id, 'squat');
-  const set = entry.sets[0];
-  if (!set) throw new Error('No set');
-  await updateSet(ctx, set.id, { kg, reps: 5, rir: 0, done: true });
-  await ctx.db.sessions.update(session.id, { dayType });
-  await updateSession(ctx, session.id, { name });
-  ctx.clock.advance(3_600_000);
-  await finishSession(ctx, session.id);
-  return { sessionId: session.id, setId: set.id };
-}
 
 describe('history calendar', () => {
   it('marks days by day type and names them for screen readers', async () => {
