@@ -27,7 +27,7 @@ test('flow 1: a mocked Tuesday is a rest day, and Wednesday is Light', async ({ 
   await expect(visibleText(page, 'Next: Light (front lever first), 2026-11-04')).toBeVisible();
 });
 
-test('flow 2: log a full Heavy day with rest, finish and see the summary', async ({ page }) => {
+test('flow 2: log a full Heavy day with rest, finish, and find it in History', async ({ page }) => {
   test.setTimeout(180_000); // 18 sets, each with a sheet opening and closing
   await openApp(page);
   await startProgramC(page);
@@ -69,6 +69,17 @@ test('flow 2: log a full Heavy day with rest, finish and see the summary', async
   await visibleText(page, 'Close').click();
   await expect(visibleText(page, 'Done: Heavy (planche first)')).toBeVisible();
   await expect(visibleText(page, 'Next: Light (front lever first), 2026-11-04')).toBeVisible();
+
+  await openTab(page, 'History');
+  const day = page.getByRole('button', { name: 'Monday 2 November, Heavy (planche first)' });
+  await expect(day.locator('[data-day-type="skill_heavy"]')).toBeVisible();
+  await page
+    .locator('ion-item', { hasText: 'Heavy (planche first)' })
+    .filter({ visible: true })
+    .click();
+  await expect(visibleText(page, 'Monday 2 November')).toBeVisible();
+  await expect(card(page, 'Weighted Dips')).toContainText('Set 1 · +25kg x 8');
+  await expect(card(page, 'Working sets')).toContainText('Working sets18');
 });
 
 test('flow 3: reload mid-workout, Resume restores the sets and the rest', async ({ page }) => {
