@@ -57,18 +57,16 @@ function TestForm(props: {
   const { error, guard } = useGuard();
   const [results, setResults] = useState(() => initialResults(view, exercises));
   const [picks, setPicks] = useState<Record<string, number>>({});
-  const slot = slots[0];
   const change = (index: number, patch: Partial<TestResultInput>) =>
     setResults((all) => all.map((r, i) => (i === index ? { ...r, ...patch } : r)));
 
   function save() {
-    const optionIndex = slot ? picks[slot.id] : undefined;
+    const choices = slots.flatMap((slot) => {
+      const optionIndex = picks[slot.id];
+      return optionIndex === undefined ? [] : [{ slotId: slot.id, optionIndex }];
+    });
     void guard(async () => {
-      await saveTestResults(ctx, {
-        sessionId: view.session.id,
-        results,
-        ...(slot && optionIndex !== undefined ? { choice: { slotId: slot.id, optionIndex } } : {}),
-      });
+      await saveTestResults(ctx, { sessionId: view.session.id, results, choices });
       router.push(TODAY, 'back', 'replace');
     });
   }
@@ -132,8 +130,8 @@ function TestForm(props: {
         );
       })}
 
-      {slot && (
-        <IonList inset>
+      {slots.map((slot) => (
+        <IonList inset key={slot.id}>
           <IonListHeader>
             <IonLabel>Next cycle: {slot.label}</IonLabel>
           </IonListHeader>
@@ -154,7 +152,7 @@ function TestForm(props: {
             </IonItem>
           ))}
         </IonList>
-      )}
+      ))}
 
       <ErrorNote error={error} />
       <div className="ion-padding">

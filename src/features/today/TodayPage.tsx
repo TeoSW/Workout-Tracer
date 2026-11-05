@@ -9,7 +9,7 @@ import {
   IonNote,
 } from '@ionic/react';
 import { useState } from 'react';
-import { useData, useLive } from '../../app/DataProvider';
+import { useData, useLive, useToday } from '../../app/DataProvider';
 import { setBodyweight } from '../../data/bodyweight';
 import { getTodayOverview, type TodayOverview } from '../../data/today';
 import { isDeloadDay } from '../../domain/deload';
@@ -144,8 +144,7 @@ function Bodyweight({ overview }: { overview: TodayOverview }) {
 }
 
 export function TodayPage() {
-  const ctx = useData();
-  const today = ctx.clock.today();
+  const today = useToday();
   const overview = useLive(getTodayOverview, [today]);
   const { startEmpty, resume } = useStartWorkout();
   const { error, guard } = useGuard();

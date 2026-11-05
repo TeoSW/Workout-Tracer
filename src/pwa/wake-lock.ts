@@ -6,6 +6,7 @@ export function isWakeLockSupported(): boolean {
 }
 
 async function request(): Promise<void> {
+  if (sentinel && !sentinel.released) return;
   try {
     sentinel = await navigator.wakeLock.request('screen');
   } catch {

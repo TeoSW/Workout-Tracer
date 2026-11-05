@@ -220,3 +220,16 @@ describe('setCurrentWeek in a later cycle', () => {
     expect(cyclePosition(moved, today)).toMatchObject({ cycleNumber: 1, cycleWeek: 2 });
   });
 });
+
+describe('rotation pointer with sessions outside the sequence', () => {
+  it('ignores sessions with no rotation index', () => {
+    const { program, dayName } = activeProgram(PROGRAM_A);
+    const sessions = [
+      makeSession({ date: D, programId: program.id, rotationIndex: 0, finishedAt: 100 }),
+      makeSession({ date: D, programId: program.id, rotationIndex: null, finishedAt: 200 }),
+    ];
+    const plan = todayPlan({ program, sessions, today: addDays(D, 2) });
+    if (plan.today.status !== 'planned') throw new Error('expected a planned day');
+    expect(dayName(plan.today.day.dayTemplateId)).toBe('Lower A');
+  });
+});

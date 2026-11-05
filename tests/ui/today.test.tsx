@@ -130,3 +130,14 @@ describe('Today', () => {
     expect(await screen.findByText('Saved: 40.5kg')).toBeInTheDocument();
   });
 });
+
+describe('Today across midnight', () => {
+  it('moves on to the new day when the app comes back', async () => {
+    const { ctx } = await withProgram(PROGRAM_C, 0);
+    renderApp('/tabs/today', ctx);
+    expect(await screen.findByText('Heavy (planche first)')).toBeInTheDocument();
+    ctx.clock.advance(DAY);
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(await screen.findByText('Rest day')).toBeInTheDocument();
+  });
+});

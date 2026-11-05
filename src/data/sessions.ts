@@ -1,7 +1,7 @@
 import { resolveChoiceBlock, saveChoice } from '../domain/choice';
 import { resolvePlan } from '../domain/plan';
 import { detectPrs, type PrFlag, type SessionSets } from '../domain/prs';
-import { latestFinishedSession, nextRotationIndex, rotationIndexForPick } from '../domain/schedule';
+import { lastRotationIndex, nextRotationIndex, rotationIndexForPick } from '../domain/schedule';
 import {
   LoggedSetSchema,
   SessionExerciseSchema,
@@ -109,14 +109,12 @@ export async function startPlannedSession(
             throw new Error('This day is not at that place in the rotation.');
           }
           rotationIndex = input.rotationIndex;
-        } else {
-          const finished = await db.sessions.where('programId').equals(program.id).toArray();
-          const pointer = nextRotationIndex(
-            program,
-            latestFinishedSession(finished, program.id)?.rotationIndex ?? null,
-          );
+        } else if (program.schedule.sequence.includes(dayTemplate.id)) {
+          const sessions = await db.sessions.where('programId').equals(program.id).toArray();
+          const pointer = nextRotationIndex(program, lastRotationIndex(sessions, program.id));
           rotationIndex = rotationIndexForPick(program, pointer, dayTemplate.id);
         }
+        // A day outside the sequence has no index, and the rotation carries on where it was.
       }
 
       const session = SessionSchema.parse(
@@ -310,6 +308,10 @@ export async function swapExercise(
     async () => {
       const se = await requireSessionExercise(ctx, sessionExerciseId);
       if (!(await ctx.db.exercises.get(exerciseId))) throw new Error(`No exercise ${exerciseId}`);
+      const sets = await ctx.db.sets.where('sessionExerciseId').equals(sessionExerciseId).toArray();
+      if (sets.some((s) => s.done)) {
+        throw new Error('Logged sets stay on their exercise. Add the other exercise instead.');
+      }
       const original = se.swappedFromExerciseId ?? se.exerciseId;
       await ctx.db.sessionExercises.put({
         ...se,

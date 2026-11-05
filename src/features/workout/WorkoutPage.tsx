@@ -18,7 +18,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useData, useLive } from '../../app/DataProvider';
 import { loadBandMap } from '../../data/bands';
 import { loadExerciseMap } from '../../data/exercises';
-import { startRestTimer, skipRestTimer } from '../../data/rest-timer';
+import { startRestTimer } from '../../data/rest-timer';
 import {
   addSet,
   deleteSession,
@@ -163,6 +163,7 @@ export function WorkoutPage() {
 
   useEffect(() => {
     if (sessionId && keepOn) void keepAwake();
+    if (keepOn === false) void allowSleep();
   }, [sessionId, keepOn]);
 
   if (view === undefined || !settings || !exercises || !bands) {
@@ -249,14 +250,15 @@ export function WorkoutPage() {
     addSet: (entry) => void guard(() => addSet(ctx, entry.id)),
     openInfo: setInfo,
     openMenu: (entry) => {
-      const hasSwap =
-        (exercises.get(entry.exerciseId)?.alternativeIds.length ?? 0) > 0 ||
-        entry.swappedFromExerciseId !== null;
+      const canSwap =
+        !entry.sets.some((s) => s.done) &&
+        ((exercises.get(entry.exerciseId)?.alternativeIds.length ?? 0) > 0 ||
+          entry.swappedFromExerciseId !== null);
       void presentSheet({
         header: exercises.get(entry.exerciseId)?.name ?? '',
         buttons: [
           { text: 'Add set', handler: () => void guard(() => addSet(ctx, entry.id)) },
-          ...(hasSwap ? [{ text: 'Swap for this workout', handler: () => chooseSwap(entry) }] : []),
+          ...(canSwap ? [{ text: 'Swap for this workout', handler: () => chooseSwap(entry) }] : []),
           { text: 'Note', handler: () => editNote(entry) },
           { text: 'Move up', handler: () => void guard(() => moveExercise(ctx, entry.id, 'up')) },
           {
@@ -293,7 +295,6 @@ export function WorkoutPage() {
     if (!yes) return;
     await guard(async () => {
       await deleteSession(ctx, session.id);
-      await skipRestTimer(ctx);
       await allowSleep();
       router.push(TODAY, 'back', 'replace');
     });

@@ -320,14 +320,23 @@ export function SetSheet(props: {
   onClose: () => void;
 }) {
   const { open, onClose } = props;
+  // Keeps the set on screen while the sheet slides away after Done.
+  const [shown, setShown] = useState<SheetSet | null>(null);
+  useEffect(() => {
+    if (open) setShown(open);
+  }, [open]);
+  const body = open ?? shown;
   return (
     <IonModal
       isOpen={open !== null}
       breakpoints={[0, 0.75, 1]}
       initialBreakpoint={0.75}
-      onDidDismiss={onClose}
+      onDidDismiss={() => {
+        setShown(null);
+        onClose();
+      }}
     >
-      {open && <SheetBody key={open.set.id} {...props} open={open} />}
+      {body && <SheetBody key={body.set.id} {...props} open={body} />}
     </IonModal>
   );
 }

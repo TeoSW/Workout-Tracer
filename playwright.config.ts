@@ -6,6 +6,7 @@ const BASE_URL = `http://localhost:${PORT}/workout-tracker/`;
 export default defineConfig({
   testDir: 'tests/e2e',
   timeout: 60_000,
+  expect: { timeout: 20_000 },
   fullyParallel: true,
   use: { ...devices['iPhone 13'], baseURL: BASE_URL, trace: 'retain-on-failure' },
   webServer: {

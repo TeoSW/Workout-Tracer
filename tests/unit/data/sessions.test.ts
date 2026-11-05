@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   activateProgram,
+  addDayTemplate,
   createProgramFromTemplate,
   deleteDayTemplate,
   getProgram,
@@ -389,5 +390,40 @@ describe('last time and summary reads', () => {
     expect((await sessionPrs(ctx, second)).map((p) => p.kind)).toEqual(['best_e1rm', 'most_reps']);
     await log(12);
     expect((await sessionPrs(ctx, second)).map((p) => p.kind)).toEqual(['best_e1rm', 'most_reps']);
+  });
+});
+
+describe('swapping and rotation edge cases', () => {
+  it('refuses to swap an exercise with logged sets', async () => {
+    const { ctx } = await setup();
+    const { session } = await startEmptySession(ctx);
+    const curl = await addExercise(ctx, session.id, 'bicep-curl');
+    await updateSet(ctx, curl.sets[0]?.id ?? '', { kg: 5, reps: 10, done: true });
+    await expect(swapExercise(ctx, curl.id, 'hammer-curl')).rejects.toThrow(
+      'Logged sets stay on their exercise. Add the other exercise instead.',
+    );
+    expect((await getSessionView(ctx, session.id))?.exercises[0]?.exerciseId).toBe('bicep-curl');
+  });
+
+  it('starts a day outside the rotation without moving the rotation', async () => {
+    const { ctx, program, day } = await setup(PROGRAM_A);
+    const first = await startPlannedSession(ctx, {
+      programId: program.id,
+      dayTemplateId: day('Upper A').id,
+    });
+    await finishSession(ctx, first.session.id);
+
+    const extra = await addDayTemplate(ctx, program.id, { name: 'Arms', dayType: 'hypertrophy' });
+    ctx.clock.advance(1000);
+    const arms = await startPlannedSession(ctx, { programId: program.id, dayTemplateId: extra.id });
+    expect(arms.session.rotationIndex).toBeNull();
+    await finishSession(ctx, arms.session.id);
+
+    ctx.clock.advance(1000);
+    const next = await startPlannedSession(ctx, {
+      programId: program.id,
+      dayTemplateId: day('Lower A').id,
+    });
+    expect(next.session.rotationIndex).toBe(1);
   });
 });

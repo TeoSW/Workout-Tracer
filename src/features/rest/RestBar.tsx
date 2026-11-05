@@ -6,6 +6,8 @@ import { getSettings } from '../../data/settings';
 import { restRemainingMs } from '../../domain/rest';
 import { playRestTone } from '../../pwa/audio';
 
+const TONE_WINDOW_MS = 2000;
+
 function formatRemaining(ms: number): string {
   const seconds = Math.ceil(ms / 1000);
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
@@ -24,8 +26,11 @@ export function RestBar() {
   const announced = useRef<number | null>(null);
   const sound = settings?.sound ?? false;
 
+  const remaining = timer ? restRemainingMs(timer, now) : null;
+  const over = remaining === 0;
+
   useEffect(() => {
-    if (!timer) return undefined;
+    if (!timer || over) return undefined;
     setNow(ctx.clock.now());
     const tick = setInterval(() => setNow(ctx.clock.now()), 250);
     const onVisible = () => setNow(ctx.clock.now());
@@ -34,16 +39,15 @@ export function RestBar() {
       clearInterval(tick);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [ctx, timer]);
-
-  const remaining = timer ? restRemainingMs(timer, now) : null;
-  const over = remaining === 0;
+  }, [ctx, timer, over]);
 
   useEffect(() => {
     if (!over || !timer || announced.current === timer.endsAt) return;
     announced.current = timer.endsAt;
-    if (sound && document.visibilityState === 'visible') playRestTone();
-  }, [over, timer, sound]);
+    // Coming back long after rest ended shows Rest over, without a sound.
+    const justEnded = ctx.clock.now() - timer.endsAt < TONE_WINDOW_MS;
+    if (sound && justEnded && document.visibilityState === 'visible') playRestTone();
+  }, [ctx, over, timer, sound]);
 
   if (!timer || remaining === null) return null;
   return (

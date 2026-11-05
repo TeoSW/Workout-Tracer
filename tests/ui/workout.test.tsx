@@ -379,3 +379,51 @@ describe('finish', () => {
     ]);
   });
 });
+
+describe('review fixes', () => {
+  it('stays silent when the app returns long after rest ended', async () => {
+    const { playRestTone } = await import('../../src/pwa/audio');
+    vi.mocked(playRestTone).mockClear();
+    const { ctx, session } = await empty('squat');
+    const { startRestTimer } = await import('../../src/data/rest-timer');
+    await startRestTimer(ctx, session.id, 90);
+    renderApp('/tabs/today', ctx);
+    await screen.findByText('1:30');
+    ctx.clock.advance(600_000);
+    expect(await screen.findByText('Rest over')).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 300));
+    expect(playRestTone).not.toHaveBeenCalled();
+  });
+
+  it('saves picks for every choice slot in the test flow', async () => {
+    const { ctx, program, view, day } = await setup('Test');
+    const extra = {
+      ...day,
+      blocks: [
+        ...day.blocks,
+        {
+          kind: 'choice' as const,
+          id: 'second',
+          order: 9,
+          setsMin: 3,
+          target: {},
+          warmupSets: 0,
+          choiceSlot: {
+            id: 'second-slot',
+            label: 'Second slot',
+            options: [{ exerciseId: 'plank', setsMin: 3, target: {}, pickWhen: 'Always.' }],
+          },
+        },
+      ],
+    };
+    await ctx.db.dayTemplates.put(extra);
+    await finishSession(ctx, view?.session.id ?? '');
+    const { user } = renderApp(`/tabs/today/test/${view?.session.id}`, ctx);
+    await user.click(await screen.findByText('Plank'));
+    await user.click(await screen.findByText('Hollow Body Hold'));
+    await user.click(screen.getByText('Save results'));
+    await waitFor(async () =>
+      expect((await getProgram(ctx, program.id))?.program.choiceSelections).toHaveLength(2),
+    );
+  });
+});

@@ -47,12 +47,24 @@ describe('wake lock', () => {
   it('requests again when the page comes back, but only while wanted', async () => {
     const request = stubWakeLock();
     await keepAwake();
+    const sentinel = await request.mock.results[0]?.value;
+    sentinel.released = true; // iOS drops the lock when the app is hidden
     document.dispatchEvent(new Event('visibilitychange'));
     await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
     await allowSleep();
     document.dispatchEvent(new Event('visibilitychange'));
     await new Promise((r) => setTimeout(r, 10));
     expect(request).toHaveBeenCalledTimes(2);
+  });
+
+  it('holds one lock when asked twice, so finishing releases it', async () => {
+    const request = stubWakeLock();
+    await keepAwake();
+    await keepAwake();
+    expect(request).toHaveBeenCalledOnce();
+    const sentinel = await request.mock.results[0]?.value;
+    await allowSleep();
+    expect(sentinel.release).toHaveBeenCalledOnce();
   });
 
   it('survives a refused request', async () => {
