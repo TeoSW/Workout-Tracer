@@ -2,6 +2,8 @@ import { IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs } 
 import { barbell, barChart, calendar, settings, today } from 'ionicons/icons';
 import { Navigate, Route } from 'react-router-dom';
 import { HistoryPage } from '../features/history/HistoryPage';
+import { SessionEditPage } from '../features/history/SessionEditPage';
+import { SessionPage } from '../features/history/SessionPage';
 import { ExerciseDetailPage } from '../features/library/ExerciseDetailPage';
 import { ExerciseEditPage, ExerciseNewPage } from '../features/library/ExerciseFormPage';
 import { LibraryPage } from '../features/library/LibraryPage';
@@ -13,7 +15,10 @@ import { NewProgramPage } from '../features/programs/NewProgramPage';
 import { ProgramEditorPage } from '../features/programs/ProgramEditorPage';
 import { ProgramsPage } from '../features/programs/ProgramsPage';
 import { ShareProgramPage } from '../features/programs/ShareProgramPage';
+import { BodyweightPage } from '../features/progress/BodyweightPage';
+import { EXERCISES, ExercisesPage } from '../features/progress/ExercisesPage';
 import { ProgressPage } from '../features/progress/ProgressPage';
+import { SkillsPage } from '../features/progress/SkillsPage';
 import { BandsPage } from '../features/settings/BandsPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { PickDayPage } from '../features/today/PickDayPage';
@@ -42,7 +47,16 @@ export function Tabs() {
         <Route path="today/summary/:id" element={<SummaryPage />} />
         <Route path="today/test/:id" element={<TestFlowPage />} />
         <Route path="today" element={<TodayPage />} />
+        <Route path="history/:id/edit" element={<SessionEditPage />} />
+        <Route path="history/:id" element={<SessionPage />} />
         <Route path="history" element={<HistoryPage />} />
+        <Route path="progress/bodyweight" element={<BodyweightPage />} />
+        <Route path="progress/skills" element={<SkillsPage />} />
+        <Route
+          path="progress/exercises/:exerciseId"
+          element={<ExerciseDetailPage base={EXERCISES} />}
+        />
+        <Route path="progress/exercises" element={<ExercisesPage />} />
         <Route path="progress" element={<ProgressPage />} />
         <Route path="programs/library/new" element={<ExerciseNewPage />} />
         <Route path="programs/library/:exerciseId/edit" element={<ExerciseEditPage />} />

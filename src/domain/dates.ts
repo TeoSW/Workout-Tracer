@@ -57,3 +57,14 @@ export function weekdayOf(date: DateStr): Weekday {
   if (!weekday) throw new Error(`No weekday for ${date}`);
   return weekday;
 }
+
+const DAY_ZERO = '2000-01-01';
+
+/** A date as a plain day count, for charts that place points on a real time axis. */
+export function dayNumber(date: DateStr): number {
+  return daysBetween(DAY_ZERO, date);
+}
+
+export function dateOfDayNumber(day: number): DateStr {
+  return addDays(DAY_ZERO, day);
+}

@@ -8,9 +8,17 @@ import {
   parseDateStr,
   toDateStr,
   weekdayOf,
+  dateOfDayNumber,
+  dayNumber,
 } from '../../../src/domain/dates';
 
 describe('dates', () => {
+  it('turns dates into day numbers and back, across a DST change', () => {
+    expect(dayNumber('2000-01-01')).toBe(0);
+    expect(dayNumber('2026-10-26') - dayNumber('2026-10-24')).toBe(2);
+    expect(dateOfDayNumber(dayNumber('2026-10-25'))).toBe('2026-10-25');
+  });
+
   it('validates yyyy-mm-dd strings', () => {
     expect(isDateStr('2026-10-30')).toBe(true);
     expect(isDateStr('2026-02-30')).toBe(false);

@@ -322,6 +322,7 @@ describe('finish', () => {
       done: true,
     });
     await finishSession(ctx, session.id);
+    ctx.clock.advance(60_000);
 
     const next = await startEmptySession(ctx);
     const squat = await addExercise(ctx, next.session.id, 'squat');

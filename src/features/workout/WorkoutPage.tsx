@@ -11,7 +11,6 @@ import {
   IonTitle,
   IonToolbar,
   useIonActionSheet,
-  useIonAlert,
   useIonRouter,
 } from '@ionic/react';
 import { useCallback, useEffect, useState } from 'react';
@@ -28,11 +27,7 @@ import {
   moveExercise,
   pickChoice,
   removeExercise,
-  removeSet,
-  setExerciseNote,
   swapExercise,
-  toggleWarmup,
-  updateSet,
   type SessionExerciseView,
 } from '../../data/sessions';
 import { getSettings, setSetting } from '../../data/settings';
@@ -40,7 +35,7 @@ import { formatDuration } from '../../domain/format';
 import { logItems } from '../../domain/log-layout';
 import { restAfterSet } from '../../domain/rest-plan';
 import type { ChoiceBlock, Exercise, LoggedSet } from '../../domain/schemas';
-import { draftFor, draftFromSet, draftToPatch, type SetDraft } from '../../domain/set-draft';
+import type { SetDraft } from '../../domain/set-draft';
 import { unlockAudio } from '../../pwa/audio';
 import { allowSleep, isWakeLockSupported, keepAwake } from '../../pwa/wake-lock';
 import { PageShell } from '../../ui/PageShell';
@@ -48,6 +43,7 @@ import { useConfirm } from '../../ui/useConfirm';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
 import { ExerciseCard, type CardActions } from './ExerciseCard';
 import { SetSheet, type SheetSet } from './SetSheet';
+import { useSetEditor } from './useSetEditor';
 
 const TODAY = '/tabs/today';
 
@@ -137,7 +133,6 @@ export function WorkoutPage() {
   const confirm = useConfirm();
   const { error, guard } = useGuard();
   const [presentSheet] = useIonActionSheet();
-  const [presentAlert] = useIonAlert();
   const view = useLive(getActiveSession);
   const settings = useLive(getSettings);
   const exercises = useLive(loadExerciseMap);
@@ -154,7 +149,7 @@ export function WorkoutPage() {
         : Promise.resolve(new Map<string, LoggedSet[]>()),
     [exerciseKey, view?.session.id],
   );
-  const [openSet, setOpenSet] = useState<SheetSet | null>(null);
+  const editor = useSetEditor(exercises, guard);
   const [info, setInfo] = useState<SessionExerciseView | null>(null);
   const elapsed = useElapsed(view?.session.startedAt);
   const sessionId = view?.session.id;
@@ -195,9 +190,7 @@ export function WorkoutPage() {
 
   async function saveSet(open: SheetSet, draft: SetDraft) {
     unlockAudio();
-    setOpenSet(null);
-    await guard(async () => {
-      await updateSet(ctx, open.set.id, draftToPatch(draft, open.exercise));
+    await editor.saveSet(open, draft, async () => {
       // A set edited after it was logged does not start the timer again.
       if (!open.set.done) await startRestFor(open.set.sessionExerciseId);
     });
@@ -219,35 +212,12 @@ export function WorkoutPage() {
     });
   }
 
-  function editNote(entry: SessionExerciseView) {
-    void presentAlert({
-      header: 'Note',
-      inputs: [{ name: 'note', type: 'textarea', value: entry.note }],
-      buttons: [
-        { text: 'Cancel', role: 'cancel' },
-        {
-          text: 'Save',
-          handler: (values: { note: string }) =>
-            void guard(() => setExerciseNote(ctx, entry.id, values.note)),
-        },
-      ],
-    });
-  }
-
   const actions: CardActions = {
+    ...editor.setActions,
     openSet: (entry, set, last) => {
-      const exercise = exercises.get(entry.exerciseId);
-      if (!exercise) return;
       unlockAudio();
-      const draft = set.done
-        ? draftFromSet(set, exercise)
-        : draftFor({ exercise, target: set.target ?? {}, last });
-      setOpenSet({ set, exercise, draft, title: exercise.name });
+      editor.setActions.openSet(entry, set, last);
     },
-    toggleChecklist: (set, done) => void guard(() => updateSet(ctx, set.id, { done })),
-    deleteSet: (set) => void guard(() => removeSet(ctx, set.id)),
-    toggleWarmup: (set) => void guard(() => toggleWarmup(ctx, set.id)),
-    addSet: (entry) => void guard(() => addSet(ctx, entry.id)),
     openInfo: setInfo,
     openMenu: (entry) => {
       const canSwap =
@@ -259,7 +229,7 @@ export function WorkoutPage() {
         buttons: [
           { text: 'Add set', handler: () => void guard(() => addSet(ctx, entry.id)) },
           ...(canSwap ? [{ text: 'Swap for this workout', handler: () => chooseSwap(entry) }] : []),
-          { text: 'Note', handler: () => editNote(entry) },
+          { text: 'Note', handler: () => editor.editNote(entry) },
           { text: 'Move up', handler: () => void guard(() => moveExercise(ctx, entry.id, 'up')) },
           {
             text: 'Move down',
@@ -361,12 +331,12 @@ export function WorkoutPage() {
         </IonItem>
       </IonList>
       <SetSheet
-        open={openSet}
+        open={editor.openSet}
         bands={[...bands.values()]}
         effortMode={settings.effortMode}
         nowMs={nowMs}
         onDone={(open, draft) => void saveSet(open, draft)}
-        onClose={() => setOpenSet(null)}
+        onClose={editor.closeSet}
       />
       <InfoSheet
         entry={infoEntry ?? null}

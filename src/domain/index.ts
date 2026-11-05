@@ -1,6 +1,7 @@
 export * from './backup';
 export * from './base64url';
 export * from './bodyweight';
+export * from './calendar';
 export * from './choice';
 export * from './config';
 export * from './consistency';
@@ -11,6 +12,7 @@ export * from './e1rm';
 export * from './effort';
 export * from './errors';
 export * from './exercise-filter';
+export * from './exercise-series';
 export * from './format';
 export * from './import';
 export * from './last-time';

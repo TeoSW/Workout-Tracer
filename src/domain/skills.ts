@@ -5,7 +5,8 @@ import { countsForStats, finishedSessionsById } from './sets';
 
 type SeriesInput = { sessions: readonly Session[]; sets: readonly LoggedSet[]; exerciseId: string };
 
-function setsBySession(input: SeriesInput): { session: Session; sets: LoggedSet[] }[] {
+/** Done working sets of finished sessions, by session, oldest first. */
+export function setsBySession(input: SeriesInput): { session: Session; sets: LoggedSet[] }[] {
   const sessions = finishedSessionsById(input.sessions);
   const grouped = new Map<string, LoggedSet[]>();
   for (const set of input.sets) {

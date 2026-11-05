@@ -232,4 +232,11 @@ describe('rotation pointer with sessions outside the sequence', () => {
     if (plan.today.status !== 'planned') throw new Error('expected a planned day');
     expect(dayName(plan.today.day.dayTemplateId)).toBe('Lower A');
   });
+
+  it('reads the latest session by its start, so a longer duration changes nothing', () => {
+    const older = makeSession({ date: '2026-11-02', programId: 'p' });
+    const newer = makeSession({ date: '2026-11-04', programId: 'p' });
+    const longer = { ...older, finishedAt: (newer.finishedAt ?? 0) + 3_600_000 };
+    expect(latestFinishedSession([longer, newer], 'p')?.id).toBe(newer.id);
+  });
 });

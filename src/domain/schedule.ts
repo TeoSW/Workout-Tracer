@@ -45,8 +45,9 @@ export function setCurrentWeek(program: Program, today: DateStr, n: number): Dat
 export function latestFinishedSession(sessions: Session[], programId: string): Session | null {
   let latest: Session | null = null;
   for (const s of sessions) {
-    if (s.programId !== programId || s.status !== 'finished' || s.finishedAt === null) continue;
-    if (latest === null || s.finishedAt > (latest.finishedAt ?? 0)) latest = s;
+    if (s.programId !== programId || s.status !== 'finished') continue;
+    // Start time, since editing a workout's duration moves its finish time.
+    if (latest === null || s.startedAt > latest.startedAt) latest = s;
   }
   return latest;
 }

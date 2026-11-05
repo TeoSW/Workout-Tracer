@@ -2,12 +2,34 @@
 :root {
   --grouped-background: #f2f2f7;
   --grouped-card: #ffffff;
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-6: #008300;
+  --chart-7: #6250d6;
+  --chart-8: #e34948;
+  --chart-grid: #e5e5ea;
+  --chart-axis: #6c6c70;
+  --chart-muted: #c7c7cc;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --grouped-background: #000000;
     --grouped-card: #1c1c1e;
+    --chart-1: #3987e5;
+    --chart-2: #d95926;
+    --chart-3: #199e70;
+    --chart-4: #c98500;
+    --chart-5: #d55181;
+    --chart-6: #008300;
+    --chart-7: #9085e9;
+    --chart-8: #e66767;
+    --chart-grid: #38383a;
+    --chart-axis: #aeaeb2;
+    --chart-muted: #48484a;
   }
 }
 
@@ -154,4 +176,174 @@ ion-toolbar ion-back-button {
 
 ion-item ion-badge {
   margin-inline-start: 8px;
+}
+
+.chart-card {
+  padding: 8px 12px 12px;
+  background: var(--grouped-card);
+}
+
+.chart-readout {
+  margin: 0 4px 8px;
+  font-size: 15px;
+}
+
+/* A tapped chart must not show a focus box around the whole chart. */
+.chart-card .recharts-surface:focus,
+.chart-card .recharts-wrapper:focus {
+  outline: none;
+}
+
+/* Recharts colors legend text like its series. Text stays readable in the text color. */
+.chart-card .recharts-legend-item-text {
+  color: var(--ion-text-color) !important;
+}
+
+.chart-tooltip {
+  padding: 6px 10px;
+  font-size: 13px;
+  background: var(--grouped-background);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.chart-tooltip-label {
+  color: var(--ion-color-medium);
+}
+
+.chart-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-tooltip-key {
+  width: 12px;
+  height: 2px;
+}
+
+.calendar {
+  margin: 0 16px 8px;
+  padding: 4px 8px 8px;
+  background: var(--grouped-card);
+  border-radius: 10px;
+}
+
+.calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calendar-head ion-button {
+  min-width: 44px;
+  height: 44px;
+  margin: 0;
+}
+
+.calendar-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-weekday {
+  padding: 4px 0;
+  font-size: 12px;
+  text-align: center;
+  color: var(--ion-color-medium);
+}
+
+.calendar-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 44px;
+  padding: 0;
+  font-size: 16px;
+  color: var(--ion-text-color);
+  background: none;
+  border: 0;
+  border-radius: 8px;
+}
+
+.calendar-day:disabled {
+  color: var(--ion-color-medium);
+  opacity: 1;
+}
+
+.calendar-day[aria-current='date'] .calendar-number {
+  font-weight: 700;
+  color: var(--ion-color-primary);
+}
+
+.calendar-day[aria-pressed='true'] {
+  background: var(--grouped-background);
+}
+
+.calendar-bars {
+  display: flex;
+  gap: 2px;
+  height: 4px;
+}
+
+.calendar-bar {
+  width: 16px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.calendar-bars .calendar-bar:not(:only-child) {
+  width: 8px;
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0 24px 8px;
+  font-size: 13px;
+  list-style: none;
+}
+
+.calendar-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.day-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+ion-item > .day-dot {
+  margin-inline-end: 12px;
+}
+
+.week-label {
+  flex: 1;
+  text-align: center;
+}
+
+.chart-note {
+  margin: 4px 4px 0;
+  font-size: 13px;
+  color: var(--ion-color-medium);
+}
+
+.section-heading {
+  margin: 16px 32px 0;
+  font-size: 20px;
+  font-weight: 600;
 }

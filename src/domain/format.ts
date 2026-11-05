@@ -1,6 +1,9 @@
+import { format } from 'date-fns';
+import { parseDateStr, type DateStr } from './dates';
 import { formatEffort } from './effort';
 import type { PrFlag } from './prs';
 import type { Band, EffortMode, Exercise, ExerciseBlock, LoggedSet, SetTarget } from './schemas';
+import { round2 } from './sets';
 
 const range = (min: number, max: number | undefined) =>
   max === undefined || max === min ? `${min}` : `${min}-${max}`;
@@ -81,6 +84,44 @@ export function formatPlanLine(
 }
 
 export const formatCycleWeek = (week: number, total: number) => `Week ${week} of ${total}`;
+
+/** "3 Nov". */
+export const formatShortDate = (date: DateStr) => format(parseDateStr(date), 'd MMM');
+
+/** "3 Nov 2026", for lists that run across years. */
+export const formatDateWithYear = (date: DateStr) => format(parseDateStr(date), 'd MMM yyyy');
+
+/** "Tuesday 3 November". */
+export const formatLongDate = (date: DateStr) => format(parseDateStr(date), 'EEEE d MMMM');
+
+/** "November 2026". */
+export const formatMonth = (month: string) => format(parseDateStr(`${month}-01`), 'MMMM yyyy');
+
+/** What a calendar day says to a screen reader, where its color can't. */
+export function formatDayLabel(date: DateStr, sessions: readonly { name: string }[]): string {
+  return [formatLongDate(date), ...sessions.map((s) => s.name)].join(', ');
+}
+
+export const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+export type ChartUnit = 'kg' | 'seconds' | 'reps' | 'band' | 'share' | 'count';
+
+export function formatChartValue(value: number, unit: ChartUnit, suffix = ''): string {
+  switch (unit) {
+    case 'kg':
+      return `${formatKg(round2(value))}${suffix}`;
+    case 'seconds':
+      return `${value}s`;
+    case 'reps':
+      return `${value} reps`;
+    case 'band':
+      return value === 0 ? 'No band' : formatKg(round2(value));
+    case 'share':
+      return `${Math.round(value * 100)}%`;
+    case 'count':
+      return `${value}`;
+  }
+}
 
 /** "48m" or "1h 05m". */
 export function formatDuration(ms: number): string {
@@ -166,21 +207,26 @@ function repsKeyLabel(key: string): string {
   return key;
 }
 
-/** One line of the finish summary. */
-export function formatPr(pr: PrFlag, exercise: Exercise): string {
+/** A record in words, without the exercise. */
+export function formatRecord(pr: Pick<PrFlag, 'kind' | 'key' | 'value'>): string {
   const at = pr.key === '' ? '' : ` at ${pr.key}`;
   switch (pr.kind) {
     case 'heaviest_load':
-      return `${exercise.name}: heaviest load ${formatKg(pr.value)}`;
+      return `heaviest load ${formatKg(pr.value)}`;
     case 'best_e1rm':
-      return `${exercise.name}: best e1RM trend ${formatKg(pr.value)}`;
+      return `best e1RM trend ${formatKg(pr.value)}`;
     case 'most_reps':
-      return `${exercise.name}: ${pr.value} reps at ${repsKeyLabel(pr.key)}`;
+      return `${pr.value} reps at ${repsKeyLabel(pr.key)}`;
     case 'longest_hold':
-      return `${exercise.name}: longest clean hold ${pr.value}s${at}`;
+      return `longest clean hold ${pr.value}s${at}`;
     case 'lowest_band':
-      return `${exercise.name}: lowest band ${formatKg(pr.value)}${at}`;
+      return `lowest band ${formatKg(pr.value)}${at}`;
     case 'most_clean_attempts':
-      return `${exercise.name}: ${pr.value} clean attempts`;
+      return `${pr.value} clean attempts`;
   }
+}
+
+/** One line of the finish summary. */
+export function formatPr(pr: Pick<PrFlag, 'kind' | 'key' | 'value'>, exercise: Exercise): string {
+  return `${exercise.name}: ${formatRecord(pr)}`;
 }

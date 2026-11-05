@@ -24,3 +24,9 @@ export function movingAverage7(entries: readonly BodyweightEntry[]): BodyweightP
     return { date: entry.date, kg: entry.kg, average: round2(sum / (i - start + 1)) };
   });
 }
+
+/** A typed weight in kg, with a comma or a dot. Null when it isn't one. */
+export function parseBodyweight(text: string): number | null {
+  const kg = Number(text.trim().replace(',', '.'));
+  return text.trim() === '' || !Number.isFinite(kg) || kg <= 0 ? null : kg;
+}
