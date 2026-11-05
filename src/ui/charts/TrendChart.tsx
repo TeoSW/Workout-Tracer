@@ -14,7 +14,10 @@ import { formatShortDate } from '../../domain/format';
 import { ChartTooltip } from './ChartTooltip';
 import { AXIS_TICK, GRID_STROKE, chartColor } from './tokens';
 
-const formatDay = (day: number | string) => formatShortDate(dateOfDayNumber(Number(day)));
+function formatDay(day: number | string): string {
+  const number = Number(day);
+  return Number.isFinite(number) ? formatShortDate(dateOfDayNumber(Math.round(number))) : '';
+}
 
 /** Past this many sessions on one line, points only add noise. A tap still marks the nearest. */
 const MAX_POINTS = 24;
@@ -47,6 +50,7 @@ export function TrendChart(props: {
         dataKey="day"
         type="number"
         domain={['dataMin', 'dataMax']}
+        allowDecimals={false}
         tickCount={4}
         tickFormatter={formatDay}
         tick={AXIS_TICK}

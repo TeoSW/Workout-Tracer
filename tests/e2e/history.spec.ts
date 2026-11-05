@@ -47,6 +47,23 @@ test('corrects a set in History, then deletes the workout', async ({ page }) => 
   await expect(visibleText(page, 'Finished workouts will show here.')).toBeVisible();
 });
 
+test('a first session draws charts, on a Progress tab already open', async ({ page }) => {
+  await openApp(page);
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await openTab(page, 'Progress');
+  await expect(visibleText(page, 'Stats will show here once you log workouts.')).toBeVisible();
+  await logSquats(page, '20', '5');
+
+  await openTab(page, 'Progress');
+  await expect(page.getByText(/^1 week streak/).filter({ visible: true })).toBeVisible();
+  await visibleText(page, 'Exercises').click();
+  await page.getByRole('heading', { name: 'Squat', exact: true }).filter({ visible: true }).click();
+  await expect(visibleText(page, 'Latest 20kg, best 20kg')).toBeVisible();
+  await expect(page.locator('.recharts-line-dot').filter({ visible: true }).first()).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
 test('Progress draws charts, and a tap on one reads a value', async ({ page }) => {
   await openApp(page);
   await logSquats(page, '20', '5');

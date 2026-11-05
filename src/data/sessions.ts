@@ -398,16 +398,16 @@ export async function lastSetsByExercise(
   const done = sets.filter((s) => s.done && s.sessionId !== excludeSessionId);
   const sessionIds = [...new Set(done.map((s) => s.sessionId))];
   const sessions = await ctx.db.sessions.bulkGet(sessionIds);
-  const finishedAt = new Map(
-    sessions.flatMap((s) => (s?.finishedAt ? [[s.id, s.finishedAt] as const] : [])),
+  const startedAt = new Map(
+    sessions.flatMap((s) => (s?.status === 'finished' ? [[s.id, s.startedAt] as const] : [])),
   );
 
   const latest = new Map<string, string>();
   for (const set of done) {
-    const at = finishedAt.get(set.sessionId);
+    const at = startedAt.get(set.sessionId);
     if (at === undefined) continue;
     const best = latest.get(set.exerciseId);
-    if (best === undefined || at > (finishedAt.get(best) ?? 0)) {
+    if (best === undefined || at > (startedAt.get(best) ?? 0)) {
       latest.set(set.exerciseId, set.sessionId);
     }
   }
@@ -433,9 +433,9 @@ async function prsFor(ctx: DataContext, view: SessionView): Promise<SessionPr[]>
     (id) => id !== view.session.id,
   );
   // Only earlier sessions count, so a summary reads the same when it is opened again later.
-  const cutoff = view.session.finishedAt ?? Number.MAX_SAFE_INTEGER;
+  const cutoff = view.session.startedAt;
   const sessions = (await ctx.db.sessions.bulkGet(sessionIds)).filter(
-    (s): s is Session => s !== undefined && s.status === 'finished' && (s.finishedAt ?? 0) < cutoff,
+    (s): s is Session => s !== undefined && s.status === 'finished' && s.startedAt < cutoff,
   );
   const current: SessionSets = {
     session: view.session,
@@ -506,6 +506,8 @@ export async function updateSession(
   });
 }
 
+const MAX_DURATION_MINUTES = 24 * 60;
+
 /** Corrects the length of a finished workout, which matters when it was finished late. */
 export async function setSessionDuration(
   ctx: DataContext,
@@ -513,6 +515,7 @@ export async function setSessionDuration(
   minutes: number,
 ): Promise<Session> {
   if (!(minutes >= 1)) throw new Error('A workout lasts at least one minute.');
+  if (minutes > MAX_DURATION_MINUTES) throw new Error('A workout lasts at most 24 hours.');
   return ctx.db.transaction('rw', ctx.db.sessions, async () => {
     const current = await requireSession(ctx, sessionId);
     if (current.status !== 'finished') throw new Error('This workout is still running.');

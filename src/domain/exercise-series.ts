@@ -92,8 +92,20 @@ function bestOf(values: readonly number[]): number | null {
   return values.length === 0 ? null : Math.max(...values);
 }
 
+/** The first date a weighted bodyweight set has a true load, or null for any date. */
+function firstBodyweightDate(input: Input): DateStr | null {
+  if (input.exercise.trackingType !== 'bodyweight_reps') return null;
+  return input.bodyweight.reduce<DateStr | null>(
+    (first, e) => (first === null || e.date < first ? e.date : first),
+    null,
+  );
+}
+
 function e1rmChart(input: Input): ChartSpec | null {
-  const points = bestE1rmPerSession(input).map((p) => ({ date: p.date, value: p.e1rm }));
+  const from = firstBodyweightDate(input);
+  const points = bestE1rmPerSession(input)
+    .filter((p) => from === null || p.date >= from)
+    .map((p) => ({ date: p.date, value: p.e1rm }));
   return single('e1rm', 'e1RM trend', 'kg', points, { suffix: loadSuffix(input.exercise) });
 }
 

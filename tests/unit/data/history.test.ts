@@ -6,6 +6,7 @@ import {
   addExercise,
   finishSession,
   getSessionView,
+  lastSetsByExercise,
   sessionPrs,
   setSessionDuration,
   startEmptySession,
@@ -75,8 +76,24 @@ describe('session duration', () => {
     await expect(setSessionDuration(ctx, sessionId, 0)).rejects.toThrow(
       'A workout lasts at least one minute.',
     );
+    await expect(setSessionDuration(ctx, sessionId, 24 * 60 + 1)).rejects.toThrow(
+      'A workout lasts at most 24 hours.',
+    );
     const { session } = await startEmptySession(ctx);
     await expect(setSessionDuration(ctx, session.id, 30)).rejects.toThrow();
+  });
+
+  it('keeps session order when an old workout gets longer', async () => {
+    const ctx = await setup();
+    const first = await logSquat(ctx, 20);
+    const second = await logSquat(ctx, 25);
+    await setSessionDuration(ctx, first.sessionId, 24 * 60);
+    ctx.clock.advance(DAY);
+
+    const { session } = await startEmptySession(ctx);
+    const last = await lastSetsByExercise(ctx, ['squat'], session.id);
+    expect(last.get('squat')?.map((s) => s.id)).toEqual([second.setId]);
+    expect(await sessionPrs(ctx, second.sessionId)).not.toEqual([]);
   });
 });
 

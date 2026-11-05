@@ -1,9 +1,9 @@
 import { IonItem, IonLabel, IonList, IonListHeader } from '@ionic/react';
-import { useLive } from '../../app/DataProvider';
 import { loadStatsData, type StatsData } from '../../data/stats';
 import { exerciseCharts } from '../../domain/exercise-series';
 import { formatShortDate } from '../../domain/format';
 import type { TestResult } from '../../domain/schemas';
+import { useLiveWhileShown } from '../../ui/useLiveWhileShown';
 import { SpecChart } from './SpecChart';
 
 function testResultLine(result: TestResult): string {
@@ -33,7 +33,7 @@ function TestResults({ data }: { data: StatsData }) {
 }
 
 export default function SkillsContent() {
-  const data = useLive(loadStatsData);
+  const data = useLiveWhileShown(loadStatsData);
   if (!data) return null;
 
   const skills = [...data.exercisesById.values()]

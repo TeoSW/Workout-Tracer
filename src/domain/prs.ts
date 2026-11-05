@@ -167,13 +167,13 @@ type ReplayInput = Ctx & { sessions: readonly SessionSets[] };
 type Dated = Candidate & { sessionId: string; date: DateStr };
 
 /**
- * Walks an exercise's finished sessions in finish order, keeping the best so far. Nothing is
+ * Walks an exercise's finished sessions oldest first, keeping the best so far. Nothing is
  * stored, so editing an old session corrects every record after it.
  */
 function replay(input: ReplayInput): { prs: DatedPr[]; best: Map<string, Dated> } {
   const ordered = input.sessions
     .filter((e) => e.session.status === 'finished')
-    .sort((a, b) => (a.session.finishedAt ?? 0) - (b.session.finishedAt ?? 0));
+    .sort((a, b) => a.session.startedAt - b.session.startedAt);
   const best = new Map<string, Dated>();
   const prs: DatedPr[] = [];
   for (const entry of ordered) {

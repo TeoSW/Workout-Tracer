@@ -93,6 +93,7 @@ describe('charts by tracking type', () => {
     ];
     const list = charts('weighted-dips', [a, b], sets, [{ date: '2026-10-10', kg: 40 }]);
     expect(list.find((c) => c.title === 'Effective load')?.rows.map((r) => r.value)).toEqual([65]);
+    expect(list.find((c) => c.id === 'e1rm')?.rows).toHaveLength(1);
   });
 
   it('charts banded sets as band level, reversed, and plain sets as reps', () => {

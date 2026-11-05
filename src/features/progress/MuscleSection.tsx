@@ -25,7 +25,11 @@ export function MuscleSection({ data, today }: { data: StatsData; today: DateStr
     exercisesById: data.exercisesById,
   };
   const volume = average
-    ? averageWeeklySetsPerMuscle({ ...input, lastWeekStart: week })
+    ? averageWeeklySetsPerMuscle({
+        ...input,
+        // An unfinished week would pull every muscle down, so it stays out of the average.
+        lastWeekStart: week < thisWeek ? week : addDays(thisWeek, -7),
+      })
     : weeklySetsPerMuscle({ ...input, weekStart: week });
   const rows = MUSCLES.map((m) => ({ muscle: MUSCLE_LABELS[m], sets: volume[m] }));
   const inBand = musclesInBand(volume, reference);

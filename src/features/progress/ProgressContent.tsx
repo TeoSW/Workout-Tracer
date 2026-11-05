@@ -1,8 +1,9 @@
 import { IonItem, IonLabel, IonList, IonListHeader, IonNote } from '@ionic/react';
-import { useLive, useToday } from '../../app/DataProvider';
+import { useToday } from '../../app/DataProvider';
 import { loadStatsData, type StatsData } from '../../data/stats';
 import { recentPrs } from '../../domain/exercise-series';
 import { formatPr, formatShortDate } from '../../domain/format';
+import { useLiveWhileShown } from '../../ui/useLiveWhileShown';
 import { ConsistencySection } from './ConsistencySection';
 import { MuscleSection } from './MuscleSection';
 
@@ -36,7 +37,7 @@ function RecentPrs({ data }: { data: StatsData }) {
 
 export default function ProgressContent() {
   const today = useToday();
-  const data = useLive(loadStatsData);
+  const data = useLiveWhileShown(loadStatsData);
   if (!data) return null;
   const hasWorkouts = data.sessions.length > 0;
 

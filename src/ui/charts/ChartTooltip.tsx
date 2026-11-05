@@ -8,15 +8,16 @@ export function ChartTooltip(
   },
 ) {
   const { active, label, payload, formatLabel, formatValue } = props;
-  if (!active || !payload || payload.length === 0) return null;
+  const items = (payload ?? []).filter((item) => typeof item.value === 'number');
+  if (!active || items.length === 0) return null;
   return (
     <div className="chart-tooltip" data-testid="chart-tooltip">
       <div className="chart-tooltip-label">{label === undefined ? '' : formatLabel(label)}</div>
-      {payload.map((item) => (
+      {items.map((item) => (
         <div key={String(item.dataKey)} className="chart-tooltip-row">
           <span className="chart-tooltip-key" style={{ background: item.color }} />
           <strong>{formatValue(Number(item.value))}</strong>
-          {payload.length > 1 && <span>{item.name}</span>}
+          {items.length > 1 && <span>{item.name}</span>}
         </div>
       ))}
     </div>

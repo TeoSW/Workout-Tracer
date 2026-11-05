@@ -1,7 +1,14 @@
 import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { getRestTimer } from '../../src/data/rest-timer';
-import { addSet, getSessionView, sessionPrs, startEmptySession } from '../../src/data/sessions';
+import {
+  addSet,
+  deleteSession,
+  getSessionView,
+  sessionPrs,
+  startEmptySession,
+} from '../../src/data/sessions';
 import { testContext } from '../unit/data/helpers';
 import { buttonLabelled, confirmAlert, ionEvent, logWorkout, renderApp } from './helpers';
 
@@ -54,6 +61,19 @@ describe('history calendar', () => {
     expect(await screen.findByRole('heading', { name: 'Second' })).toBeInTheDocument();
   });
 
+  it('lets go of a picked day when its only workout is deleted', async () => {
+    const ctx = testContext();
+    const { sessionId } = await logWorkout(ctx, 'First');
+    ctx.clock.advance(DAY);
+    await logWorkout(ctx, 'Second');
+    const { user } = renderApp('/tabs/history', ctx);
+
+    await user.click(await screen.findByRole('button', { name: 'Monday 2 November, First' }));
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Second' })).toBeNull());
+    await deleteSession(ctx, sessionId);
+    expect(await screen.findByRole('heading', { name: 'Second' })).toBeInTheDocument();
+  });
+
   it('steps through months, stops at this month, and says when one is empty', async () => {
     const ctx = testContext();
     await logWorkout(ctx, 'First');
@@ -86,6 +106,26 @@ describe('session view', () => {
     expect(screen.getByText('Squat: heaviest load 25kg')).toBeInTheDocument();
     expect(screen.getByText('Tuesday 3 November')).toBeInTheDocument();
     expect(screen.getByText('1h 00m')).toBeInTheDocument();
+  });
+
+  it('shows the note from the plan', async () => {
+    const ctx = testContext();
+    const { sessionId } = await logWorkout(ctx, 'First');
+    const session = await ctx.db.sessions.get(sessionId);
+    await ctx.db.sessions.update(sessionId, {
+      planSnapshot: {
+        dayTemplateId: null,
+        name: 'First',
+        dayType: session?.dayType ?? 'custom',
+        note: 'Keep rests strict.',
+        isDeload: false,
+        cycleNumber: null,
+        cycleWeek: null,
+        blocks: [],
+      },
+    });
+    renderApp(`/tabs/history/${sessionId}`, ctx);
+    expect(await screen.findByText('Keep rests strict.')).toBeInTheDocument();
   });
 
   it('asks before deleting, then removes the workout', async () => {
@@ -139,6 +179,31 @@ describe('session edit', () => {
       expect(session).toMatchObject({ name: 'Renamed', notes: 'Felt ok' });
       expect((session?.finishedAt ?? 0) - (session?.startedAt ?? 0)).toBe(45 * 60_000);
     });
+  });
+
+  it('keeps a name on the workout', async () => {
+    const { ctx, first } = await openEditor();
+    const name = document.querySelector('ion-input') as Element;
+    ionEvent(name, 'ionChange', { value: '   ' });
+    expect(await screen.findByRole('alert')).toHaveTextContent('Give this workout a name.');
+    expect((await ctx.db.sessions.get(first.sessionId))?.name).toBe('First');
+  });
+
+  it('asks before removing an exercise', async () => {
+    const { ctx, first } = await openEditor();
+    // Overlays keep pointer-events off while they animate, which never ends in jsdom.
+    const tap = userEvent.setup({ pointerEventsCheck: 0 });
+    await tap.click(await buttonLabelled('Options for Squat'));
+    await tap.click(await screen.findByText('Remove'));
+    await confirmAlert(tap, 'Cancel');
+    expect(await ctx.db.sets.where('sessionId').equals(first.sessionId).count()).toBe(1);
+
+    await tap.click(await buttonLabelled('Options for Squat'));
+    await tap.click((await screen.findAllByText('Remove')).at(-1) as Element);
+    await confirmAlert(tap, 'Remove');
+    await waitFor(async () =>
+      expect(await ctx.db.sets.where('sessionId').equals(first.sessionId).count()).toBe(0),
+    );
   });
 
   it('explains a bad duration', async () => {

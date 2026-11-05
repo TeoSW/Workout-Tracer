@@ -9,12 +9,14 @@ import {
   removeExercise,
   setSessionDuration,
   updateSession,
+  type SessionExerciseView,
 } from '../../data/sessions';
 import { getSettings } from '../../data/settings';
 import { sessionDurationMs } from '../../domain/consistency';
 import { logItems } from '../../domain/log-layout';
 import type { LoggedSet } from '../../domain/schemas';
 import { PageShell } from '../../ui/PageShell';
+import { useConfirm } from '../../ui/useConfirm';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
 import { ExerciseCard, type CardActions } from '../workout/ExerciseCard';
 import { SetSheet } from '../workout/SetSheet';
@@ -26,7 +28,8 @@ const NO_LAST_SETS = new Map<string, LoggedSet[]>();
 export function SessionEditPage() {
   const { id = '' } = useParams();
   const ctx = useData();
-  const { error, guard } = useGuard();
+  const { error, guard, setError } = useGuard();
+  const confirm = useConfirm();
   const [presentSheet] = useIonActionSheet();
   const view = useLive((c) => getSessionView(c, id), [id]);
   const settings = useLive(getSettings);
@@ -45,6 +48,15 @@ export function SessionEditPage() {
   const items = logItems(view.exercises, blocks);
   const duration = sessionDurationMs(session);
 
+  async function removeLogged(entry: SessionExerciseView) {
+    const yes = await confirm({
+      header: `Remove ${exercises?.get(entry.exerciseId)?.name ?? 'this exercise'}?`,
+      message: 'Its sets in this workout are deleted, and stats change to match.',
+      confirm: 'Remove',
+    });
+    if (yes) await guard(() => removeExercise(ctx, entry.id));
+  }
+
   const actions: CardActions = {
     ...editor.setActions,
     openMenu: (entry) => {
@@ -55,7 +67,7 @@ export function SessionEditPage() {
           {
             text: 'Remove',
             role: 'destructive',
-            handler: () => void guard(() => removeExercise(ctx, entry.id)),
+            handler: () => void removeLogged(entry),
           },
           { text: 'Cancel', role: 'cancel' },
         ],
@@ -72,8 +84,9 @@ export function SessionEditPage() {
             labelPlacement="stacked"
             value={session.name}
             onIonChange={(e) => {
-              const name = e.detail.value ?? '';
-              void guard(() => updateSession(ctx, id, { name }));
+              const name = (e.detail.value ?? '').trim();
+              if (name === '') setError('Give this workout a name.');
+              else void guard(() => updateSession(ctx, id, { name }));
             }}
           />
         </IonItem>

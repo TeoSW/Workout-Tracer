@@ -138,6 +138,8 @@ export function SessionPage() {
         <Fact label="Working sets" value={String(workingSetsDone(allSets, exercises))} />
       </IonList>
 
+      {session.planSnapshot?.note && <p className="section-note">{session.planSnapshot.note}</p>}
+
       {prLines.length > 0 && (
         <IonList inset>
           <IonListHeader>

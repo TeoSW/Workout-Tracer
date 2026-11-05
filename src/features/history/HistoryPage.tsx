@@ -42,7 +42,9 @@ export function HistoryPage() {
   const anyFinished = useLive(hasFinishedSession);
 
   const byDay = sessionsByDay(sessions ?? []);
-  const listed = selected === null ? (sessions ?? []) : (byDay.get(selected) ?? []);
+  // A deleted session can leave the picked day empty, and an empty day can't be tapped off.
+  const day = selected !== null && byDay.has(selected) ? selected : null;
+  const listed = day === null ? (sessions ?? []) : (byDay.get(day) ?? []);
   const newestFirst = [...listed].sort((a, b) => b.startedAt - a.startedAt);
   const legend = dayTypesIn(sessions ?? []);
 
@@ -56,11 +58,11 @@ export function HistoryPage() {
       <MonthCalendar
         month={month}
         today={today}
-        selected={selected}
+        selected={day}
         byDay={byDay}
         canGoForward={month < monthOf(today)}
         onStep={step}
-        onSelect={(date) => setSelected(date === selected ? null : date)}
+        onSelect={(date) => setSelected(date === day ? null : date)}
       />
       {legend.length > 0 && (
         <ul className="calendar-legend">
@@ -77,7 +79,7 @@ export function HistoryPage() {
           {newestFirst.map((session) => (
             <SessionRow key={session.id} session={session} />
           ))}
-          {selected !== null && (
+          {day !== null && (
             <IonItem button detail={false} onClick={() => setSelected(null)}>
               <IonLabel color="primary">{`Show all of ${formatMonth(month)}`}</IonLabel>
             </IonItem>
