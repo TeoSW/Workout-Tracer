@@ -30,3 +30,12 @@ ion-content.grouped {
   font-size: 13px;
   color: var(--ion-color-danger);
 }
+
+.share-code {
+  margin: 0 32px 24px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+}

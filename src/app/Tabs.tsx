@@ -8,9 +8,11 @@ import { LibraryPage } from '../features/library/LibraryPage';
 import { AddBlockPage } from '../features/programs/AddBlockPage';
 import { BlockEditorPage } from '../features/programs/BlockEditorPage';
 import { DayEditorPage } from '../features/programs/DayEditorPage';
+import { ImportProgramPage } from '../features/programs/ImportProgramPage';
 import { NewProgramPage } from '../features/programs/NewProgramPage';
 import { ProgramEditorPage } from '../features/programs/ProgramEditorPage';
 import { ProgramsPage } from '../features/programs/ProgramsPage';
+import { ShareProgramPage } from '../features/programs/ShareProgramPage';
 import { ProgressPage } from '../features/progress/ProgressPage';
 import { BandsPage } from '../features/settings/BandsPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
@@ -36,6 +38,8 @@ export function Tabs() {
         <Route path="programs/library/:exerciseId" element={<ExerciseDetailPage />} />
         <Route path="programs/library" element={<LibraryPage />} />
         <Route path="programs/new" element={<NewProgramPage />} />
+        <Route path="programs/import" element={<ImportProgramPage />} />
+        <Route path="programs/:id/share" element={<ShareProgramPage />} />
         <Route path="programs/:id/days/:dayId/blocks/:blockId" element={<BlockEditorPage />} />
         <Route path="programs/:id/days/:dayId/add-choice" element={<AddBlockPage asChoice />} />
         <Route path="programs/:id/days/:dayId/add" element={<AddBlockPage />} />

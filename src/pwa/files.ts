@@ -33,3 +33,13 @@ export function readFileText(file: File): Promise<string> {
     reader.readAsText(file);
   });
 }
+
+/** False when the browser has no clipboard access, so the user can select the text instead. */
+export async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
