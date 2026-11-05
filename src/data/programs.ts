@@ -1,4 +1,5 @@
 import { addDays, mondayOf, WEEKDAYS } from '../domain/dates';
+import { removeOptionFromSelections } from '../domain/choice';
 import { addManualDeloadWeek, removeManualDeloadWeek } from '../domain/deload';
 import type { BuiltInTemplate } from '../domain/fixtures/templates';
 import { updateChoiceSlot } from '../domain/program-edit';
@@ -238,6 +239,23 @@ export async function editChoiceSlot(
       }
     }
     throw new Error(`No choice slot ${slotId}`);
+  });
+}
+
+/** Removes one option of a choice slot, keeping the program's saved picks right. */
+export async function removeChoiceOption(
+  ctx: DataContext,
+  programId: string,
+  slotId: string,
+  optionIndex: number,
+): Promise<void> {
+  await ctx.db.transaction('rw', [ctx.db.programs, ctx.db.dayTemplates], async () => {
+    await editChoiceSlot(ctx, programId, slotId, (slot) => ({
+      ...slot,
+      options: slot.options.filter((_, i) => i !== optionIndex),
+    }));
+    const program = await requireProgram(ctx, programId);
+    await ctx.db.programs.put(removeOptionFromSelections(program, slotId, optionIndex));
   });
 }
 

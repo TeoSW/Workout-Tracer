@@ -172,3 +172,21 @@ describe('program editor', () => {
     await waitFor(async () => expect(await getProgram(ctx, program.id)).toBeUndefined());
   });
 });
+
+describe('switching the schedule type', () => {
+  it('asks first, and cancelling leaves the schedule alone', async () => {
+    const { ctx, program } = await withProgram();
+    const { user } = renderApp(`/tabs/programs/${program.id}`, ctx);
+    await screen.findByText('Schedule');
+    ionEvent(screen.getByLabelText('Schedule type'), 'ionChange', { value: 'rotation' });
+    await confirmAlert(user, 'Cancel');
+    await waitFor(() => expect(document.querySelector('ion-alert')).toBeNull());
+    expect((await getProgram(ctx, program.id))?.program.schedule.kind).toBe('weekday');
+
+    ionEvent(screen.getByLabelText('Schedule type'), 'ionChange', { value: 'rotation' });
+    await confirmAlert(user, 'Switch');
+    await waitFor(async () =>
+      expect((await getProgram(ctx, program.id))?.program.schedule.kind).toBe('rotation'),
+    );
+  });
+});

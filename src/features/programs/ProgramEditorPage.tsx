@@ -33,6 +33,7 @@ import { DAY_TYPE_LABELS } from '../../ui/labels';
 import { PageShell } from '../../ui/PageShell';
 import { Stepper } from '../../ui/Stepper';
 import { useConfirm } from '../../ui/useConfirm';
+import { ErrorNote, useGuard } from '../../ui/useGuard';
 import { ScheduleEditor } from './ScheduleEditor';
 
 const PROGRAMS = '/tabs/programs';
@@ -44,19 +45,10 @@ export function ProgramEditorPage() {
   const confirm = useConfirm();
   const loaded = useLive((c) => getProgram(c, id), [id]);
   const [dayName, setDayName] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const { error, guard: guarded, setError } = useGuard();
 
   if (!loaded) return <PageShell title="Program" back={PROGRAMS} children={null} />;
   const { program, dayTemplates: days } = loaded;
-
-  async function guarded(action: () => Promise<unknown>) {
-    try {
-      await action();
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong.');
-    }
-  }
 
   const save = (change: (p: Program) => Program) =>
     void guarded(() => editProgram(ctx, id, change));
@@ -178,11 +170,7 @@ export function ProgramEditorPage() {
       </IonList>
 
       <ScheduleEditor program={program} days={days} onChange={save} />
-      {error && (
-        <p className="error-note" role="alert">
-          {error}
-        </p>
-      )}
+      <ErrorNote error={error} />
 
       <IonList inset>
         <IonListHeader>

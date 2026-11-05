@@ -24,6 +24,7 @@ import { DAY_TYPE_LABELS } from '../../ui/labels';
 import { useGoBack } from '../../ui/navigation';
 import { PageShell } from '../../ui/PageShell';
 import { useConfirm } from '../../ui/useConfirm';
+import { ErrorNote, useGuard } from '../../ui/useGuard';
 
 export function DayEditorPage() {
   const { id = '', dayId = '' } = useParams();
@@ -31,6 +32,7 @@ export function DayEditorPage() {
   const programUrl = `/tabs/programs/${id}`;
   const goBack = useGoBack(programUrl);
   const confirm = useConfirm();
+  const { error, guard } = useGuard();
   const loaded = useLive((c) => getProgram(c, id), [id]);
   const exercises = useLive(loadExerciseMap);
   const bands = useLive(loadBandMap);
@@ -41,7 +43,7 @@ export function DayEditorPage() {
   }
 
   const edit = (change: (d: DayTemplate) => DayTemplate) =>
-    void editDayTemplate(ctx, dayId, change);
+    void guard(() => editDayTemplate(ctx, dayId, change));
   const nameOf = (block: Block) =>
     block.kind === 'choice'
       ? block.choiceSlot.label
@@ -59,8 +61,10 @@ export function DayEditorPage() {
       confirm: 'Delete',
     });
     if (!yes) return;
-    await deleteDayTemplate(ctx, dayId);
-    goBack();
+    await guard(async () => {
+      await deleteDayTemplate(ctx, dayId);
+      goBack();
+    });
   }
 
   const blocks = [...day.blocks].sort((a, b) => a.order - b.order);
@@ -149,6 +153,7 @@ export function DayEditorPage() {
         </IonItem>
       </IonList>
 
+      <ErrorNote error={error} />
       <IonList inset>
         <IonItem button detail={false} onClick={() => void remove()}>
           <IonLabel color="danger">Delete day</IonLabel>

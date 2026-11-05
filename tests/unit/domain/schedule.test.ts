@@ -52,11 +52,11 @@ describe('cyclePosition', () => {
 describe('setCurrentWeek', () => {
   it('moves the anchor so today falls in week N', () => {
     const { program } = activeProgram(PROGRAM_C);
-    const today = '2026-12-17'; // a Thursday
+    const today = '2026-11-26'; // a Thursday
     for (const n of [1, 3, 6]) {
       const moved = { ...program, anchorDate: setCurrentWeek(program, today, n) };
       expect(cyclePosition(moved, today)).toMatchObject({ cycleNumber: 1, cycleWeek: n });
-      expect(moved.anchorDate).toBe(addDays('2026-12-14', -7 * (n - 1)));
+      expect(moved.anchorDate).toBe(addDays('2026-11-23', -7 * (n - 1)));
     }
   });
 
@@ -201,5 +201,22 @@ describe('todayPlan', () => {
     expect(plan.today.status).toBe('done');
     expect(plan.next).toMatchObject({ rotationIndex: 1, date: null });
     expect(dayName(plan.next?.dayTemplateId ?? null)).toBe('Lower A');
+  });
+});
+
+describe('setCurrentWeek in a later cycle', () => {
+  it('keeps the current cycle, so picks for it still apply', () => {
+    const { program } = activeProgram(PROGRAM_C);
+    const today = addDays(D, 6 * 7 * 2 + 8); // cycle 3, week 2
+    expect(cyclePosition(program, today)).toMatchObject({ cycleNumber: 3, cycleWeek: 2 });
+    const moved = { ...program, anchorDate: setCurrentWeek(program, today, 5) };
+    expect(cyclePosition(moved, today)).toMatchObject({ cycleNumber: 3, cycleWeek: 5 });
+  });
+
+  it('uses cycle 1 before the program has started', () => {
+    const { program } = activeProgram(PROGRAM_C);
+    const today = addDays(D, -3);
+    const moved = { ...program, anchorDate: setCurrentWeek(program, today, 2) };
+    expect(cyclePosition(moved, today)).toMatchObject({ cycleNumber: 1, cycleWeek: 2 });
   });
 });

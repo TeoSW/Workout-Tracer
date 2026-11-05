@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { resolveChoice, saveChoice, testFlowTargetCycle } from '../../../src/domain/choice';
+import {
+  removeOptionFromSelections,
+  resolveChoice,
+  saveChoice,
+  testFlowTargetCycle,
+} from '../../../src/domain/choice';
 import { addDays, mondayOf } from '../../../src/domain/dates';
 import {
   DELOAD_NOTE,
@@ -237,5 +242,30 @@ describe('plan snapshot', () => {
       cycleNumber: 1,
       cycleWeek: 1,
     });
+  });
+});
+
+describe('removing a choice option', () => {
+  const { program: base, dayTemplates } = activeProgram(PROGRAM_C);
+  const heavy = dayByName(dayTemplates, 'Heavy (planche first)');
+  const slotId = slotIdOf(heavy);
+
+  it('drops picks of that option and moves later picks down', () => {
+    const program = saveChoice(
+      saveChoice(saveChoice(base, slotId, 1, 0), slotId, 2, 1),
+      slotId,
+      3,
+      2,
+    );
+    expect(removeOptionFromSelections(program, slotId, 1).choiceSelections).toEqual([
+      { cycleNumber: 1, slotId, optionIndex: 0 },
+      { cycleNumber: 3, slotId, optionIndex: 1 },
+    ]);
+  });
+
+  it('asks again instead of failing when a stored pick has no option', () => {
+    const program = saveChoice(base, slotId, 1, 9);
+    const snapshot = resolvePlan({ program, dayTemplate: heavy, date: D, exercisesById });
+    expect(snapshot.blocks[3]?.kind).toBe('choice');
   });
 });

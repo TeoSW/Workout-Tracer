@@ -12,11 +12,17 @@ import {
   IonToggle,
 } from '@ionic/react';
 import { close } from 'ionicons/icons';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useData, useLive } from '../../app/DataProvider';
 import { listBands } from '../../data/bands';
 import { listExercises, loadExerciseMap } from '../../data/exercises';
-import { editChoiceSlot, editDayTemplate, getProgram } from '../../data/programs';
+import {
+  editChoiceSlot,
+  editDayTemplate,
+  getProgram,
+  removeChoiceOption,
+} from '../../data/programs';
 import {
   removeBlock,
   setSupersetWithNext,
@@ -35,6 +41,7 @@ import type {
 import { useGoBack } from '../../ui/navigation';
 import { PageShell } from '../../ui/PageShell';
 import { Stepper } from '../../ui/Stepper';
+import { ErrorNote, useGuard } from '../../ui/useGuard';
 import { TargetFields } from './TargetFields';
 
 type EditDay = (change: (day: DayTemplate) => DayTemplate) => void;
@@ -56,28 +63,36 @@ function CommonFields(props: {
 
   return (
     <>
-      <Stepper
-        label="Sets"
-        noun="sets"
-        value={block.setsMin}
-        min={1}
-        max={20}
-        onChange={(setsMin) =>
-          patch({
-            setsMin,
-            setsMax:
-              block.setsMax !== undefined && block.setsMax > setsMin ? block.setsMax : undefined,
-          })
-        }
-      />
-      <Stepper
-        label="Up to"
-        noun="sets at most"
-        value={block.setsMax ?? block.setsMin}
-        min={block.setsMin}
-        max={20}
-        onChange={(setsMax) => patch({ setsMax: setsMax > block.setsMin ? setsMax : undefined })}
-      />
+      {block.kind === 'exercise' && (
+        <>
+          <Stepper
+            label="Sets"
+            noun="sets"
+            value={block.setsMin}
+            min={1}
+            max={20}
+            onChange={(setsMin) =>
+              patch({
+                setsMin,
+                setsMax:
+                  block.setsMax !== undefined && block.setsMax > setsMin
+                    ? block.setsMax
+                    : undefined,
+              })
+            }
+          />
+          <Stepper
+            label="Up to"
+            noun="sets at most"
+            value={block.setsMax ?? block.setsMin}
+            min={block.setsMin}
+            max={20}
+            onChange={(setsMax) =>
+              patch({ setsMax: setsMax > block.setsMin ? setsMax : undefined })
+            }
+          />
+        </>
+      )}
       <Stepper
         label="Rest"
         noun="rest seconds"
@@ -127,13 +142,16 @@ function ChoiceFields(props: {
   exercises: Exercise[];
   byId: ReadonlyMap<string, Exercise>;
   bands: Band[];
+  guard: (action: () => Promise<unknown>) => Promise<void>;
 }) {
-  const { programId, block, exercises, byId, bands } = props;
+  const { programId, block, exercises, byId, bands, guard } = props;
   const ctx = useData();
   const slot = block.choiceSlot;
+  // ion-select keeps its last value and only reports changes, so it is remounted after each pick.
+  const [addKey, setAddKey] = useState(0);
 
   const editSlot = (change: (s: ChoiceSlot) => ChoiceSlot) =>
-    void editChoiceSlot(ctx, programId, slot.id, change);
+    void guard(() => editChoiceSlot(ctx, programId, slot.id, change));
   const editOption = (index: number, change: (o: ChoiceOption) => ChoiceOption) =>
     editSlot((s) => ({ ...s, options: s.options.map((o, i) => (i === index ? change(o) : o)) }));
 
@@ -165,10 +183,7 @@ function ChoiceFields(props: {
                     color="medium"
                     aria-label={`Remove option ${index + 1}`}
                     onClick={() =>
-                      editSlot((s) => ({
-                        ...s,
-                        options: s.options.filter((_, i) => i !== index),
-                      }))
+                      void guard(() => removeChoiceOption(ctx, programId, slot.id, index))
                     }
                   >
                     <IonIcon slot="icon-only" icon={close} aria-hidden="true" />
@@ -213,6 +228,7 @@ function ChoiceFields(props: {
       <IonList inset>
         <IonItem>
           <IonSelect
+            key={addKey}
             aria-label="Add option"
             label="Add option"
             interface="action-sheet"
@@ -225,6 +241,7 @@ function ChoiceFields(props: {
                   options: [...s.options, { exerciseId, setsMin: 3, target: {}, pickWhen: '' }],
                 }));
               }
+              setAddKey(addKey + 1);
             }}
           >
             {exercises.map((e) => (
@@ -247,7 +264,8 @@ export function BlockEditorPage() {
   const loaded = useLive((c) => getProgram(c, id), [id]);
   const byId = useLive(loadExerciseMap);
   const exercises = useLive(listExercises);
-  const bands = useLive(listBands);
+  const bands = useLive((c) => listBands(c, { includeArchived: true }));
+  const { error, guard } = useGuard();
 
   const day = loaded?.dayTemplates.find((d) => d.id === dayId);
   const block = day?.blocks.find((b) => b.id === blockId);
@@ -255,7 +273,7 @@ export function BlockEditorPage() {
     return <PageShell title="Exercise" back={dayUrl} children={null} />;
   }
 
-  const edit: EditDay = (change) => void editDayTemplate(ctx, dayId, change);
+  const edit: EditDay = (change) => void guard(() => editDayTemplate(ctx, dayId, change));
   const exercise = block.kind === 'exercise' ? byId.get(block.exerciseId) : undefined;
   const title = block.kind === 'choice' ? block.choiceSlot.label : (exercise?.name ?? 'Exercise');
 
@@ -268,6 +286,7 @@ export function BlockEditorPage() {
           exercises={exercises}
           byId={byId}
           bands={bands}
+          guard={guard}
         />
       )}
       <IonList inset>
@@ -286,6 +305,7 @@ export function BlockEditorPage() {
           onEdit={edit}
         />
       </IonList>
+      <ErrorNote error={error} />
       <IonList inset>
         <IonItem
           button

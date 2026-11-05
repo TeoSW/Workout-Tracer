@@ -96,3 +96,20 @@ describe('exercise library', () => {
     );
   });
 });
+
+describe('custom exercise details', () => {
+  it('saves alternatives and levels', async () => {
+    const { ctx, user } = renderApp(`${LIST}/new`);
+    ionEvent(await screen.findByLabelText('Name'), 'ionInput', { value: 'L-sit' });
+    ionEvent(selectLabelled('Alternatives'), 'ionChange', { value: ['plank'] });
+    ionEvent(screen.getByLabelText('Levels'), 'ionChange', { value: 'Tuck, Full' });
+    await user.click(screen.getByText('Save'));
+    await waitFor(async () => {
+      const added = (await listExercises(ctx)).find((e) => e.name === 'L-sit');
+      expect(added).toMatchObject({
+        alternativeIds: ['plank'],
+        progressionLadder: ['Tuck', 'Full'],
+      });
+    });
+  });
+});

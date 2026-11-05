@@ -31,13 +31,14 @@ export function plannedDayTemplateId(program: Program, date: DateStr): string | 
   return week[weekdayOf(date)];
 }
 
-/** The anchor date that puts `today` in week `n` of the cycle. */
+/** The anchor date that puts `today` in week `n` of the current cycle, or of cycle 1 before it. */
 export function setCurrentWeek(program: Program, today: DateStr, n: number): DateStr {
   const cycleWeeks = program.cycleWeeks ?? 1;
   if (!Number.isInteger(n) || n < 1 || n > cycleWeeks) {
     throw new Error(`Week must be between 1 and ${cycleWeeks}`);
   }
-  return addDays(mondayOf(today), -7 * (n - 1));
+  const cycle = Math.max(cyclePosition(program, today)?.cycleNumber ?? 1, 1);
+  return addDays(mondayOf(today), -7 * ((cycle - 1) * cycleWeeks + n - 1));
 }
 
 /** The latest finished session of a program, by finish time. */

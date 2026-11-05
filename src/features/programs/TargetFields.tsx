@@ -15,38 +15,65 @@ import type { Band, ComplexPartTarget, Exercise, SetTarget } from '../../domain/
 function NumberField(props: {
   label: string;
   value: number | undefined;
+  /** Kg take decimals. Reps, seconds and attempts are whole numbers. */
+  decimal?: boolean;
   onChange: (value: number | undefined) => void;
 }) {
-  const { label, value, onChange } = props;
+  const { label, value, decimal = false, onChange } = props;
   return (
     <IonItem>
       <IonInput
         aria-label={label}
         label={label}
-        inputmode="decimal"
+        inputmode={decimal ? 'decimal' : 'numeric'}
         value={value ?? ''}
         onIonChange={(e) => {
-          const text = (e.detail.value ?? '').trim();
+          const text = (e.detail.value ?? '').trim().replace(',', '.');
           const parsed = Number(text);
           if (text === '') onChange(undefined);
-          else if (Number.isFinite(parsed) && parsed >= 0) onChange(parsed);
+          else if (Number.isFinite(parsed) && parsed >= 0) {
+            onChange(decimal ? parsed : Math.round(parsed));
+          }
         }}
       />
     </IonItem>
   );
 }
 
+type NumberKey =
+  | 'repsMin'
+  | 'repsMax'
+  | 'secondsMin'
+  | 'secondsMax'
+  | 'attemptsMin'
+  | 'attemptsMax'
+  | 'loadMinKg'
+  | 'loadMaxKg';
+
+/** Each end saves on its own, so a quick edit to one end cannot undo the other. */
 function RangeFields(props: {
   label: string;
-  min: number | undefined;
-  max: number | undefined;
-  onChange: (min: number | undefined, max: number | undefined) => void;
+  target: SetTarget;
+  min: NumberKey;
+  max: NumberKey;
+  decimal?: boolean;
+  onChange: (patch: Partial<SetTarget>) => void;
 }) {
-  const { label, min, max, onChange } = props;
+  const { label, target, min, max, decimal = false, onChange } = props;
   return (
     <>
-      <NumberField label={`${label} min`} value={min} onChange={(v) => onChange(v, max)} />
-      <NumberField label={`${label} max`} value={max} onChange={(v) => onChange(min, v)} />
+      <NumberField
+        label={`${label} min`}
+        value={target[min]}
+        decimal={decimal}
+        onChange={(v) => onChange({ [min]: v })}
+      />
+      <NumberField
+        label={`${label} max`}
+        value={target[max]}
+        decimal={decimal}
+        onChange={(v) => onChange({ [max]: v })}
+      />
     </>
   );
 }
@@ -58,7 +85,9 @@ function BandFields(props: {
 }) {
   const { bands, target, onChange } = props;
   const selected = target.bandIds ?? [];
-  return bands.map((band) => (
+  // An archived band stays listed while a target uses it, so it can be taken off.
+  const shown = bands.filter((b) => !b.archived || selected.includes(b.id));
+  return shown.map((band) => (
     <IonItem key={band.id}>
       <IonCheckbox
         aria-label={`Band ${band.label}`}
@@ -180,19 +209,15 @@ export function TargetFields(props: {
 }) {
   const { exercise, target, bands, onChange: patch } = props;
   const reps = (
-    <RangeFields
-      label="Reps"
-      min={target.repsMin}
-      max={target.repsMax}
-      onChange={(repsMin, repsMax) => patch({ repsMin, repsMax })}
-    />
+    <RangeFields label="Reps" target={target} min="repsMin" max="repsMax" onChange={patch} />
   );
   const seconds = (
     <RangeFields
       label="Seconds"
-      min={target.secondsMin}
-      max={target.secondsMax}
-      onChange={(secondsMin, secondsMax) => patch({ secondsMin, secondsMax })}
+      target={target}
+      min="secondsMin"
+      max="secondsMax"
+      onChange={patch}
     />
   );
   const bandFields = <BandFields bands={bands} target={target} onChange={patch} />;
@@ -205,9 +230,11 @@ export function TargetFields(props: {
           {reps}
           <RangeFields
             label="Load"
-            min={target.loadMinKg}
-            max={target.loadMaxKg}
-            onChange={(loadMinKg, loadMaxKg) => patch({ loadMinKg, loadMaxKg })}
+            target={target}
+            min="loadMinKg"
+            max="loadMaxKg"
+            decimal
+            onChange={patch}
           />
         </>
       );
@@ -218,6 +245,7 @@ export function TargetFields(props: {
           <NumberField
             label="Added kg"
             value={target.addedKg}
+            decimal
             onChange={(addedKg) =>
               patch(addedKg ? { addedKg, bandIds: undefined } : { addedKg: undefined })
             }
@@ -255,9 +283,10 @@ export function TargetFields(props: {
       return (
         <RangeFields
           label="Attempts"
-          min={target.attemptsMin}
-          max={target.attemptsMax}
-          onChange={(attemptsMin, attemptsMax) => patch({ attemptsMin, attemptsMax })}
+          target={target}
+          min="attemptsMin"
+          max="attemptsMax"
+          onChange={patch}
         />
       );
     case 'checklist':

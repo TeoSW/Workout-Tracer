@@ -14,6 +14,7 @@ import { useData, useLive } from '../../app/DataProvider';
 import {
   addCustomExercise,
   getExercise,
+  listExercises,
   updateExercise,
   type NewExercise,
 } from '../../data/exercises';
@@ -50,6 +51,16 @@ function ExerciseForm({ exercise }: { exercise?: Exercise }) {
   const [error, setError] = useState<string | null>(null);
   const change = (patch: Partial<NewExercise>) => setDraft({ ...draft, ...patch });
   const isBuiltIn = exercise !== undefined && !exercise.isCustom;
+  const others = (useLive(listExercises) ?? []).filter((e) => e.id !== exercise?.id);
+
+  function setLevels(text: string) {
+    const levels = text
+      .split(',')
+      .map((level) => level.trim())
+      .filter((level) => level !== '');
+    const { progressionLadder: _unused, ...rest } = draft;
+    setDraft(levels.length > 0 ? { ...rest, progressionLadder: levels } : rest);
+  }
 
   async function save() {
     if (draft.name.trim() === '') {
@@ -155,6 +166,30 @@ function ExerciseForm({ exercise }: { exercise?: Exercise }) {
             </IonItem>
           </>
         )}
+        <IonItem>
+          <IonSelect
+            aria-label="Alternatives"
+            label="Alternatives"
+            multiple
+            value={draft.alternativeIds}
+            onIonChange={(e) => change({ alternativeIds: e.detail.value })}
+          >
+            {others.map((e) => (
+              <IonSelectOption key={e.id} value={e.id}>
+                {e.name}
+              </IonSelectOption>
+            ))}
+          </IonSelect>
+        </IonItem>
+        <IonItem>
+          <IonInput
+            aria-label="Levels"
+            label="Levels"
+            placeholder="Tuck, Straddle, Full"
+            value={draft.progressionLadder?.join(', ') ?? ''}
+            onIonChange={(e) => setLevels(e.detail.value ?? '')}
+          />
+        </IonItem>
         <Stepper
           label="Default rest"
           noun="rest seconds"

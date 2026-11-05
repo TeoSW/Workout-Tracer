@@ -13,6 +13,7 @@ import {
 } from '@ionic/react';
 import { arrowDown, arrowUp, close } from 'ionicons/icons';
 import { useState } from 'react';
+import { useConfirm } from '../../ui/useConfirm';
 import { WEEKDAYS, type Weekday } from '../../domain/dates';
 import {
   addRotationDay,
@@ -119,6 +120,8 @@ function WeekdayGrid(props: Props & { schedule: WeekdaySchedule }) {
 function Rotation(props: Props & { schedule: RotationSchedule }) {
   const { program, days, schedule, onChange } = props;
   const nameOf = (id: string) => days.find((d) => d.id === id)?.name ?? 'Missing day';
+  // ion-select keeps its last value and only reports changes, so it is remounted after each pick.
+  const [addKey, setAddKey] = useState(0);
   return (
     <>
       {schedule.sequence.map((id, index) => (
@@ -157,6 +160,7 @@ function Rotation(props: Props & { schedule: RotationSchedule }) {
       ))}
       <IonItem>
         <IonSelect
+          key={addKey}
           aria-label="Add to rotation"
           label="Add to rotation"
           interface="action-sheet"
@@ -164,6 +168,7 @@ function Rotation(props: Props & { schedule: RotationSchedule }) {
           onIonChange={(e) => {
             const id = e.detail.value as string | null;
             if (id) onChange((p) => addRotationDay(p, id));
+            setAddKey(addKey + 1);
           }}
         >
           {days.map((d) => (
@@ -204,6 +209,29 @@ function Rotation(props: Props & { schedule: RotationSchedule }) {
 export function ScheduleEditor(props: Props) {
   const { program, days, onChange } = props;
   const { schedule } = program;
+  const confirm = useConfirm();
+  // Remounting puts the segment back on the real schedule type after a refused change.
+  const [segmentKey, setSegmentKey] = useState(0);
+
+  async function switchKind(kind: Program['schedule']['kind']) {
+    if (kind === schedule.kind) return;
+    const yes = await confirm({
+      header: 'Switch the schedule type?',
+      message: 'This replaces the current schedule. Your days stay.',
+      confirm: 'Switch',
+    });
+    if (yes) {
+      onChange((p) =>
+        convertSchedule(
+          p,
+          kind,
+          days.map((d) => d.id),
+        ),
+      );
+    }
+    setSegmentKey(segmentKey + 1);
+  }
+
   return (
     <IonList inset>
       <IonListHeader>
@@ -211,18 +239,10 @@ export function ScheduleEditor(props: Props) {
       </IonListHeader>
       <IonItem>
         <IonSegment
+          key={segmentKey}
           aria-label="Schedule type"
           value={schedule.kind}
-          onIonChange={(e) => {
-            const kind = e.detail.value as Program['schedule']['kind'];
-            onChange((p) =>
-              convertSchedule(
-                p,
-                kind,
-                days.map((d) => d.id),
-              ),
-            );
-          }}
+          onIonChange={(e) => void switchKind(e.detail.value as Program['schedule']['kind'])}
         >
           <IonSegmentButton value="weekday">
             <IonLabel>Weekdays</IonLabel>

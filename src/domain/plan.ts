@@ -23,7 +23,10 @@ export function resolvePlan(input: {
     let block: Block = structuredClone(original);
     if (block.kind === 'choice' && position !== null) {
       const resolution = resolveChoice(program, block.choiceSlot.id, position.cycleNumber);
-      if (resolution.status === 'picked') block = resolveChoiceBlock(block, resolution.optionIndex);
+      // A pick that no longer has an option counts as no pick, so the logger asks again.
+      if (resolution.status === 'picked' && block.choiceSlot.options[resolution.optionIndex]) {
+        block = resolveChoiceBlock(block, resolution.optionIndex);
+      }
     }
     return isDeload ? deloadBlock(block, exercisesById) : block;
   });
