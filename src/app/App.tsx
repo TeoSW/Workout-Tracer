@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { Navigate, Route } from 'react-router-dom';
 import type { DataContext } from '../data/context';
 import { requestPersistentStorage } from '../pwa/storage';
+import { useAppUpdate } from '../pwa/useAppUpdate';
 import { DataProvider } from './DataProvider';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Tabs } from './Tabs';
@@ -21,9 +22,11 @@ setupIonicReact({ mode: 'ios' });
 
 export function App({ ctx }: { ctx: DataContext }) {
   useEffect(() => void requestPersistentStorage(), []);
+  // Up here so that a crash below can still reach a waiting fix.
+  const update = useAppUpdate();
 
   return (
-    <ErrorBoundary ctx={ctx}>
+    <ErrorBoundary ctx={ctx} update={update}>
       <DataProvider ctx={ctx}>
         <IonApp>
           <IonReactHashRouter>
@@ -32,7 +35,7 @@ export function App({ ctx }: { ctx: DataContext }) {
               <Route path="/" element={<Navigate to="/tabs/today" replace />} />
             </IonRouterOutlet>
           </IonReactHashRouter>
-          <UpdateToast />
+          <UpdateToast update={update} />
         </IonApp>
       </DataProvider>
     </ErrorBoundary>

@@ -1,8 +1,9 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import type { DataContext } from '../data/context';
+import type { AppUpdate } from '../pwa/useAppUpdate';
 import { CrashScreen } from './CrashScreen';
 
-type Props = { ctx: DataContext; children: ReactNode };
+type Props = { ctx: DataContext; update: AppUpdate; children: ReactNode };
 
 /** Sits above everything, so a crash in any screen can't trap anyone's logs. */
 export class ErrorBoundary extends Component<Props, { failed: boolean }> {
@@ -17,6 +18,7 @@ export class ErrorBoundary extends Component<Props, { failed: boolean }> {
   }
 
   override render() {
-    return this.state.failed ? <CrashScreen ctx={this.props.ctx} /> : this.props.children;
+    const { ctx, update, children } = this.props;
+    return this.state.failed ? <CrashScreen ctx={ctx} update={update} /> : children;
   }
 }

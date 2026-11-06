@@ -1,11 +1,11 @@
 import { IonToast } from '@ionic/react';
 import { hasActiveSession } from '../data/sessions';
-import { useAppUpdate } from '../pwa/useAppUpdate';
+import type { AppUpdate } from '../pwa/useAppUpdate';
 import { useLive } from './DataProvider';
 
 /** Updating reloads the app, so the offer waits until no workout is running. */
-export function UpdateToast() {
-  const { waiting, apply, dismiss } = useAppUpdate();
+export function UpdateToast({ update }: { update: AppUpdate }) {
+  const { waiting, apply, dismiss } = update;
   const active = useLive(hasActiveSession);
   return (
     <IonToast

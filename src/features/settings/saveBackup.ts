@@ -7,6 +7,7 @@ import { saveFile, type SaveResult } from '../../pwa/files';
 export async function saveBackup(ctx: DataContext): Promise<SaveResult> {
   const json = backupToJson(await exportBackup(ctx));
   const result = await saveFile(backupFileName(ctx.clock.today()), json, 'application/json');
-  if (result === 'saved') await recordBackup(ctx);
+  // The file is safe by now. Failing to note the time only brings the reminder back.
+  if (result === 'saved') await recordBackup(ctx).catch(console.error);
   return result;
 }

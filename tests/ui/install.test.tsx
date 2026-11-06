@@ -99,6 +99,12 @@ describe('persistent storage request', () => {
     await expect(requestPersistentStorage()).resolves.toBeUndefined();
   });
 
+  it('shows the status when the app opens on Settings', async () => {
+    setStorage({ persisted: vi.fn(async () => false) });
+    renderApp('/tabs/settings');
+    expect(await screen.findByText('Not persistent')).toBeInTheDocument();
+  });
+
   it('shows the new status each time Settings opens', async () => {
     const persisted = vi.fn(async () => false);
     setStorage({

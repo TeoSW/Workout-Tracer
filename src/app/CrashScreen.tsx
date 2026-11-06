@@ -2,12 +2,13 @@ import { useState } from 'react';
 import type { DataContext } from '../data/context';
 import { saveBackup } from '../features/settings/saveBackup';
 import { reloadApp } from '../pwa/reload';
+import type { AppUpdate } from '../pwa/useAppUpdate';
 
 /**
  * Shown when the app can't go on. It is plain HTML, since the crash may be in Ionic or the shell,
  * and it reaches the data through ctx, so it works without any provider above it.
  */
-export function CrashScreen({ ctx }: { ctx: DataContext }) {
+export function CrashScreen({ ctx, update }: { ctx: DataContext; update: AppUpdate }) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -29,7 +30,8 @@ export function CrashScreen({ ctx }: { ctx: DataContext }) {
       <button type="button" disabled={saving} onClick={() => void exportData()}>
         Export my data
       </button>
-      <button type="button" onClick={reloadApp}>
+      {/* A plain reload stays on the old version, so a fix for this crash has to be applied. */}
+      <button type="button" onClick={update.waiting ? update.apply : reloadApp}>
         Reload
       </button>
       {message && <p role="status">{message}</p>}

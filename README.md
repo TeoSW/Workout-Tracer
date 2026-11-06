@@ -12,7 +12,7 @@ You need iOS 17 or later.
 2. Tap Share, then Add to Home Screen.
 3. Open the app from the home screen, and use it from there.
 
-Data saved in a Safari tab stays in that tab and won't appear in the installed app. Open the installed app once while online, and after that it works offline.
+Data saved in a Safari tab stays in that tab and won't appear in the installed app. The first launch of the installed app needs a connection, and after that it works offline.
 
 ## Keep a backup
 
