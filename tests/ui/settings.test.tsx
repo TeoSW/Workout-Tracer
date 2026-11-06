@@ -1,5 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { version } from '../../package.json';
 import { exportBackup, backupToJson, hasUndoSnapshot } from '../../src/data/backup';
 import { listBands } from '../../src/data/bands';
 import { setBodyweight, listBodyweight } from '../../src/data/bodyweight';
@@ -36,7 +37,7 @@ describe('settings', () => {
   it('shows the app version', async () => {
     renderApp('/tabs/settings');
     expect(await screen.findByText('App version')).toBeInTheDocument();
-    expect(screen.getByText('0.1.0')).toBeInTheDocument();
+    expect(screen.getByText(version)).toBeInTheDocument();
   });
 });
 
