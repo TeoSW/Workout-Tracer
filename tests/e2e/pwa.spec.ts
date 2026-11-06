@@ -81,3 +81,22 @@ test('in a Safari tab the banner shows on Today', async ({ page }) => {
   await openApp(page);
   await expect(visibleText(page, 'Install this app')).toBeVisible();
 });
+
+test('after the first visit it works offline, charts chunk included', async ({ page, context }) => {
+  await openApp(page);
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload(); // The worker takes control from the next load.
+  await expect
+    .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
+    .toBe(true);
+
+  await context.setOffline(true);
+  await page.reload();
+  await expect(visibleText(page, 'Bodyweight')).toBeVisible();
+  await openTab(page, 'Progress');
+  await expect(visibleText(page, 'Stats will show here once you log workouts.')).toBeVisible();
+
+  await openTab(page, 'Today');
+  await visibleText(page, 'Empty workout').click();
+  await expect(page.getByTestId('finish-workout').filter({ visible: true })).toBeVisible();
+});
