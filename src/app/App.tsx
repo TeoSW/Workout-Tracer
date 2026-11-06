@@ -1,7 +1,9 @@
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactHashRouter } from '@ionic/react-router';
+import { useEffect } from 'react';
 import { Navigate, Route } from 'react-router-dom';
 import type { DataContext } from '../data/context';
+import { requestPersistentStorage } from '../pwa/storage';
 import { DataProvider } from './DataProvider';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Tabs } from './Tabs';
@@ -18,6 +20,8 @@ import './theme.css';
 setupIonicReact({ mode: 'ios' });
 
 export function App({ ctx }: { ctx: DataContext }) {
+  useEffect(() => void requestPersistentStorage(), []);
+
   return (
     <ErrorBoundary ctx={ctx}>
       <DataProvider ctx={ctx}>

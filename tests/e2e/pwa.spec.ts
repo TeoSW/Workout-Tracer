@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openApp, openTab } from './helpers';
+import { openApp, openTab, visibleText } from './helpers';
 
 const BASE_PATH = '/workout-tracker/';
 
@@ -61,4 +61,23 @@ test('a chunk that will not load shows the crash screen, and the data can leave'
   await page.unroute('**/ProgressContent-*.js');
   await page.getByRole('button', { name: 'Reload' }).click();
   await expect(page.locator('ion-tab-button', { hasText: 'Today' })).toBeVisible();
+});
+
+test('in the installed app there is no banner, and storage is requested', async ({ page }) => {
+  await page.addInitScript(() => {
+    let granted = false;
+    Object.defineProperty(navigator, 'standalone', { value: true });
+    StorageManager.prototype.persisted = async () => granted;
+    StorageManager.prototype.persist = async () => (granted = true);
+  });
+  await openApp(page);
+  await expect(visibleText(page, 'Bodyweight')).toBeVisible();
+  await expect(page.getByText('Install this app')).toHaveCount(0);
+  await openTab(page, 'Settings');
+  await expect(visibleText(page, 'Persistent')).toBeVisible();
+});
+
+test('in a Safari tab the banner shows on Today', async ({ page }) => {
+  await openApp(page);
+  await expect(visibleText(page, 'Install this app')).toBeVisible();
 });

@@ -18,6 +18,7 @@ import { formatCycleWeek, formatKg } from '../../domain/format';
 import type { PlannedDay } from '../../domain/today';
 import { PageShell } from '../../ui/PageShell';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
+import { InstallBanner } from './InstallBanner';
 import { useStartWorkout } from './useStartWorkout';
 
 function nameOf(overview: TodayOverview, dayTemplateId: string | null): string {
@@ -152,6 +153,7 @@ export function TodayPage() {
 
   return (
     <PageShell title="Today">
+      <InstallBanner />
       {overview?.active && (
         <IonList inset>
           <IonItem button detail onClick={resume}>

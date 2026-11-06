@@ -7,8 +7,9 @@ import {
   IonSelect,
   IonSelectOption,
   IonToggle,
+  useIonViewWillEnter,
 } from '@ionic/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { version } from '../../../package.json';
 import { useData, useLive } from '../../app/DataProvider';
 import { getSettings, setSetting } from '../../data/settings';
@@ -37,9 +38,9 @@ export function SettingsPage() {
   const settings = useLive(getSettings);
   const [storage, setStorage] = useState<StorageStatus | null>(null);
 
-  useEffect(() => {
+  useIonViewWillEnter(() => {
     void getStorageStatus().then(setStorage);
-  }, []);
+  });
 
   return (
     <PageShell title="Settings">
