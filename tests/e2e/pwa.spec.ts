@@ -35,3 +35,11 @@ test('every icon and splash screen in the page exists', async ({ page, request }
   expect(hrefs.length).toBe(47);
   for (const href of hrefs) expect((await request.get(href)).ok(), href).toBe(true);
 });
+
+test('the service worker precaches the main chunk', async ({ page, request }) => {
+  await page.goto('./');
+  const script = await page.locator('script[type="module"][src]').first().getAttribute('src');
+  const main = script?.split('/').pop() ?? '';
+  expect(main).toMatch(/^index-.+\.js$/);
+  expect(await (await request.get(`${BASE_PATH}sw.js`)).text()).toContain(`assets/${main}`);
+});

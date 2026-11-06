@@ -21,6 +21,11 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       injectRegister: false,
+      workbox: {
+        globPatterns: ['**/*.{js,css,html}'],
+        // The main chunk is close to Workbox's 2 MiB default, and it has to be in the precache.
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+      },
       manifest: {
         id: BASE_PATH,
         name: APP_NAME,

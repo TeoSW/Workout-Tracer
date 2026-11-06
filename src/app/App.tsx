@@ -4,6 +4,7 @@ import { Navigate, Route } from 'react-router-dom';
 import type { DataContext } from '../data/context';
 import { DataProvider } from './DataProvider';
 import { Tabs } from './Tabs';
+import { UpdateToast } from './UpdateToast';
 
 import '@ionic/react/css/core.css';
 import '@ionic/react/css/normalize.css';
@@ -25,6 +26,7 @@ export function App({ ctx }: { ctx: DataContext }) {
             <Route path="/" element={<Navigate to="/tabs/today" replace />} />
           </IonRouterOutlet>
         </IonReactHashRouter>
+        <UpdateToast />
       </IonApp>
     </DataProvider>
   );

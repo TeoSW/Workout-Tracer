@@ -69,6 +69,10 @@ export async function getSessionView(ctx: DataContext, id: string): Promise<Sess
   };
 }
 
+export async function hasActiveSession(ctx: DataContext): Promise<boolean> {
+  return (await ctx.db.sessions.where('status').equals('active').count()) > 0;
+}
+
 export async function getActiveSession(ctx: DataContext): Promise<SessionView | null> {
   const active = await ctx.db.sessions.where('status').equals('active').first();
   return active ? getSessionView(ctx, active.id) : null;
