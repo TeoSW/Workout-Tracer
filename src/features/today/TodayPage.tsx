@@ -18,6 +18,7 @@ import { formatCycleWeek, formatKg } from '../../domain/format';
 import type { PlannedDay } from '../../domain/today';
 import { PageShell } from '../../ui/PageShell';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
+import { BackupReminder } from './BackupReminder';
 import { InstallBanner } from './InstallBanner';
 import { useStartWorkout } from './useStartWorkout';
 
@@ -154,6 +155,7 @@ export function TodayPage() {
   return (
     <PageShell title="Today">
       <InstallBanner />
+      {overview && !overview.active && <BackupReminder today={today} />}
       {overview?.active && (
         <IonList inset>
           <IonItem button detail onClick={resume}>
