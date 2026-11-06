@@ -7,7 +7,7 @@ export function InstallBanner() {
   return (
     <IonList inset>
       <IonItem>
-        <IonLabel className="ion-text-wrap">
+        <IonLabel className="ion-text-wrap notice">
           <h2>Install this app</h2>
           <p>
             Tap Share, then Add to Home Screen. Data saved in this Safari tab won't appear in the

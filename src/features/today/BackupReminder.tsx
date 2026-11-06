@@ -35,7 +35,7 @@ export function BackupReminder({ today }: { today: DateStr }) {
     <>
       <IonList inset>
         <IonItem>
-          <IonLabel className="ion-text-wrap">
+          <IonLabel className="ion-text-wrap notice">
             <h2>Back up your data</h2>
             <p>{`${last} iOS can clear app data, so keep a copy in Files.`}</p>
           </IonLabel>

@@ -386,3 +386,8 @@ ion-item > .day-dot {
   background: var(--ion-color-primary, #0054e9);
   color: var(--ion-color-primary-contrast, #ffffff);
 }
+
+/* A notice is meant to be read, so its text skips the faint secondary color of list items. */
+ion-label.notice p {
+  color: var(--ion-text-color);
+}
