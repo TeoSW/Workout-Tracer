@@ -1,10 +1,48 @@
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
+import { APP_NAME } from './src/domain/config';
 
-/** Must match the GitHub Pages repo path. Settled in Milestone 6. */
+/** Must match the GitHub Pages repo path. */
 const BASE_PATH = '/workout-tracker/';
 
+/** Keeps APP_NAME the one place for the name, index.html included. */
+function appNameInHtml(): Plugin {
+  return {
+    name: 'app-name-in-html',
+    transformIndexHtml: (html) => html.replaceAll('__APP_NAME__', APP_NAME),
+  };
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    appNameInHtml(),
+    VitePWA({
+      registerType: 'prompt',
+      injectRegister: false,
+      manifest: {
+        id: BASE_PATH,
+        name: APP_NAME,
+        short_name: 'Workouts',
+        description: 'A workout logger for iPhone.',
+        lang: 'en',
+        display: 'standalone',
+        orientation: 'portrait',
+        theme_color: '#f2f2f7',
+        background_color: '#f2f2f7',
+        icons: [
+          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+          {
+            src: 'maskable-icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+      },
+    }),
+  ],
   base: BASE_PATH,
 });
