@@ -3,6 +3,7 @@ import { IonReactHashRouter } from '@ionic/react-router';
 import { Navigate, Route } from 'react-router-dom';
 import type { DataContext } from '../data/context';
 import { DataProvider } from './DataProvider';
+import { ErrorBoundary } from './ErrorBoundary';
 import { Tabs } from './Tabs';
 import { UpdateToast } from './UpdateToast';
 
@@ -18,16 +19,18 @@ setupIonicReact({ mode: 'ios' });
 
 export function App({ ctx }: { ctx: DataContext }) {
   return (
-    <DataProvider ctx={ctx}>
-      <IonApp>
-        <IonReactHashRouter>
-          <IonRouterOutlet>
-            <Route path="/tabs/*" element={<Tabs />} />
-            <Route path="/" element={<Navigate to="/tabs/today" replace />} />
-          </IonRouterOutlet>
-        </IonReactHashRouter>
-        <UpdateToast />
-      </IonApp>
-    </DataProvider>
+    <ErrorBoundary ctx={ctx}>
+      <DataProvider ctx={ctx}>
+        <IonApp>
+          <IonReactHashRouter>
+            <IonRouterOutlet>
+              <Route path="/tabs/*" element={<Tabs />} />
+              <Route path="/" element={<Navigate to="/tabs/today" replace />} />
+            </IonRouterOutlet>
+          </IonReactHashRouter>
+          <UpdateToast />
+        </IonApp>
+      </DataProvider>
+    </ErrorBoundary>
   );
 }

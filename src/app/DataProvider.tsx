@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { DataContext } from '../data/context';
 import { seedIfNeeded } from '../data/seed';
+import { CrashScreen } from './CrashScreen';
 
 const Data = createContext<DataContext | null>(null);
 
@@ -24,7 +25,7 @@ export function DataProvider({ ctx, children }: { ctx: DataContext; children: Re
     };
   }, [ctx]);
 
-  if (state === 'failed') return <p>The app could not open its data on this device.</p>;
+  if (state === 'failed') return <CrashScreen ctx={ctx} />;
   if (state === 'loading') return null;
   return <Data.Provider value={ctx}>{children}</Data.Provider>;
 }

@@ -347,3 +347,42 @@ ion-item > .day-dot {
   font-size: 20px;
   font-weight: 600;
 }
+
+/* The crash screen uses no Ionic components, so it styles its own buttons. */
+.crash-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  padding: calc(env(safe-area-inset-top) + 32px) 24px 32px;
+  overflow-y: auto;
+  background: var(--grouped-background);
+  color: var(--ion-text-color, #000000);
+  font-family: var(--ion-font-family, -apple-system, system-ui, sans-serif);
+}
+
+.crash-screen h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.crash-screen p {
+  margin: 0 0 12px;
+}
+
+.crash-screen button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--grouped-card);
+  color: var(--ion-color-primary, #0054e9);
+  font: inherit;
+  font-weight: 600;
+}
+
+.crash-screen button:first-of-type {
+  background: var(--ion-color-primary, #0054e9);
+  color: var(--ion-color-primary-contrast, #ffffff);
+}

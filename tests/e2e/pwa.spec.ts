@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openApp, openTab } from './helpers';
 
 const BASE_PATH = '/workout-tracker/';
 
@@ -42,4 +43,22 @@ test('the service worker precaches the main chunk', async ({ page, request }) =>
   const main = script?.split('/').pop() ?? '';
   expect(main).toMatch(/^index-.+\.js$/);
   expect(await (await request.get(`${BASE_PATH}sw.js`)).text()).toContain(`assets/${main}`);
+});
+
+test('a chunk that will not load shows the crash screen, and the data can leave', async ({
+  page,
+}) => {
+  await page.route('**/ProgressContent-*.js', (route) => route.abort());
+  await openApp(page);
+  await openTab(page, 'Progress');
+  await expect(page.getByText('Something went wrong')).toBeVisible();
+
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export my data' }).click();
+  expect((await download).suggestedFilename()).toMatch(/^workout-tracker-backup-.+\.json$/);
+  await expect(page.getByText('Backup saved.')).toBeVisible();
+
+  await page.unroute('**/ProgressContent-*.js');
+  await page.getByRole('button', { name: 'Reload' }).click();
+  await expect(page.locator('ion-tab-button', { hasText: 'Today' })).toBeVisible();
 });
