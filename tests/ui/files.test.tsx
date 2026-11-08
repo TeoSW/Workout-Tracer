@@ -50,11 +50,14 @@ describe('saveFile', () => {
     expect(click).not.toHaveBeenCalled();
   });
 
-  it('falls back to a download when sharing fails', async () => {
+  it('fails rather than pretend a download saved the file', async () => {
     const click = stubDownload();
-    stubNavigator({ canShare: () => true, share: () => Promise.reject(new Error('no')) });
-    expect(await saveFile('a.json', '{}', 'application/json')).toBe('saved');
-    expect(click).toHaveBeenCalledOnce();
+    const blocked = new DOMException('no gesture', 'NotAllowedError');
+    stubNavigator({ canShare: () => true, share: () => Promise.reject(blocked) });
+    await expect(saveFile('a.json', '{}', 'application/json')).rejects.toThrow(
+      'The share sheet could not open. Try again.',
+    );
+    expect(click).not.toHaveBeenCalled();
   });
 });
 

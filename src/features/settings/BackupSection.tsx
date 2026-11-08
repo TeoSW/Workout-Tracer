@@ -1,19 +1,13 @@
 import { IonItem, IonLabel, IonList, IonListHeader, IonNote } from '@ionic/react';
 import { useRef, useState, type ChangeEvent } from 'react';
 import { useData, useLive } from '../../app/DataProvider';
-import {
-  backupToJson,
-  exportBackup,
-  hasUndoSnapshot,
-  recordBackup,
-  restoreBackup,
-  undoLastRestore,
-} from '../../data/backup';
+import { hasUndoSnapshot, restoreBackup, undoLastRestore } from '../../data/backup';
 import { exportCsv } from '../../data/csv';
-import { backupFileName, parseBackup, recordCounts, type BackupFile } from '../../domain/backup';
+import { parseBackup, recordCounts, type BackupFile } from '../../domain/backup';
 import { dateOfEpochMs } from '../../domain/dates';
 import type { AppSettings } from '../../domain/schemas';
 import { readFileText, saveFile } from '../../pwa/files';
+import { saveBackup } from './saveBackup';
 
 function parseFile(text: string): ReturnType<typeof parseBackup> {
   try {
@@ -43,12 +37,7 @@ export function BackupSection({ settings }: { settings: AppSettings }) {
 
   const exportJson = () =>
     run(async () => {
-      const json = backupToJson(await exportBackup(ctx));
-      const name = backupFileName(ctx.clock.today());
-      if ((await saveFile(name, json, 'application/json')) === 'saved') {
-        await recordBackup(ctx);
-        say('Backup saved.');
-      }
+      if ((await saveBackup(ctx)) === 'saved') say('Backup saved.');
     });
 
   const exportSheet = () =>

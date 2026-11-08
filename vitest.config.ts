@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
@@ -14,7 +15,10 @@ export default defineConfig({
       {
         plugins: [react()],
         // @lit/react, under Ionic's components, ships a server build that never attaches events.
-        resolve: { conditions: ['browser'] },
+        resolve: {
+          conditions: ['browser'],
+          alias: { 'virtual:pwa-register/react': resolve('tests/ui/pwa-register-stub.ts') },
+        },
         test: {
           name: 'ui',
           testTimeout: 30_000,

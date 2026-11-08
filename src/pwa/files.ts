@@ -10,7 +10,10 @@ function download(file: File): void {
   URL.revokeObjectURL(url);
 }
 
-/** Saves through the iOS share sheet when it takes files, otherwise as a download. */
+/**
+ * Saves through the iOS share sheet when it takes files, otherwise as a download. A share sheet
+ * that fails throws, because a download can't be confirmed and must not pass for a saved backup.
+ */
 export async function saveFile(name: string, text: string, type: string): Promise<SaveResult> {
   const file = new File([text], name, { type });
   if (navigator.canShare?.({ files: [file] })) {
@@ -19,6 +22,7 @@ export async function saveFile(name: string, text: string, type: string): Promis
       return 'saved';
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return 'cancelled';
+      throw new Error('The share sheet could not open. Try again.');
     }
   }
   download(file);

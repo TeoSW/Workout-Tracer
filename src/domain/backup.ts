@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { APP_ID } from './config';
-import type { DateStr } from './dates';
+import { dateOfEpochMs, dayNumber, type DateStr } from './dates';
 import { firstIssue, type Result } from './errors';
 import {
   BandSchema,
@@ -120,4 +120,19 @@ export function recordCounts(backup: BackupFile): Record<BackupTable, number> {
   return Object.fromEntries(
     Object.entries(backup.data).map(([table, rows]) => [table, rows.length]),
   ) as Record<BackupTable, number>;
+}
+
+/**
+ * True when the last backup is at least the reminder interval old, in calendar days. With no backup
+ * yet the interval runs from the first finished workout, so nobody is nagged with nothing to lose.
+ */
+export function backupDue(input: {
+  lastBackupAt: number | null;
+  reminderDays: number;
+  firstFinishedDate: DateStr | null;
+  today: DateStr;
+}): boolean {
+  const { lastBackupAt, reminderDays, firstFinishedDate, today } = input;
+  const from = lastBackupAt === null ? firstFinishedDate : dateOfEpochMs(lastBackupAt);
+  return from !== null && dayNumber(today) - dayNumber(from) >= reminderDays;
 }

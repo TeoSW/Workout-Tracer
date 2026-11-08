@@ -27,8 +27,14 @@ export function ShareProgramPage() {
   async function shareFile() {
     if (!shared) return;
     const json = JSON.stringify(shared.share);
-    const result = await saveFile(fileName(shared.share.program.name), json, 'application/json');
-    if (result === 'saved') setMessage('Program file saved.');
+    try {
+      const name = fileName(shared.share.program.name);
+      if ((await saveFile(name, json, 'application/json')) === 'saved') {
+        setMessage('Program file saved.');
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Something went wrong.');
+    }
   }
 
   return (

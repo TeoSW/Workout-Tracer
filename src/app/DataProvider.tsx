@@ -24,7 +24,7 @@ export function DataProvider({ ctx, children }: { ctx: DataContext; children: Re
     };
   }, [ctx]);
 
-  if (state === 'failed') return <p>The app could not open its data on this device.</p>;
+  if (state === 'failed') throw new Error('The app could not open its data on this device.');
   if (state === 'loading') return null;
   return <Data.Provider value={ctx}>{children}</Data.Provider>;
 }
