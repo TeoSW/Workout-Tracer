@@ -45,22 +45,26 @@ test('the service worker precaches the main chunk', async ({ page, request }) =>
   expect(await (await request.get(`${BASE_PATH}sw.js`)).text()).toContain(`assets/${main}`);
 });
 
-test('a chunk that will not load shows the crash screen, and the data can leave', async ({
-  page,
-}) => {
-  await page.route('**/ProgressContent-*.js', (route) => route.abort());
-  await openApp(page);
-  await openTab(page, 'Progress');
-  await expect(page.getByText('Something went wrong')).toBeVisible();
+test.describe('with the worker out of the way', () => {
+  test.use({ serviceWorkers: 'block' });
 
-  const download = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Export my data' }).click();
-  expect((await download).suggestedFilename()).toMatch(/^workout-tracker-backup-.+\.json$/);
-  await expect(page.getByText('Backup saved.')).toBeVisible();
+  test('a chunk that will not load shows the crash screen, and the data can leave', async ({
+    page,
+  }) => {
+    await page.route('**/ProgressContent-*.js', (route) => route.abort());
+    await openApp(page);
+    await openTab(page, 'Progress');
+    await expect(page.getByText('Something went wrong')).toBeVisible();
 
-  await page.unroute('**/ProgressContent-*.js');
-  await page.getByRole('button', { name: 'Reload' }).click();
-  await expect(page.locator('ion-tab-button', { hasText: 'Today' })).toBeVisible();
+    const download = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Export my data' }).click();
+    expect((await download).suggestedFilename()).toMatch(/^workout-tracker-backup-.+\.json$/);
+    await expect(page.getByText('Backup saved.')).toBeVisible();
+
+    await page.unroute('**/ProgressContent-*.js');
+    await page.getByRole('button', { name: 'Reload' }).click();
+    await expect(page.locator('ion-tab-button', { hasText: 'Today' })).toBeVisible();
+  });
 });
 
 test('in the installed app there is no banner, and storage is requested', async ({ page }) => {

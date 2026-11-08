@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { finishSession, startEmptySession } from '../../src/data/sessions';
 import { seedIfNeeded } from '../../src/data/seed';
+import { reloadApp } from '../../src/pwa/reload';
 import { updateCheckDue } from '../../src/pwa/useAppUpdate';
 import { testContext } from '../unit/data/helpers';
 import { renderApp } from './helpers';
@@ -35,13 +36,20 @@ describe('update toast', () => {
     await expectToast(false);
   });
 
-  it('offers the update, and Update applies it', async () => {
+  it('offers the update, and Update applies it and reloads', async () => {
+    const addEventListener = vi.fn();
+    Object.defineProperty(navigator, 'serviceWorker', {
+      value: { addEventListener },
+      configurable: true,
+    });
     renderApp();
     await expectToast(true);
     expect(toast()?.message).toBe('Update available');
     await waitFor(() => toastButton('Update'));
     toastButton('Update').click();
     await waitFor(() => expect(pwaStub.updateServiceWorker).toHaveBeenCalledWith(true));
+    expect(addEventListener).toHaveBeenCalledWith('controllerchange', reloadApp, { once: true });
+    Reflect.deleteProperty(navigator, 'serviceWorker');
   });
 
   it('Later closes it without updating', async () => {

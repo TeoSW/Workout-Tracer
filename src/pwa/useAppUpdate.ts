@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { reloadApp } from './reload';
 
 const CHECK_EVERY_MS = 60 * 60 * 1000;
 
@@ -40,7 +41,12 @@ export function useAppUpdate(): AppUpdate {
 
   return {
     waiting,
-    apply: () => void updateServiceWorker(true),
+    apply: () => {
+      // The plugin reloads only if a worker was in control when it registered, which isn't the
+      // case on the first launch, so an update found then needs its own reload.
+      navigator.serviceWorker?.addEventListener('controllerchange', reloadApp, { once: true });
+      void updateServiceWorker(true);
+    },
     dismiss: () => setWaiting(false),
   };
 }
