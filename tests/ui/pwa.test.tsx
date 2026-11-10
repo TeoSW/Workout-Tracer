@@ -1,3 +1,4 @@
+import { screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { playRestTone, resetAudioForTests, unlockAudio } from '../../src/pwa/audio';
 import {
@@ -6,6 +7,7 @@ import {
   keepAwake,
   resetWakeLockForTests,
 } from '../../src/pwa/wake-lock';
+import { renderApp } from './helpers';
 
 function fakeSentinel() {
   return {
@@ -83,13 +85,17 @@ describe('rest tone', () => {
   function stubAudio() {
     const start = vi.fn();
     const resume = vi.fn(async () => undefined);
+    const instances: { state: string }[] = [];
     class FakeContext {
       state = 'running';
+      constructor() {
+        instances.push(this);
+      }
       currentTime = 0;
       destination = {};
       resume = resume;
       createOscillator() {
-        return { frequency: { value: 0 }, connect: vi.fn(), start, stop: vi.fn() };
+        return { type: 'sine', frequency: { value: 0 }, connect: vi.fn(), start, stop: vi.fn() };
       }
       createGain() {
         return {
@@ -99,7 +105,7 @@ describe('rest tone', () => {
       }
     }
     vi.stubGlobal('AudioContext', FakeContext);
-    return { start, resume };
+    return { start, resume, instances };
   }
 
   it('stays silent until a tap has unlocked it', () => {
@@ -108,7 +114,44 @@ describe('rest tone', () => {
     expect(start).not.toHaveBeenCalled();
     unlockAudio();
     expect(playRestTone()).toBe(true);
-    expect(start).toHaveBeenCalledOnce();
+    // Three double beeps, so it can be heard across a gym.
+    expect(start).toHaveBeenCalledTimes(6);
+  });
+
+  it('plays as media during the alarm, so silent mode does not mute it, then mixes again', () => {
+    vi.useFakeTimers();
+    stubAudio();
+    const session = { type: 'auto' };
+    Object.defineProperty(navigator, 'audioSession', { value: session, configurable: true });
+    unlockAudio();
+    expect(session.type).toBe('ambient');
+    playRestTone();
+    expect(session.type).toBe('playback');
+    vi.advanceTimersByTime(2000);
+    expect(session.type).toBe('ambient');
+    Reflect.deleteProperty(navigator, 'audioSession');
+    vi.useRealTimers();
+  });
+
+  it('wakes sound that iOS suspended, on the next tap', () => {
+    const { resume, instances } = stubAudio();
+    unlockAudio();
+    resume.mockClear();
+    document.dispatchEvent(new Event('pointerdown'));
+    expect(resume).not.toHaveBeenCalled(); // running, nothing to wake
+    const [audio] = instances;
+    if (!audio) throw new Error('no audio context');
+    audio.state = 'interrupted'; // iOS after the app was in the background
+    expect(playRestTone()).toBe(false);
+    document.dispatchEvent(new Event('pointerdown'));
+    expect(resume).toHaveBeenCalledOnce();
+  });
+
+  it('plays a test alarm from Settings', async () => {
+    const { start } = stubAudio();
+    const { user } = renderApp('/tabs/settings');
+    await user.click(await screen.findByText('Play test alarm'));
+    await waitFor(() => expect(start).toHaveBeenCalledTimes(6));
   });
 
   it('does nothing where Web Audio is missing', () => {

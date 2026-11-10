@@ -14,6 +14,7 @@ import { version } from '../../../package.json';
 import { useData, useLive } from '../../app/DataProvider';
 import { getSettings, setSetting } from '../../data/settings';
 import type { EffortMode } from '../../domain/schemas';
+import { playRestTone, unlockAudio } from '../../pwa/audio';
 import { getStorageStatus, type StorageStatus } from '../../pwa/storage';
 import { PageShell } from '../../ui/PageShell';
 import { Stepper } from '../../ui/Stepper';
@@ -82,6 +83,17 @@ export function SettingsPage() {
                 >
                   Sound
                 </IonToggle>
+              </IonItem>
+              <IonItem
+                button
+                detail={false}
+                onClick={() => {
+                  unlockAudio();
+                  // The tap starts the sound; the alarm itself plays just after.
+                  setTimeout(() => playRestTone(), 50);
+                }}
+              >
+                <IonLabel color="primary">Play test alarm</IonLabel>
               </IonItem>
               <IonItem>
                 <IonToggle
