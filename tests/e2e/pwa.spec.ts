@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { openApp, openTab, visibleText } from './helpers';
 
-const BASE_PATH = '/workout-tracker/';
+const BASE_PATH = '/Workout-Tracer/';
 
 test('the manifest matches the base path and its icons load', async ({ page, request }) => {
   await page.goto('./');

@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { APP_NAME, APP_SHORT_NAME } from './src/domain/config';
 
 /** Must match the GitHub Pages repo path. */
-const BASE_PATH = '/workout-tracker/';
+const BASE_PATH = '/Workout-Tracer/';
 
 /** Keeps src/domain/config the one place for the name, index.html included. */
 function appNameInHtml(): Plugin {

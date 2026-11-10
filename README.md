@@ -8,7 +8,7 @@ Everything stays on your phone. There are no accounts, no server and no shared d
 
 You need iOS 17 or later.
 
-1. Open https://teosw.github.io/workout-tracker/ in Safari.
+1. Open https://teosw.github.io/Workout-Tracer/ in Safari.
 2. Tap Share, then Add to Home Screen.
 3. Open the app from the home screen, and use it from there.
 

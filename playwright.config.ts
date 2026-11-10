@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = 4173;
-const BASE_URL = `http://localhost:${PORT}/workout-tracker/`;
+const BASE_URL = `http://localhost:${PORT}/Workout-Tracer/`;
 
 export default defineConfig({
   testDir: 'tests/e2e',
