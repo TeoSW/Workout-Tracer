@@ -98,10 +98,8 @@ export function SetPlanFields(props: { block: ExerciseBlock; mode: EffortMode; o
               <IonLabel>
                 <h3>{extra ? `Set ${i + 1} (if done)` : `Set ${i + 1}`}</h3>
               </IonLabel>
-              {mode !== 'off' && (
-                <IonNote slot="end">
-                  {effortText(plan.rir === undefined ? target.rir : plan.rir, mode)}
-                </IonNote>
+              {mode !== 'off' && plan.rir === undefined && (
+                <IonNote slot="end">{`Every set: ${effortText(target.rir, mode)}`}</IonNote>
               )}
             </IonItem>
             {mode !== 'off' && (

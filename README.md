@@ -26,6 +26,8 @@ On a training day, Today asks "Training today?". Tap Not today to skip the day, 
 
 On Today, tap Start workout. You see the day from your program and its exercises, and you can pick another week or day first. While a workout runs, Today shows its exercises with Continue workout and End workout. Tap the check on a set to log it and start the rest. Tap the rest time to set your own.
 
+Each exercise in a program day can plan an effort (RIR or RPE, following Settings) for every set, plus its own effort and note per set. The logger shows the plan under each set and prefills the effort.
+
 ## Coach profile
 
 In Settings, switch Profile to Coach. Your own training stays as it is in My training. As a coach you add clients, build a program for each one from a preset or from scratch, and tap Send to send it as a WhatsApp message or a file. The client pastes the code under Programs, Import program. The coach profile has its own backup file.
