@@ -391,3 +391,127 @@ ion-item > .day-dot {
 ion-label.notice p {
   color: var(--ion-text-color);
 }
+
+/* Today: one card with the day and its main action. */
+.today-card {
+  margin: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--grouped-card);
+}
+
+.today-card-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ion-color-medium);
+}
+
+.today-card-title {
+  margin: 4px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.today-card-line {
+  margin: 4px 0 12px;
+  font-size: 15px;
+  color: var(--ion-color-medium);
+}
+
+.today-card ion-button[size='large'] {
+  margin: 12px 0 0;
+  min-height: 50px;
+}
+
+.today-card ion-button[fill='clear'] {
+  margin: 4px 0 0;
+  min-height: 44px;
+}
+
+.today-card-next {
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--ion-color-step-150, #d9d9d9);
+  font-size: 15px;
+}
+
+.sheet-intro {
+  padding-top: 16px;
+}
+
+/* A missed day: outlined, so it never reads as a workout of some day type. */
+.calendar-missed {
+  width: 16px;
+  height: 4px;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px var(--ion-color-medium);
+}
+
+.day-dot-missed {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--ion-color-medium);
+}
+
+/* The one-tap check on a pending set. */
+.set-check {
+  --padding-start: 6px;
+  --padding-end: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  font-size: 26px;
+}
+
+.rest-bar {
+  padding: 8px 12px;
+}
+
+.rest-bar-main {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-bottom: 6px;
+}
+
+.rest-bar-label {
+  font-size: 13px;
+  color: var(--ion-color-medium);
+}
+
+.rest-bar-main .rest-bar-time {
+  flex: none;
+  font-size: 30px;
+  font-weight: 600;
+}
+
+.rest-bar-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ion-color-primary);
+  transform-origin: left center;
+  transition: transform 0.25s linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rest-bar-progress {
+    transition: none;
+  }
+}
+
+.preset-note {
+  color: var(--ion-text-color);
+}
+
+.preset-weekday {
+  width: 40px;
+  margin-inline-end: 8px;
+}

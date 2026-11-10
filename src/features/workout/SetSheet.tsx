@@ -1,6 +1,5 @@
 import {
   IonButton,
-  IonChip,
   IonContent,
   IonHeader,
   IonItem,
@@ -19,35 +18,10 @@ import type { Band, EffortMode, Exercise, LoggedSet } from '../../domain/schemas
 import type { SetDraft } from '../../domain/set-draft';
 import { draftProblem } from '../../domain/set-draft';
 import { ErrorNote } from '../../ui/useGuard';
+import { Chips } from '../../ui/Chips';
 import { Stepper } from '../../ui/Stepper';
 
 type Change = (patch: Partial<SetDraft>) => void;
-
-function Chips<T>(props: {
-  options: readonly T[];
-  label: (value: T) => string;
-  isOn: (value: T) => boolean;
-  onTap: (value: T) => void;
-}) {
-  return (
-    <div className="chip-row">
-      {props.options.map((value) => {
-        const on = props.isOn(value);
-        return (
-          <IonChip
-            key={props.label(value)}
-            color={on ? 'primary' : 'medium'}
-            outline={!on}
-            aria-pressed={on}
-            onClick={() => props.onTap(value)}
-          >
-            {props.label(value)}
-          </IonChip>
-        );
-      })}
-    </div>
-  );
-}
 
 function EffortChips({
   draft,

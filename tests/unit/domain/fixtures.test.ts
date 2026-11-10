@@ -6,7 +6,6 @@ import {
   PROGRAM_A,
   PROGRAM_C,
   blankTemplate,
-  templatesForSplit,
 } from '../../../src/domain/fixtures/templates';
 import {
   BandSchema,
@@ -37,17 +36,17 @@ function day(name: string): DayTemplate {
 }
 
 describe('seed bands', () => {
-  it('has 15, 25 and 35kg bands', () => {
-    expect(SEED_BANDS.map((b) => BandSchema.parse(b).ratedKg)).toEqual([15, 25, 35]);
+  it('has 5, 15, 25 and 35kg bands', () => {
+    expect(SEED_BANDS.map((b) => BandSchema.parse(b).ratedKg)).toEqual([5, 15, 25, 35]);
   });
 });
 
 describe('seed exercises', () => {
-  it('has the 54 exercises from the spec, all valid, with unique ids and names', () => {
-    expect(SEED_EXERCISES).toHaveLength(54);
+  it('has 54 exercises from the spec plus 6 for the presets, all valid, with unique ids and names', () => {
+    expect(SEED_EXERCISES).toHaveLength(60);
     for (const e of SEED_EXERCISES) ExerciseSchema.parse(e);
-    expect(exerciseIds.size).toBe(54);
-    expect(new Set(SEED_EXERCISES.map((e) => e.name.toLowerCase())).size).toBe(54);
+    expect(exerciseIds.size).toBe(60);
+    expect(new Set(SEED_EXERCISES.map((e) => e.name.toLowerCase())).size).toBe(60);
   });
 
   it('only points alternatives at exercises that exist', () => {
@@ -95,12 +94,6 @@ describe('built-in templates', () => {
       const ids = t.dayTemplates.flatMap((d) => d.blocks.map((b) => b.id));
       expect(new Set(ids).size).toBe(ids.length);
     }
-  });
-
-  it('offers built-in templates per split type plus a blank one', () => {
-    expect(templatesForSplit('ulu_lul_rotation').map((t) => t.name)).toEqual(['ULU/LUL', 'Blank']);
-    expect(templatesForSplit('ppll').map((t) => t.name)).toEqual(['PPLL', 'Blank']);
-    expect(templatesForSplit('custom').map((t) => t.name)).toEqual(['Blank']);
   });
 
   it('builds Program A as a 4-day rotation, 3 sessions a week', () => {

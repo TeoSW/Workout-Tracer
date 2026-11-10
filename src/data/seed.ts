@@ -7,8 +7,16 @@ import type { DataContext } from './context';
  * Bump when a release adds built-in exercises or bands, and list the new ids in
  * INTRODUCED_IN with the version that adds them. Ids not listed count as version 1.
  */
-export const SEED_VERSION = 1;
-const INTRODUCED_IN: Readonly<Record<string, number>> = {};
+export const SEED_VERSION = 2;
+const INTRODUCED_IN: Readonly<Record<string, number>> = {
+  'band-5': 2,
+  'push-ups': 2,
+  'inverted-row': 2,
+  dips: 2,
+  'pike-push-ups': 2,
+  'planche-press': 2,
+  'oblique-extension': 2,
+};
 
 const SEED_VERSION_KEY = 'seedVersion';
 
@@ -31,6 +39,13 @@ export async function seedIfNeeded(ctx: DataContext): Promise<boolean> {
     const existingExercises = new Set(
       await db.exercises.bulkGet(exercises.map((e) => e.id)).then(ids),
     );
+    // A custom exercise the user already made under the same name stays the only one.
+    const names = new Set((await db.exercises.toArray()).map((e) => e.name.toLowerCase()));
+    for (const e of exercises) {
+      if (!existingExercises.has(e.id) && names.has(e.name.toLowerCase())) {
+        existingExercises.add(e.id);
+      }
+    }
     await db.bands.bulkPut(clean(bands.filter((b) => !existingBands.has(b.id))));
     await db.exercises.bulkPut(clean(exercises.filter((e) => !existingExercises.has(e.id))));
     await db.settings.put({ key: SEED_VERSION_KEY, value: SEED_VERSION });

@@ -56,7 +56,17 @@ export function RestBar() {
       role="timer"
       data-testid="rest-bar"
     >
-      <span className="rest-bar-time">{over ? 'Rest over' : formatRemaining(remaining)}</span>
+      <div className="rest-bar-main">
+        <span className="rest-bar-label">Rest</span>
+        <span className="rest-bar-time">{over ? 'Rest over' : formatRemaining(remaining)}</span>
+        <span
+          className="rest-bar-progress"
+          aria-hidden="true"
+          style={{
+            transform: `scaleX(${over ? 0 : remaining / Math.max(1, timer.durationSec * 1000)})`,
+          }}
+        />
+      </div>
       {!over && (
         <IonButton fill="clear" onClick={() => void extendRestTimer(ctx, 15)}>
           +15s

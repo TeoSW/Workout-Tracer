@@ -16,6 +16,12 @@ On Android, open the site in Chrome, open the browser menu, then tap Install app
 
 Data saved in a browser tab stays in that tab and won't appear in the installed app. The first launch of the installed app needs a connection, and after that it works offline.
 
+## Programs and missed days
+
+New program opens on a list of presets, including the Calisthenics 5-week cycle. Pick one, check its weeks and days, set the week you are in, and tap Use this program.
+
+On a training day, Today asks "Training today?". Tap Not today to skip the day, with an optional reason. The plan stays as it is, History keeps a record of the missed day, and Progress counts missed days each month.
+
 ## Keep a backup
 
 iOS can clear app data, and removing the app deletes it. In Settings, tap Export backup and save the file to Files. The app reminds you when your last backup is older than the interval you set. Restore from file brings it all back, on this phone or a new one.

@@ -33,6 +33,27 @@ export function formatBandLevel(
 }
 
 /** "3 x 8-12", "3-4 x 5-10s", "4-6 attempts". Empty for a checklist item. */
+const LEG_MUSCLES = new Set(['glutes', 'quads', 'hamstrings', 'adductors', 'abductors', 'calves']);
+const ARM_MUSCLES = new Set([
+  'chest',
+  'lats',
+  'upper_back',
+  'traps',
+  'front_delts',
+  'side_delts',
+  'rear_delts',
+  'biceps',
+  'triceps',
+  'forearms',
+]);
+
+/** What "per" means for a one-sided exercise: a leg, an arm, or a side for core work. */
+function limbOf(exercise: Exercise): 'leg' | 'arm' | 'side' {
+  if (exercise.primaryMuscles.some((m) => LEG_MUSCLES.has(m))) return 'leg';
+  if (exercise.primaryMuscles.some((m) => ARM_MUSCLES.has(m))) return 'arm';
+  return 'side';
+}
+
 export function formatSetsTarget(
   block: Pick<ExerciseBlock, 'setsMin' | 'setsMax' | 'target'>,
   exercise: Exercise,
@@ -56,7 +77,7 @@ export function formatSetsTarget(
     return `${sets} x ${range(target.secondsMin, target.secondsMax)}s`;
   }
   if (target.repsMin !== undefined) {
-    const perSide = exercise.unilateral ? ' /leg' : '';
+    const perSide = exercise.unilateral ? ` /${limbOf(exercise)}` : '';
     return `${sets} x ${range(target.repsMin, target.repsMax)}${perSide}`;
   }
   return block.setsMin === 1 && block.setsMax === undefined ? '1 set' : `${sets} sets`;
@@ -87,6 +108,9 @@ export const formatCycleWeek = (week: number, total: number) => `Week ${week} of
 
 /** "3 Nov". */
 export const formatShortDate = (date: DateStr) => format(parseDateStr(date), 'd MMM');
+
+/** "Wed 4 Nov". */
+export const formatWeekdayDate = (date: DateStr) => format(parseDateStr(date), 'EEE d MMM');
 
 /** "3 Nov 2026", for lists that run across years. */
 export const formatDateWithYear = (date: DateStr) => format(parseDateStr(date), 'd MMM yyyy');

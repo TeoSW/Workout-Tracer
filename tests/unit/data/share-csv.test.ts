@@ -102,7 +102,7 @@ describe('acceptance 12: program share and import', () => {
         anchorDate: null,
         cycleWeeks: template.cycleWeeks,
       });
-      expect(await receiver.db.exercises.count()).toBe(54);
+      expect(await receiver.db.exercises.count()).toBe(60);
     }
   });
 
@@ -121,7 +121,7 @@ describe('acceptance 12: program share and import', () => {
     };
     const ring = await addCustomExercise(sender, { ...base, name: 'Ring Row' });
     const mine = await addCustomExercise(receiver, { ...base, name: 'RING ROW' });
-    const thin = await addBand(sender, { label: 'Thin', ratedKg: 5 });
+    const thin = await addBand(sender, { label: 'Thin', ratedKg: 3 });
     const { program, dayTemplates } = await createProgramFromTemplate(sender, PROGRAM_A);
     const upperA = dayTemplates[0] as DayTemplate;
     await saveDayTemplate(sender, {
@@ -167,8 +167,8 @@ describe('acceptance 12: program share and import', () => {
       mine.id,
     ]);
     const bands = await receiver.db.bands.toArray();
-    expect(bands.filter((b) => b.ratedKg === 5)).toHaveLength(1);
-    expect(added[0]?.target.bandIds).toEqual([bands.find((b) => b.ratedKg === 5)?.id]);
+    expect(bands.filter((b) => b.ratedKg === 3)).toHaveLength(1);
+    expect(added[0]?.target.bandIds).toEqual([bands.find((b) => b.ratedKg === 3)?.id]);
     expect((await listExercises(receiver)).filter((e) => e.isCustom)).toHaveLength(1);
   });
 

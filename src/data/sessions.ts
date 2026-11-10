@@ -90,7 +90,7 @@ export async function startPlannedSession(
   const { db } = ctx;
   const id = await db.transaction(
     'rw',
-    [...sessionTables(ctx), db.programs, db.dayTemplates, db.exercises],
+    [...sessionTables(ctx), db.programs, db.dayTemplates, db.exercises, db.missedDays],
     async () => {
       await assertNoActiveSession(ctx);
       const program = await db.programs.get(input.programId);
@@ -114,8 +114,14 @@ export async function startPlannedSession(
           }
           rotationIndex = input.rotationIndex;
         } else if (program.schedule.sequence.includes(dayTemplate.id)) {
-          const sessions = await db.sessions.where('programId').equals(program.id).toArray();
-          const pointer = nextRotationIndex(program, lastRotationIndex(sessions, program.id));
+          const [sessions, missedDays] = await Promise.all([
+            db.sessions.where('programId').equals(program.id).toArray(),
+            db.missedDays.where('programId').equals(program.id).toArray(),
+          ]);
+          const pointer = nextRotationIndex(
+            program,
+            lastRotationIndex(sessions, program.id, missedDays),
+          );
           rotationIndex = rotationIndexForPick(program, pointer, dayTemplate.id);
         }
         // A day outside the sequence has no index, and the rotation carries on where it was.

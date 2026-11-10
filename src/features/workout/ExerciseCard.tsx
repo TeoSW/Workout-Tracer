@@ -10,7 +10,12 @@ import {
   IonNote,
   IonToggle,
 } from '@ionic/react';
-import { checkmark, ellipsisHorizontal, informationCircleOutline } from 'ionicons/icons';
+import {
+  checkmark,
+  checkmarkCircleOutline,
+  ellipsisHorizontal,
+  informationCircleOutline,
+} from 'ionicons/icons';
 import { Fragment } from 'react';
 import type { SessionExerciseView } from '../../data/sessions';
 import { formatLastTime, formatPlanLine, formatSetResult } from '../../domain/format';
@@ -20,6 +25,8 @@ import type { Band, Block, EffortMode, Exercise, LoggedSet } from '../../domain/
 
 export type CardActions = {
   openSet: (entry: SessionExerciseView, set: LoggedSet, last: LoggedSet | null) => void;
+  /** Logs a pending set with its prefilled values in one tap. Only a running workout has it. */
+  quickLog?: (entry: SessionExerciseView, set: LoggedSet, last: LoggedSet | null) => void;
   toggleChecklist: (set: LoggedSet, done: boolean) => void;
   deleteSet: (set: LoggedSet) => void;
   toggleWarmup: (set: LoggedSet) => void;
@@ -56,6 +63,20 @@ function SetRow(props: {
           )}
         </IonLabel>
         {set.done && <IonIcon slot="end" icon={checkmark} color="success" aria-label="Done" />}
+        {!set.done && actions.quickLog && (
+          <IonButton
+            slot="end"
+            fill="clear"
+            className="set-check"
+            aria-label={`Log ${label.text.toLowerCase()} of ${exercise.name}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              actions.quickLog?.(entry, set, last);
+            }}
+          >
+            <IonIcon slot="icon-only" icon={checkmarkCircleOutline} aria-hidden="true" />
+          </IonButton>
+        )}
       </IonItem>
       <IonItemOptions side="end">
         <IonItemOption color="medium" onClick={() => actions.toggleWarmup(set)}>

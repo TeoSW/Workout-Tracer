@@ -76,10 +76,8 @@ test('flow 5: share Program A as a code, import it in a fresh browser', async ({
   await openApp(page);
   await openTab(page, 'Programs');
   await visibleText(page, 'New program').click();
-  await page.locator('ion-select').filter({ visible: true }).first().click();
-  await page.locator('ion-action-sheet button', { hasText: 'ULU/LUL rotation' }).click();
-  await visibleText(page, 'ULU/LUL').click();
-  await visibleText(page, 'Create').click();
+  await page.locator('ion-item', { hasText: 'ULU/LUL' }).filter({ visible: true }).first().click();
+  await visibleText(page, 'Edit before using').click();
   await visibleText(page, 'Share program').click();
   const code = await page.locator('.share-code').filter({ visible: true }).innerText();
   expect(code).toMatch(/^WT1\./);

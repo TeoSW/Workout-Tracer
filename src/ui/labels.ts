@@ -1,4 +1,4 @@
-import type { DayType, Muscle, SplitType, TrackingType } from '../domain/schemas';
+import type { DayType, MissedReason, Muscle, SplitType, TrackingType } from '../domain/schemas';
 
 export const MUSCLE_LABELS: Record<Muscle, string> = {
   chest: 'Chest',
@@ -49,4 +49,12 @@ export const DAY_TYPE_LABELS: Record<DayType, string> = {
   test: 'Test',
   conditioning: 'Conditioning',
   custom: 'Custom',
+};
+
+export const MISSED_REASON_LABELS: Record<MissedReason, string> = {
+  sick: 'Sick',
+  busy: 'Busy',
+  pain: 'Pain',
+  travel: 'Travel',
+  other: 'Other',
 };

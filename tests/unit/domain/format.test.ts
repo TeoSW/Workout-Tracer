@@ -84,6 +84,17 @@ describe('plan lines', () => {
 
   it('marks unilateral sets', () => {
     expect(line(lowerB.blocks[0])).toBe('3 x 8-12 /leg · 10-15kg');
+    const cable = SEED_EXERCISES.find((e) => e.id === 'cable-lateral-raise');
+    if (!cable) throw new Error('missing exercise');
+    expect(formatSetsTarget({ setsMin: 2, target: { repsMin: 8, repsMax: 10 } }, cable)).toBe(
+      '2 x 8-10 /arm',
+    );
+    expect(
+      formatSetsTarget(
+        { setsMin: 2, target: { repsMin: 10 } },
+        { ...cable, primaryMuscles: ['abs'], secondaryMuscles: [] },
+      ),
+    ).toBe('2 x 10 /side');
   });
 
   it('writes every tracking type', () => {

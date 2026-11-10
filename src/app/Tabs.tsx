@@ -12,6 +12,7 @@ import { BlockEditorPage } from '../features/programs/BlockEditorPage';
 import { DayEditorPage } from '../features/programs/DayEditorPage';
 import { ImportProgramPage } from '../features/programs/ImportProgramPage';
 import { NewProgramPage } from '../features/programs/NewProgramPage';
+import { PresetPage } from '../features/programs/PresetPage';
 import { ProgramEditorPage } from '../features/programs/ProgramEditorPage';
 import { ProgramsPage } from '../features/programs/ProgramsPage';
 import { ShareProgramPage } from '../features/programs/ShareProgramPage';
@@ -63,6 +64,7 @@ export function Tabs() {
         <Route path="programs/library/:exerciseId" element={<ExerciseDetailPage />} />
         <Route path="programs/library" element={<LibraryPage />} />
         <Route path="programs/new" element={<NewProgramPage />} />
+        <Route path="programs/presets/:id" element={<PresetPage />} />
         <Route path="programs/import" element={<ImportProgramPage />} />
         <Route path="programs/:id/share" element={<ShareProgramPage />} />
         <Route path="programs/:id/days/:dayId/blocks/:blockId" element={<BlockEditorPage />} />

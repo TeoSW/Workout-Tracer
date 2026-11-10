@@ -46,13 +46,13 @@ describe('bands', () => {
     const { ctx, user } = renderApp('/tabs/settings/bands');
     expect(await screen.findByText('35kg')).toBeInTheDocument();
     ionEvent(screen.getByLabelText('New band name'), 'ionInput', { value: 'Thin' });
-    ionEvent(screen.getByLabelText('New band rated kg'), 'ionInput', { value: '5' });
+    ionEvent(screen.getByLabelText('New band rated kg'), 'ionInput', { value: '3' });
     await user.click(screen.getByText('Add band'));
     expect(await screen.findByText('Thin')).toBeInTheDocument();
     await waitFor(async () => expect((await listBands(ctx))[0]?.label).toBe('Thin'));
 
     await user.click(await buttonLabelled('Archive 15kg'));
-    await waitFor(async () => expect(await listBands(ctx)).toHaveLength(3));
+    await waitFor(async () => expect(await listBands(ctx)).toHaveLength(4));
     await waitFor(() => expect(screen.queryByText('15kg')).not.toBeInTheDocument());
   });
 
@@ -98,7 +98,7 @@ describe('backup', () => {
     await user.upload(input, new File([json], 'b.json', { type: 'application/json' }));
 
     expect(
-      await screen.findByText('54 exercises, 0 sessions, 1 bodyweight entries'),
+      await screen.findByText('60 exercises, 0 sessions, 1 bodyweight entries'),
     ).toBeInTheDocument();
     expect(await listBodyweight(ctx)).toEqual([{ date: '2026-11-02', kg: 40 }]);
 

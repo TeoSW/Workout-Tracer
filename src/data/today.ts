@@ -1,5 +1,5 @@
 import { todayPlan, type TodayPlan } from '../domain/today';
-import type { BodyweightEntry, DayTemplate, Program } from '../domain/schemas';
+import type { BodyweightEntry, DayTemplate, MissedDay, Program } from '../domain/schemas';
 import type { DataContext } from './context';
 import { getActiveProgram, getProgram } from './programs';
 import { getActiveSession, type SessionView } from './sessions';
@@ -9,6 +9,7 @@ export type TodayOverview = {
   program: Program | null;
   days: DayTemplate[];
   plan: TodayPlan | null;
+  missedDays: MissedDay[];
   bodyweight: BodyweightEntry | null;
 };
 
@@ -21,15 +22,17 @@ export async function getTodayOverview(ctx: DataContext): Promise<TodayOverview>
     ctx.db.bodyweight.get(today),
   ]);
   const base = { active, bodyweight: bodyweight ?? null };
-  if (!program) return { ...base, program: null, days: [], plan: null };
-  const [loaded, sessions] = await Promise.all([
+  if (!program) return { ...base, program: null, days: [], plan: null, missedDays: [] };
+  const [loaded, sessions, missedDays] = await Promise.all([
     getProgram(ctx, program.id),
     ctx.db.sessions.where('programId').equals(program.id).toArray(),
+    ctx.db.missedDays.where('programId').equals(program.id).toArray(),
   ]);
   return {
     ...base,
     program,
     days: loaded?.dayTemplates ?? [],
-    plan: todayPlan({ program, sessions, today }),
+    plan: todayPlan({ program, sessions, missedDays, today }),
+    missedDays,
   };
 }

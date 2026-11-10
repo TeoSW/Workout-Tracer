@@ -24,7 +24,7 @@ test('flow 1: a mocked Tuesday is a rest day, and Wednesday is Light', async ({ 
   await openApp(page, new Date('2026-11-03T09:00:00'));
   await startProgramC(page);
   await expect(visibleText(page, 'Rest day')).toBeVisible();
-  await expect(visibleText(page, 'Next: Light (front lever first), 2026-11-04')).toBeVisible();
+  await expect(visibleText(page, 'Next: Light (front lever first), Wed 4 Nov')).toBeVisible();
 });
 
 test('flow 2: log a full Heavy day with rest, finish, and find it in History', async ({ page }) => {
@@ -39,7 +39,7 @@ test('flow 2: log a full Heavy day with rest, finish, and find it in History', a
   await expect(page.getByTestId('rest-bar')).toBeHidden();
 
   await logNextSet(page, 'Planche Complex');
-  await expect(page.getByTestId('rest-bar')).toContainText(/^[23]:\d\d/);
+  await expect(page.getByTestId('rest-bar')).toContainText(/^Rest[23]:\d\d/);
   await expectRestBarOnTop(page);
   await visibleText(page, '+15s').click();
   await visibleText(page, 'Skip').click();
@@ -68,7 +68,7 @@ test('flow 2: log a full Heavy day with rest, finish, and find it in History', a
   await expect(card(page, 'Working sets')).toContainText('Working sets18');
   await visibleText(page, 'Close').click();
   await expect(visibleText(page, 'Done: Heavy (planche first)')).toBeVisible();
-  await expect(visibleText(page, 'Next: Light (front lever first), 2026-11-04')).toBeVisible();
+  await expect(visibleText(page, 'Next: Light (front lever first), Wed 4 Nov')).toBeVisible();
 
   await openTab(page, 'History');
   const day = page.getByRole('button', { name: 'Monday 2 November, Heavy (planche first)' });
@@ -87,7 +87,7 @@ test('flow 3: reload mid-workout, Resume restores the sets and the rest', async 
   await startProgramC(page);
   await visibleText(page, 'Start').click();
   await logNextSet(page, 'Planche Complex');
-  await expect(page.getByTestId('rest-bar')).toContainText(/^[23]:\d\d/);
+  await expect(page.getByTestId('rest-bar')).toContainText(/^Rest[23]:\d\d/);
 
   await page.clock.fastForward('00:30');
   await page.clock.resume();
@@ -95,7 +95,7 @@ test('flow 3: reload mid-workout, Resume restores the sets and the rest', async 
   await page.reload();
 
   await expect(visibleText(page, 'Resume workout')).toBeVisible();
-  await expect(page.getByTestId('rest-bar')).toContainText(/^2:[0-3]\d/);
+  await expect(page.getByTestId('rest-bar')).toContainText(/^Rest2:[0-3]\d/);
   await visibleText(page, 'Resume workout').click();
   await expect(card(page, 'Planche Complex')).toContainText('Set 1 ·');
   await expect(card(page, 'Planche Complex')).toContainText('band 25kg');

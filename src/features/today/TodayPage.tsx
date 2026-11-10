@@ -1,109 +1,145 @@
 import {
   IonBadge,
   IonButton,
+  IonButtons,
+  IonContent,
+  IonHeader,
   IonInput,
   IonItem,
   IonLabel,
   IonList,
-  IonListHeader,
+  IonModal,
   IonNote,
+  IonTitle,
+  IonToolbar,
 } from '@ionic/react';
 import { useState } from 'react';
 import { useData, useLive, useToday } from '../../app/DataProvider';
 import { setBodyweight } from '../../data/bodyweight';
+import { undoMissedDay } from '../../data/missed-days';
 import { getTodayOverview, type TodayOverview } from '../../data/today';
 import { parseBodyweight } from '../../domain/bodyweight';
 import { isDeloadDay } from '../../domain/deload';
-import { formatCycleWeek, formatKg } from '../../domain/format';
+import { formatCycleWeek, formatKg, formatWeekdayDate } from '../../domain/format';
 import type { PlannedDay } from '../../domain/today';
+import { MISSED_REASON_LABELS } from '../../ui/labels';
 import { PageShell } from '../../ui/PageShell';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
 import { BackupReminder } from './BackupReminder';
 import { InstallBanner } from './InstallBanner';
+import { NotTodaySheet } from './NotTodaySheet';
 import { useStartWorkout } from './useStartWorkout';
+
+type Guard = (action: () => Promise<unknown>) => Promise<void>;
 
 function nameOf(overview: TodayOverview, dayTemplateId: string | null): string {
   return overview.days.find((d) => d.id === dayTemplateId)?.name ?? 'Workout';
 }
 
-function NextLine({ overview, next }: { overview: TodayOverview; next: PlannedDay | null }) {
+function nextLine(overview: TodayOverview, next: PlannedDay | null): string | null {
   if (!next) return null;
-  const when = next.date === null ? '' : `, ${next.date}`;
-  return (
-    <IonItem>
-      <IonLabel>{`Next: ${nameOf(overview, next.dayTemplateId)}${when}`}</IonLabel>
-    </IonItem>
-  );
+  const when = next.date === null ? '' : `, ${formatWeekdayDate(next.date)}`;
+  return `Next: ${nameOf(overview, next.dayTemplateId)}${when}`;
 }
 
-function PlanCard({ overview, onError }: { overview: TodayOverview; onError: Guard }) {
+/** The one card at the top: what today is, and the one thing to do about it. */
+function TodayCard({ overview, onError }: { overview: TodayOverview; onError: Guard }) {
   const ctx = useData();
   const { startDay } = useStartWorkout();
+  /** The day being skipped, kept while the sheet closes after the day turns to missed. */
+  const [skipping, setSkipping] = useState<string | null>(null);
   const { plan, program } = overview;
   if (!plan || !program) return null;
   const { today, cycle } = plan;
   const planned = today.status === 'planned' ? today.day : null;
   const day = overview.days.find((d) => d.id === planned?.dayTemplateId);
   const deload = day !== undefined && isDeloadDay(program, day, ctx.clock.today());
+  const missed =
+    today.status === 'missed' ? overview.missedDays.find((m) => m.id === today.missedDayId) : null;
+  const next = nextLine(overview, plan.next);
+
+  let title: string;
+  if (today.status === 'rest') title = 'Rest day';
+  else if (today.status === 'done') title = `Done: ${nameOf(overview, today.dayTemplateId)}`;
+  else if (today.status === 'missed') title = `Missed: ${nameOf(overview, today.dayTemplateId)}`;
+  else title = nameOf(overview, planned?.dayTemplateId ?? null);
+
+  const missedDetail = missed
+    ? [missed.reason === null ? null : MISSED_REASON_LABELS[missed.reason], missed.note || null]
+        .filter((part) => part !== null)
+        .join(', ')
+    : '';
 
   return (
-    <IonList inset>
+    <section className="today-card" aria-label="Today's plan">
       {cycle && (
-        <IonItem>
-          <IonLabel>{formatCycleWeek(cycle.cycleWeek, cycle.cycleWeeks)}</IonLabel>
-          {deload && (
-            <IonBadge slot="end" color="warning">
-              Deload
-            </IonBadge>
-          )}
-        </IonItem>
+        <div className="today-card-kicker">
+          <span>{formatCycleWeek(cycle.cycleWeek, cycle.cycleWeeks)}</span>
+          {deload && <IonBadge color="warning">Deload</IonBadge>}
+        </div>
       )}
-      {today.status === 'rest' && (
-        <IonItem>
-          <IonLabel>Rest day</IonLabel>
-        </IonItem>
-      )}
-      {today.status === 'done' && (
-        <IonItem>
-          <IonLabel>{`Done: ${nameOf(overview, today.dayTemplateId)}`}</IonLabel>
-        </IonItem>
-      )}
+      <h2 className="today-card-title">{title}</h2>
+      {missedDetail !== '' && <p className="today-card-line">{missedDetail}</p>}
       {planned && (
         <>
-          <IonItem>
-            <IonLabel>{nameOf(overview, planned.dayTemplateId)}</IonLabel>
-          </IonItem>
-          <div className="ion-padding">
-            <IonButton
-              expand="block"
-              onClick={() =>
-                void onError(() =>
-                  startDay({
-                    programId: program.id,
-                    dayTemplateId: planned.dayTemplateId,
-                    ...(planned.rotationIndex === null
-                      ? {}
-                      : { rotationIndex: planned.rotationIndex }),
-                  }),
-                )
-              }
-            >
-              Start
-            </IonButton>
-          </div>
+          <p className="today-card-line">Training today?</p>
+          <IonButton
+            expand="block"
+            size="large"
+            onClick={() =>
+              void onError(() =>
+                startDay({
+                  programId: program.id,
+                  dayTemplateId: planned.dayTemplateId,
+                  ...(planned.rotationIndex === null
+                    ? {}
+                    : { rotationIndex: planned.rotationIndex }),
+                }),
+              )
+            }
+          >
+            Start
+          </IonButton>
+          <IonButton
+            expand="block"
+            fill="clear"
+            onClick={() => setSkipping(nameOf(overview, planned.dayTemplateId))}
+          >
+            Not today
+          </IonButton>
         </>
       )}
-      <NextLine overview={overview} next={plan.next} />
-    </IonList>
+      {missed && (
+        <IonButton
+          fill="clear"
+          size="small"
+          className="today-card-undo"
+          onClick={() => void onError(() => undoMissedDay(ctx, missed.id))}
+        >
+          Undo
+        </IonButton>
+      )}
+      {next && <p className="today-card-next">{next}</p>}
+      <NotTodaySheet
+        open={skipping !== null}
+        dayName={skipping ?? ''}
+        onClose={() => setSkipping(null)}
+      />
+    </section>
   );
 }
 
-type Guard = (action: () => Promise<unknown>) => Promise<void>;
-
-function Bodyweight({ overview }: { overview: TodayOverview }) {
+function BodyweightRow({ overview }: { overview: TodayOverview }) {
   const ctx = useData();
+  const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
   const { error, guard, setError } = useGuard();
+
+  function close() {
+    setText('');
+    setError(null);
+    setOpen(false);
+  }
 
   function save() {
     const kg = parseBodyweight(text);
@@ -113,35 +149,49 @@ function Bodyweight({ overview }: { overview: TodayOverview }) {
     }
     void guard(async () => {
       await setBodyweight(ctx, ctx.clock.today(), kg);
-      setText('');
+      close();
     });
   }
 
   return (
     <>
       <IonList inset>
-        <IonListHeader>
+        <IonItem button detail onClick={() => setOpen(true)}>
           <IonLabel>Bodyweight</IonLabel>
-        </IonListHeader>
-        {overview.bodyweight && (
-          <IonItem>
-            <IonLabel>{`Saved: ${formatKg(overview.bodyweight.kg)}`}</IonLabel>
-          </IonItem>
-        )}
-        <IonItem>
-          <IonInput
-            aria-label="Bodyweight today"
-            placeholder="Weight in kg"
-            inputmode="decimal"
-            value={text}
-            onIonInput={(e) => setText(e.detail.value ?? '')}
-          />
-          <IonButton slot="end" fill="clear" onClick={save}>
-            Save weight
-          </IonButton>
+          <IonNote slot="end">
+            {overview.bodyweight ? formatKg(overview.bodyweight.kg) : 'Add today'}
+          </IonNote>
         </IonItem>
       </IonList>
-      <ErrorNote error={error} />
+      <IonModal isOpen={open} breakpoints={[0, 0.4]} initialBreakpoint={0.4} onDidDismiss={close}>
+        <IonHeader>
+          <IonToolbar>
+            <IonButtons slot="start">
+              <IonButton onClick={close}>Cancel</IonButton>
+            </IonButtons>
+            <IonTitle>Bodyweight</IonTitle>
+            <IonButtons slot="end">
+              <IonButton strong onClick={save}>
+                Save weight
+              </IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent>
+          <IonList inset>
+            <IonItem>
+              <IonInput
+                aria-label="Bodyweight today"
+                placeholder="Weight in kg"
+                inputmode="decimal"
+                value={text}
+                onIonInput={(e) => setText(e.detail.value ?? '')}
+              />
+            </IonItem>
+          </IonList>
+          <ErrorNote error={error} />
+        </IonContent>
+      </IonModal>
     </>
   );
 }
@@ -151,11 +201,10 @@ export function TodayPage() {
   const overview = useLive(getTodayOverview, [today]);
   const { startEmpty, resume } = useStartWorkout();
   const { error, guard } = useGuard();
+  const idle = overview !== undefined && overview.active === null;
 
   return (
     <PageShell title="Today">
-      <InstallBanner />
-      {overview && !overview.active && <BackupReminder today={today} />}
       {overview?.active && (
         <IonList inset>
           <IonItem button detail onClick={resume}>
@@ -166,9 +215,9 @@ export function TodayPage() {
           </IonItem>
         </IonList>
       )}
-      {overview && !overview.active && <PlanCard overview={overview} onError={guard} />}
+      {idle && <TodayCard overview={overview} onError={guard} />}
       <ErrorNote error={error} />
-      {overview && !overview.active && (
+      {idle && (
         <IonList inset>
           {overview.program ? (
             <IonItem routerLink="/tabs/today/pick-day" detail>
@@ -184,7 +233,9 @@ export function TodayPage() {
           </IonItem>
         </IonList>
       )}
-      {overview && <Bodyweight overview={overview} />}
+      {overview && <BodyweightRow overview={overview} />}
+      {idle && <BackupReminder today={today} />}
+      <InstallBanner />
       {overview?.program && (
         <p className="section-note">
           <IonNote>{overview.program.name}</IonNote>

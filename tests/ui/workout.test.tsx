@@ -160,6 +160,28 @@ describe('set sheet', () => {
     );
   });
 
+  it('logs a set in one tap with the check button and starts the rest', async () => {
+    const { ctx, session } = await empty('squat');
+    const view = await getActiveSession(ctx);
+    const setId = view?.exercises[0]?.sets[0]?.id ?? '';
+    await updateSet(ctx, setId, { target: { repsMin: 8, loadMinKg: 20 } });
+    const { user } = renderApp(WORKOUT, ctx);
+    await user.click(await buttonLabelled('Log set 1 of Squat'));
+    expect(await screen.findByText('Set 1 · 20kg x 8')).toBeInTheDocument();
+    expect(screen.queryByTestId('sheet-done')).not.toBeInTheDocument();
+    await waitFor(async () =>
+      expect(await getRestTimer(ctx)).toMatchObject({ sessionId: session.id, durationSec: 120 }),
+    );
+  });
+
+  it('opens the sheet from the check button when there is nothing to prefill', async () => {
+    const { ctx } = await empty('squat');
+    const { user } = renderApp(WORKOUT, ctx);
+    await user.click(await buttonLabelled('Log set 1 of Squat'));
+    expect(await doneButton()).toBeInTheDocument();
+    expect(await getRestTimer(ctx)).toBeUndefined();
+  });
+
   it('does not start the rest again when a done set is edited', async () => {
     const { ctx } = await empty('squat');
     const view = await getActiveSession(ctx);
@@ -273,6 +295,16 @@ describe('rest bar', () => {
     await startRestTimer(ctx, session.id, 90);
     return { ctx, view };
   }
+
+  it('shows the rest left as a bar that empties', async () => {
+    const { ctx } = await resting();
+    renderApp('/tabs/today', ctx);
+    await screen.findByText('1:30');
+    ctx.clock.advance(45_000);
+    expect(await screen.findByText('0:45')).toBeInTheDocument();
+    const bar = screen.getByTestId('rest-bar').querySelector('.rest-bar-progress') as HTMLElement;
+    expect(bar.style.transform).toBe('scaleX(0.5)');
+  });
 
   it('shows the time, adds 15 seconds and skips', async () => {
     const { ctx } = await resting();

@@ -45,7 +45,7 @@ describe('database', () => {
     const ctx = testContext();
     await ctx.db.bands.bulkPut(SEED_BANDS);
     const again = reopen(ctx);
-    expect(await again.db.bands.count()).toBe(3);
+    expect(await again.db.bands.count()).toBe(4);
     expect(await testContext().db.bands.count()).toBe(0);
   });
 });
