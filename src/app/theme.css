@@ -506,3 +506,12 @@ ion-label.notice p {
     transition: none;
   }
 }
+
+.preset-note {
+  color: var(--ion-text-color);
+}
+
+.preset-weekday {
+  width: 40px;
+  margin-inline-end: 8px;
+}

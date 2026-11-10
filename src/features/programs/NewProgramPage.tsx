@@ -1,6 +1,5 @@
 import {
   IonButton,
-  IonIcon,
   IonInput,
   IonItem,
   IonLabel,
@@ -10,65 +9,65 @@ import {
   IonSelectOption,
   useIonRouter,
 } from '@ionic/react';
-import { checkmark } from 'ionicons/icons';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useData } from '../../app/DataProvider';
 import { createProgramFromTemplate } from '../../data/programs';
-import { templatesForSplit } from '../../domain/fixtures/templates';
+import { BUILT_IN_TEMPLATES, blankTemplate } from '../../domain/fixtures/templates';
+import { presetSummary } from '../../domain/preset-summary';
 import { SPLIT_TYPES, type SplitType } from '../../domain/schemas';
 import { SPLIT_LABELS } from '../../ui/labels';
 import { PageShell } from '../../ui/PageShell';
+import { ErrorNote, useGuard } from '../../ui/useGuard';
 
+/** Presets first, since most people start from one. A blank program sits at the bottom. */
 export function NewProgramPage() {
   const ctx = useData();
   const router = useIonRouter();
   const [splitType, setSplitType] = useState<SplitType>('custom');
-  const [templateId, setTemplateId] = useState<string | null>(null);
   const [name, setName] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const templates = useMemo(() => templatesForSplit(splitType), [splitType]);
+  const { error, guard, setError } = useGuard();
 
-  function pickTemplate(id: string, templateName: string) {
-    setTemplateId(id);
-    setName(templateName === 'Blank' ? '' : templateName);
-    setError(null);
-  }
-
-  async function create() {
-    const template = templates.find((t) => t.id === templateId);
-    if (!template) {
-      setError('Pick a template.');
-      return;
-    }
+  function createBlank() {
     if (name.trim() === '') {
       setError('Give the program a name.');
       return;
     }
-    const { program } = await createProgramFromTemplate(ctx, template, name.trim());
-    router.push(`/tabs/programs/${program.id}`, 'forward', 'replace');
+    void guard(async () => {
+      const { program } = await createProgramFromTemplate(
+        ctx,
+        blankTemplate(splitType),
+        name.trim(),
+      );
+      router.push(`/tabs/programs/${program.id}`, 'forward', 'replace');
+    });
   }
 
   return (
-    <PageShell
-      title="New program"
-      back="/tabs/programs"
-      actions={
-        <IonButton strong onClick={() => void create()}>
-          Create
-        </IonButton>
-      }
-    >
+    <PageShell title="New program" back="/tabs/programs">
+      <IonList inset data-testid="preset-list">
+        <IonListHeader>
+          <IonLabel>Presets</IonLabel>
+        </IonListHeader>
+        {BUILT_IN_TEMPLATES.map((t) => (
+          <IonItem key={t.id} routerLink={`/tabs/programs/presets/${t.id}`} detail>
+            <IonLabel>
+              <h2>{t.name}</h2>
+              <p>{presetSummary(t)}</p>
+            </IonLabel>
+          </IonItem>
+        ))}
+      </IonList>
       <IonList inset>
+        <IonListHeader>
+          <IonLabel>Blank program</IonLabel>
+        </IonListHeader>
         <IonItem>
           <IonSelect
             aria-label="Split"
             label="Split"
             interface="action-sheet"
             value={splitType}
-            onIonChange={(e) => {
-              setSplitType(e.detail.value);
-              setTemplateId(null);
-            }}
+            onIonChange={(e) => setSplitType(e.detail.value)}
           >
             {SPLIT_TYPES.map((s) => (
               <IonSelectOption key={s} value={s}>
@@ -77,19 +76,6 @@ export function NewProgramPage() {
             ))}
           </IonSelect>
         </IonItem>
-      </IonList>
-      <IonList inset data-testid="template-list">
-        <IonListHeader>
-          <IonLabel>Template</IonLabel>
-        </IonListHeader>
-        {templates.map((t) => (
-          <IonItem key={t.id} button detail={false} onClick={() => pickTemplate(t.id, t.name)}>
-            <IonLabel>{t.name}</IonLabel>
-            {t.id === templateId && <IonIcon slot="end" icon={checkmark} aria-label="Selected" />}
-          </IonItem>
-        ))}
-      </IonList>
-      <IonList inset>
         <IonItem>
           <IonInput
             aria-label="Program name"
@@ -98,12 +84,16 @@ export function NewProgramPage() {
             onIonInput={(e) => setName(e.detail.value ?? '')}
           />
         </IonItem>
+        <IonItem button detail={false} onClick={createBlank}>
+          <IonLabel color="primary">Create blank program</IonLabel>
+        </IonItem>
       </IonList>
-      {error && (
-        <p className="error-note" role="alert">
-          {error}
-        </p>
-      )}
+      <ErrorNote error={error} />
+      <div className="ion-padding">
+        <IonButton expand="block" fill="clear" routerLink="/tabs/programs/import">
+          Import a program from a friend
+        </IonButton>
+      </div>
     </PageShell>
   );
 }

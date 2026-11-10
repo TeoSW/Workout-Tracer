@@ -19,17 +19,13 @@ export async function openApp(page: Page, date = MONDAY): Promise<void> {
   await expect(page).toHaveURL(/#\/tabs\/today$/);
 }
 
-/** Creates Program C from its template and starts it this week, through the screens. */
+/** Starts Program C from its preset this week, through the screens. */
 export async function startProgramC(page: Page): Promise<void> {
   await openTab(page, 'Programs');
   await visibleText(page, 'New program').click();
-  await page.locator('ion-select').filter({ visible: true }).first().click();
-  await page.locator('ion-action-sheet button', { hasText: 'Calisthenics cycle' }).click();
   await visibleText(page, 'Calisthenics 6-week cycle').click();
-  await visibleText(page, 'Create').click();
-  await visibleText(page, 'Start this week').click();
-  await expect(visibleText(page, 'Stop using this program')).toBeVisible();
-  await openTab(page, 'Today');
+  await visibleText(page, 'Use this program').click();
+  await expect(visibleText(page, 'Week 1 of 6')).toBeVisible();
 }
 
 export function card(page: Page, name: string): Locator {

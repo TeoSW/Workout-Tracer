@@ -39,29 +39,60 @@ describe('program list', () => {
 });
 
 describe('new program', () => {
-  it('goes from split type to template to name', async () => {
-    const { ctx, user } = renderApp('/tabs/programs/new');
-    await screen.findByText('Template');
-    ionEvent(selectLabelled('Split'), 'ionChange', { value: 'ppll' });
-    const templates = within(screen.getByTestId('template-list'));
-    expect(await templates.findByText('PPLL')).toBeInTheDocument();
-    expect(templates.getByText('Blank')).toBeInTheDocument();
-    await user.click(templates.getByText('PPLL'));
-    ionEvent(screen.getByLabelText('Program name'), 'ionInput', { value: 'My split' });
-    await user.click(screen.getByText('Create'));
-    await waitFor(async () => {
-      const programs = await listPrograms(ctx);
-      expect(programs.map((p) => p.name)).toEqual(['My split']);
-    });
-    const [created] = await listPrograms(ctx);
-    expect((await getProgram(ctx, created?.id ?? ''))?.dayTemplates).toHaveLength(3);
+  it('lists the presets, with the Excel cycle first and a one-line summary', async () => {
+    renderApp('/tabs/programs/new');
+    const presets = within(await screen.findByTestId('preset-list'));
+    const names = presets.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+    expect(names[0]).toBe('Calisthenics 5-week cycle');
+    expect(names).toContain('Beginner calisthenics');
+    expect(names).toContain('PPLL');
+    expect(presets.getByText('5-week cycle, 4 days a week, deload in week 5')).toBeInTheDocument();
   });
 
-  it('asks for a template first', async () => {
-    const { user } = renderApp('/tabs/programs/new');
-    await screen.findByText('Template');
-    await user.click(screen.getByText('Create'));
-    expect(await screen.findByText('Pick a template.')).toBeInTheDocument();
+  it('previews a preset, then uses it from the week you are in', async () => {
+    const ctx = testContext();
+    await seedIfNeeded(ctx);
+    const { user } = renderApp('/tabs/programs/presets/tpl-cal5', ctx);
+    expect(await screen.findByText('Weeks 1-2')).toBeInTheDocument();
+    expect(screen.getByText('Weeks 3-4')).toBeInTheDocument();
+    expect(screen.getAllByText('Heavy 1, planche (intensity)').length).toBeGreaterThan(0);
+    await user.click(await buttonLabelled('More weeks'));
+    await user.click(await buttonLabelled('More weeks'));
+    await user.click(screen.getByText('Use this program'));
+    await waitFor(async () =>
+      expect(await getActiveProgram(ctx)).toMatchObject({
+        name: 'Calisthenics 5-week cycle',
+        anchorDate: '2026-10-19',
+      }),
+    );
+    await waitFor(() => expect(window.location.hash).toBe('#/tabs/today'));
+    expect(await screen.findByText('Week 3 of 5')).toBeInTheDocument();
+  });
+
+  it('can copy a preset to edit it first, without starting it', async () => {
+    const ctx = testContext();
+    await seedIfNeeded(ctx);
+    const { user } = renderApp('/tabs/programs/presets/tpl-b', ctx);
+    await user.click(await screen.findByText('Edit before using'));
+    await waitFor(async () =>
+      expect((await listPrograms(ctx)).map((p) => p.name)).toEqual(['PPLL']),
+    );
+    expect(await getActiveProgram(ctx)).toBeUndefined();
+    await waitFor(() => expect(window.location.hash).toMatch(/^#\/tabs\/programs\/id-/));
+  });
+
+  it('creates a blank program, and asks for its name first', async () => {
+    const { ctx, user } = renderApp('/tabs/programs/new');
+    await user.click(await screen.findByText('Create blank program'));
+    expect(await screen.findByText('Give the program a name.')).toBeInTheDocument();
+    ionEvent(selectLabelled('Split'), 'ionChange', { value: 'ppll' });
+    ionEvent(screen.getByLabelText('Program name'), 'ionInput', { value: 'My split' });
+    await user.click(screen.getByText('Create blank program'));
+    await waitFor(async () =>
+      expect((await listPrograms(ctx)).map((p) => [p.name, p.splitType])).toEqual([
+        ['My split', 'ppll'],
+      ]),
+    );
   });
 });
 

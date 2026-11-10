@@ -21,6 +21,7 @@ export * from './missed-days';
 export * from './log-layout';
 export * from './plan';
 export * from './program-edit';
+export * from './preset-summary';
 export * from './prs';
 export * from './rest';
 export * from './rest-plan';

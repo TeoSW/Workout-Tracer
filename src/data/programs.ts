@@ -297,3 +297,17 @@ export async function deleteProgram(ctx: DataContext, id: string): Promise<void>
     await ctx.db.programs.delete(id);
   });
 }
+
+/**
+ * Creates a program from a preset and makes it the active one, starting this week. `week` puts
+ * today in that week of the cycle, for someone already part way through it.
+ */
+export async function startFromPreset(
+  ctx: DataContext,
+  template: BuiltInTemplate,
+  week = 1,
+): Promise<Program> {
+  const { program } = await createProgramFromTemplate(ctx, template);
+  const active = await activateProgram(ctx, program.id, 'this_week');
+  return week > 1 ? setProgramCurrentWeek(ctx, active.id, week) : active;
+}
