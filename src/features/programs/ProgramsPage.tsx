@@ -9,6 +9,9 @@ import { SwipeToDelete } from '../../ui/SwipeToDelete';
 export function ProgramsPage() {
   const ctx = useData();
   const programs = useLive(listPrograms);
+  const clients = useLive(
+    async (c) => new Map((await c.db.clients.toArray()).map((x) => [x.id, x.name])),
+  );
 
   return (
     <PageShell
@@ -33,7 +36,11 @@ export function ProgramsPage() {
               <IonItem routerLink={`/tabs/programs/${p.id}`} detail>
                 <IonLabel>
                   <h2>{p.name}</h2>
-                  <p>{SPLIT_LABELS[p.splitType]}</p>
+                  <p>
+                    {p.clientId && clients?.get(p.clientId)
+                      ? `For ${clients.get(p.clientId)}`
+                      : SPLIT_LABELS[p.splitType]}
+                  </p>
                 </IonLabel>
                 {p.active && (
                   <IonBadge slot="end" color="success">

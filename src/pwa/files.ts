@@ -47,3 +47,21 @@ export async function copyText(text: string): Promise<boolean> {
     return false;
   }
 }
+
+export type ShareTextResult = 'shared' | 'copied' | 'cancelled' | 'failed';
+
+/**
+ * Opens the share sheet with text, for WhatsApp and the like. Without a share sheet the text
+ * goes to the clipboard instead, so it can be pasted.
+ */
+export async function shareText(text: string): Promise<ShareTextResult> {
+  if (typeof navigator.share === 'function') {
+    try {
+      await navigator.share({ text });
+      return 'shared';
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return 'cancelled';
+    }
+  }
+  return (await copyText(text)) ? 'copied' : 'failed';
+}

@@ -18,6 +18,7 @@ import { getStorageStatus, type StorageStatus } from '../../pwa/storage';
 import { PageShell } from '../../ui/PageShell';
 import { Stepper } from '../../ui/Stepper';
 import { BackupSection } from './BackupSection';
+import { ProfileSection } from './ProfileSection';
 
 const MB = 1_000_000;
 
@@ -44,6 +45,7 @@ export function SettingsPage() {
 
   return (
     <PageShell title="Settings">
+      <ProfileSection />
       {settings && (
         <>
           <IonList inset>

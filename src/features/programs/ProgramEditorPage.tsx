@@ -47,6 +47,14 @@ export function ProgramEditorPage() {
   const router = useIonRouter();
   const confirm = useConfirm();
   const loaded = useLive((c) => getProgram(c, id), [id]);
+  const clientName = useLive(
+    async (c) => {
+      const clientId = (await c.db.programs.get(id))?.clientId;
+      return clientId ? ((await c.db.clients.get(clientId))?.name ?? null) : null;
+    },
+    [id],
+  );
+  const coach = ctx.profile === 'coach';
   const [dayName, setDayName] = useState('');
   const { error, guard: guarded, setError } = useGuard();
 
@@ -106,71 +114,89 @@ export function ProgramEditorPage() {
         </IonItem>
       </IonList>
 
-      <IonList inset>
-        <IonListHeader>
-          <IonLabel>Status</IonLabel>
-        </IonListHeader>
-        {program.active ? (
-          <>
-            <IonItem>
-              <IonLabel>{program.cycleWeeks === null ? 'Rotation' : 'Current week'}</IonLabel>
+      {coach && (
+        <IonList inset>
+          {program.clientId && clientName && (
+            <IonItem routerLink={`/tabs/clients/${program.clientId}`} detail>
+              <IonLabel>Client</IonLabel>
+              <IonNote slot="end">{clientName}</IonNote>
+            </IonItem>
+          )}
+          <IonItem routerLink={`${PROGRAMS}/${id}/send`} detail>
+            <IonLabel color="primary">
+              {clientName ? `Send to ${clientName}` : 'Send to a client'}
+            </IonLabel>
+          </IonItem>
+        </IonList>
+      )}
+
+      {!coach && (
+        <IonList inset>
+          <IonListHeader>
+            <IonLabel>Status</IonLabel>
+          </IonListHeader>
+          {program.active ? (
+            <>
+              <IonItem>
+                <IonLabel>{program.cycleWeeks === null ? 'Rotation' : 'Current week'}</IonLabel>
+                {position && program.cycleWeeks !== null && (
+                  <IonNote slot="end">
+                    {formatCycleWeek(position.cycleWeek, program.cycleWeeks)}
+                  </IonNote>
+                )}
+                <IonBadge slot="end" color="success">
+                  Active
+                </IonBadge>
+              </IonItem>
               {position && program.cycleWeeks !== null && (
-                <IonNote slot="end">
-                  {formatCycleWeek(position.cycleWeek, program.cycleWeeks)}
-                </IonNote>
+                <Stepper
+                  label="Set current week"
+                  noun="current week"
+                  value={position.cycleWeek}
+                  min={1}
+                  max={program.cycleWeeks}
+                  onChange={(week) => void guarded(() => setProgramCurrentWeek(ctx, id, week))}
+                />
               )}
-              <IonBadge slot="end" color="success">
-                Active
-              </IonBadge>
-            </IonItem>
-            {position && program.cycleWeeks !== null && (
-              <Stepper
-                label="Set current week"
-                noun="current week"
-                value={position.cycleWeek}
-                min={1}
-                max={program.cycleWeeks}
-                onChange={(week) => void guarded(() => setProgramCurrentWeek(ctx, id, week))}
-              />
-            )}
-            <IonItem>
-              <IonToggle
-                aria-label="Deload this week"
-                checked={deloadedThisWeek}
-                onIonChange={(e) =>
-                  void guarded(() =>
-                    e.detail.checked ? setDeloadThisWeek(ctx, id) : removeDeloadThisWeek(ctx, id),
-                  )
-                }
+              <IonItem>
+                <IonToggle
+                  aria-label="Deload this week"
+                  checked={deloadedThisWeek}
+                  onIonChange={(e) =>
+                    void guarded(() =>
+                      e.detail.checked ? setDeloadThisWeek(ctx, id) : removeDeloadThisWeek(ctx, id),
+                    )
+                  }
+                >
+                  Deload this week
+                </IonToggle>
+              </IonItem>
+              <IonItem button detail={false} onClick={() => void deactivateProgram(ctx, id)}>
+                <IonLabel color="primary">Stop using this program</IonLabel>
+              </IonItem>
+            </>
+          ) : (
+            <>
+              <IonItem
+                button
+                detail={false}
+                onClick={() => void guarded(() => activateProgram(ctx, id, 'this_week'))}
               >
-                Deload this week
-              </IonToggle>
-            </IonItem>
-            <IonItem button detail={false} onClick={() => void deactivateProgram(ctx, id)}>
-              <IonLabel color="primary">Stop using this program</IonLabel>
-            </IonItem>
-          </>
-        ) : (
-          <>
-            <IonItem
-              button
-              detail={false}
-              onClick={() => void guarded(() => activateProgram(ctx, id, 'this_week'))}
-            >
-              <IonLabel color="primary">Start this week</IonLabel>
-              <IonNote slot="end">{mondayOf(today)}</IonNote>
-            </IonItem>
-            <IonItem
-              button
-              detail={false}
-              onClick={() => void guarded(() => activateProgram(ctx, id, 'next_week'))}
-            >
-              <IonLabel color="primary">Start next week</IonLabel>
-              <IonNote slot="end">{addDays(mondayOf(today), 7)}</IonNote>
-            </IonItem>
-          </>
-        )}
-      </IonList>
+                <IonLabel color="primary">Start this week</IonLabel>
+                <IonNote slot="end">{mondayOf(today)}</IonNote>
+              </IonItem>
+              <IonItem
+                button
+                detail={false}
+                onClick={() => void guarded(() => activateProgram(ctx, id, 'next_week'))}
+              >
+                <IonLabel color="primary">Start next week</IonLabel>
+                <IonNote slot="end">{addDays(mondayOf(today), 7)}</IonNote>
+              </IonItem>
+            </>
+          )}
+        </IonList>
+      )}
 
       <ScheduleEditor program={program} days={days} onChange={save} />
       <ErrorNote error={error} />

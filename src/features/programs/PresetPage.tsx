@@ -8,7 +8,7 @@ import {
   useIonRouter,
 } from '@ionic/react';
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { useData, useLive } from '../../app/DataProvider';
 import { loadBandMap } from '../../data/bands';
 import { loadExerciseMap } from '../../data/exercises';
@@ -43,6 +43,12 @@ export function PresetPage() {
   const { id } = useParams();
   const template = BUILT_IN_TEMPLATES.find((t) => t.id === id);
   const library = useLive(loadLibrary);
+  const clientId = new URLSearchParams(useLocation().search).get('client');
+  const client = useLive(
+    async (c) => (clientId ? ((await c.db.clients.get(clientId)) ?? null) : null),
+    [clientId],
+  );
+  const coach = ctx.profile === 'coach';
   const [week, setWeek] = useState(1);
   const [busy, setBusy] = useState(false);
   const { error, guard } = useGuard();
@@ -75,7 +81,12 @@ export function PresetPage() {
   function editFirst() {
     if (!template) return;
     once(async () => {
-      const { program } = await createProgramFromTemplate(ctx, template);
+      const { program } = await createProgramFromTemplate(
+        ctx,
+        template,
+        undefined,
+        clientId ? { clientId } : {},
+      );
       router.push(`/tabs/programs/${program.id}`, 'forward', 'replace');
     });
   }
@@ -154,7 +165,7 @@ export function PresetPage() {
       ))}
 
       <div className="preset-actions">
-        {cycleWeeks > 1 && (
+        {!coach && cycleWeeks > 1 && (
           <IonList inset>
             <Stepper
               label="Start in week"
@@ -167,12 +178,20 @@ export function PresetPage() {
           </IonList>
         )}
         <div className="ion-padding">
-          <IonButton expand="block" size="large" disabled={busy} onClick={use}>
-            Use this program
-          </IonButton>
-          <IonButton expand="block" fill="clear" disabled={busy} onClick={editFirst}>
-            Edit before using
-          </IonButton>
+          {coach ? (
+            <IonButton expand="block" size="large" disabled={busy} onClick={editFirst}>
+              {client ? `Create for ${client.name}` : 'Create program'}
+            </IonButton>
+          ) : (
+            <>
+              <IonButton expand="block" size="large" disabled={busy} onClick={use}>
+                Use this program
+              </IonButton>
+              <IonButton expand="block" fill="clear" disabled={busy} onClick={editFirst}>
+                Edit before using
+              </IonButton>
+            </>
+          )}
         </div>
         <ErrorNote error={error} />
       </div>

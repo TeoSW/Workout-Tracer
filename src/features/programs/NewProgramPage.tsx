@@ -10,6 +10,7 @@ import {
   useIonRouter,
 } from '@ionic/react';
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useData } from '../../app/DataProvider';
 import { createProgramFromTemplate } from '../../data/programs';
 import { BUILT_IN_TEMPLATES, blankTemplate } from '../../domain/fixtures/templates';
@@ -23,6 +24,8 @@ import { ErrorNote, useGuard } from '../../ui/useGuard';
 export function NewProgramPage() {
   const ctx = useData();
   const router = useIonRouter();
+  const clientId = new URLSearchParams(useLocation().search).get('client');
+  const clientQuery = clientId ? `?client=${clientId}` : '';
   const [splitType, setSplitType] = useState<SplitType>('custom');
   const [name, setName] = useState('');
   const { error, guard, setError } = useGuard();
@@ -37,6 +40,7 @@ export function NewProgramPage() {
         ctx,
         blankTemplate(splitType),
         name.trim(),
+        clientId ? { clientId } : {},
       );
       router.push(`/tabs/programs/${program.id}`, 'forward', 'replace');
     });
@@ -49,7 +53,7 @@ export function NewProgramPage() {
           <IonLabel>Presets</IonLabel>
         </IonListHeader>
         {BUILT_IN_TEMPLATES.map((t) => (
-          <IonItem key={t.id} routerLink={`/tabs/programs/presets/${t.id}`} detail>
+          <IonItem key={t.id} routerLink={`/tabs/programs/presets/${t.id}${clientQuery}`} detail>
             <IonLabel>
               <h2>{t.name}</h2>
               <p>{presetSummary(t)}</p>
