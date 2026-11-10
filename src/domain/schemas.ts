@@ -238,6 +238,11 @@ export const ProgramSchema = z
     note: z.string(),
     active: z.boolean(),
     archived: z.boolean(),
+    /** In the coach profile: the client the program is for. */
+    clientId: IdSchema.nullable().optional(),
+    /** In the coach profile: when it was last sent, and a hash of the share code sent. */
+    sentAt: EpochMsSchema.nullable().optional(),
+    sentHash: z.string().optional(),
   })
   .refine((p) => p.schedule.kind !== 'weekday' || p.schedule.weeks.length === p.cycleWeeks, {
     message: 'A weekday grid needs one week per cycle week',
@@ -335,6 +340,18 @@ export const TestResultSchema = z.object({
   nextCycleChoice: z.object({ slotId: IdSchema, optionIndex: count }).nullable(),
 });
 
+export const PROFILES = ['me', 'coach'] as const;
+export const ProfileSchema = z.enum(PROFILES);
+
+/** A person the coach writes programs for. Only the coach profile has clients. */
+export const ClientSchema = z.object({
+  id: IdSchema,
+  name: z.string().min(1),
+  note: z.string(),
+  createdAt: EpochMsSchema,
+  archived: z.boolean(),
+});
+
 export const MISSED_REASONS = ['sick', 'busy', 'pain', 'travel', 'other'] as const;
 export const MissedReasonSchema = z.enum(MISSED_REASONS);
 
@@ -402,6 +419,8 @@ export type SessionExercise = z.infer<typeof SessionExerciseSchema>;
 export type LoggedPart = z.infer<typeof LoggedPartSchema>;
 export type LoggedSet = z.infer<typeof LoggedSetSchema>;
 export type MissedReason = z.infer<typeof MissedReasonSchema>;
+export type Profile = z.infer<typeof ProfileSchema>;
+export type Client = z.infer<typeof ClientSchema>;
 export type MissedDay = z.infer<typeof MissedDaySchema>;
 export type BodyweightEntry = z.infer<typeof BodyweightEntrySchema>;
 export type TestResult = z.infer<typeof TestResultSchema>;

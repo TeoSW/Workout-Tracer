@@ -18,11 +18,13 @@ import { loadBandMap } from '../../data/bands';
 import { loadExerciseMap } from '../../data/exercises';
 import { deleteDayTemplate, editDayTemplate, getProgram } from '../../data/programs';
 import { formatPlanLine } from '../../domain/format';
-import { moveBlock } from '../../domain/program-edit';
+import { moveBlock, removeBlock } from '../../domain/program-edit';
 import { DAY_TYPES, type Block, type DayTemplate, type DayType } from '../../domain/schemas';
 import { DAY_TYPE_LABELS } from '../../ui/labels';
 import { useGoBack } from '../../ui/navigation';
 import { PageShell } from '../../ui/PageShell';
+import { SaveButton } from '../../ui/SaveButton';
+import { SwipeToDelete } from '../../ui/SwipeToDelete';
 import { useConfirm } from '../../ui/useConfirm';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
 
@@ -70,7 +72,11 @@ export function DayEditorPage() {
   const blocks = [...day.blocks].sort((a, b) => a.order - b.order);
 
   return (
-    <PageShell title={day.name} back={programUrl}>
+    <PageShell
+      title={day.name}
+      back={programUrl}
+      actions={<SaveButton back={programUrl} error={error} />}
+    >
       <IonList inset>
         <IonItem>
           <IonInput
@@ -124,26 +130,33 @@ export function DayEditorPage() {
           <IonLabel>Exercises</IonLabel>
         </IonListHeader>
         {blocks.map((block, index) => (
-          <IonItem key={block.id} routerLink={`${programUrl}/days/${dayId}/blocks/${block.id}`}>
-            <IonLabel>
-              <h2>{nameOf(block)}</h2>
-              <p>{lineOf(block)}</p>
-            </IonLabel>
-            {index > 0 && (
-              <IonButton
-                slot="end"
-                fill="clear"
-                aria-label={`Move ${nameOf(block)} up`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  edit((d) => moveBlock(d, block.id, 'up'));
-                }}
-              >
-                <IonIcon slot="icon-only" icon={arrowUp} aria-hidden="true" />
-              </IonButton>
-            )}
-          </IonItem>
+          <SwipeToDelete
+            key={block.id}
+            label={nameOf(block)}
+            header={`Remove ${nameOf(block)} from this day?`}
+            onDelete={() => edit((d) => removeBlock(d, block.id))}
+          >
+            <IonItem routerLink={`${programUrl}/days/${dayId}/blocks/${block.id}`}>
+              <IonLabel>
+                <h2>{nameOf(block)}</h2>
+                <p>{lineOf(block)}</p>
+              </IonLabel>
+              {index > 0 && (
+                <IonButton
+                  slot="end"
+                  fill="clear"
+                  aria-label={`Move ${nameOf(block)} up`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    edit((d) => moveBlock(d, block.id, 'up'));
+                  }}
+                >
+                  <IonIcon slot="icon-only" icon={arrowUp} aria-hidden="true" />
+                </IonButton>
+              )}
+            </IonItem>
+          </SwipeToDelete>
         ))}
         <IonItem routerLink={`${programUrl}/days/${dayId}/add`} detail={false}>
           <IonLabel color="primary">Add exercise</IonLabel>

@@ -38,6 +38,28 @@ describe('program list', () => {
   });
 });
 
+describe('swipe to delete', () => {
+  it('deletes a program from the list after asking', async () => {
+    const { ctx, program } = await withProgram();
+    const { user } = renderApp('/tabs/programs', ctx);
+    await screen.findByText(program.name);
+    await user.click(screen.getByLabelText(`Delete ${program.name}`));
+    await confirmAlert(user, 'Delete');
+    await waitFor(async () => expect(await listPrograms(ctx)).toEqual([]));
+  });
+
+  it('removes an exercise from the library, keeping it for past workouts', async () => {
+    const ctx = testContext();
+    await seedIfNeeded(ctx);
+    const { user } = renderApp('/tabs/programs/library', ctx);
+    await screen.findByText('Plank');
+    await user.click(screen.getByLabelText('Delete Plank'));
+    await confirmAlert(user, 'Delete');
+    await waitFor(() => expect(screen.queryByText('Plank')).not.toBeInTheDocument());
+    expect((await ctx.db.exercises.get('plank'))?.archived).toBe(true);
+  });
+});
+
 describe('new program', () => {
   it('lists the presets, with the Excel cycle first and a one-line summary', async () => {
     renderApp('/tabs/programs/new');
@@ -122,6 +144,17 @@ describe('program editor', () => {
     );
   });
 
+  it('has a Save button that confirms and goes back', async () => {
+    const { ctx, program } = await withProgram();
+    const { user } = renderApp(`/tabs/programs/${program.id}`, ctx);
+    ionEvent(await screen.findByLabelText('Program note'), 'ionChange', {
+      value: 'Planche first.',
+    });
+    await user.click(screen.getByText('Save'));
+    await waitFor(() => expect(window.location.hash).toBe('#/tabs/programs'));
+    expect((await getProgram(ctx, program.id))?.program.note).toBe('Planche first.');
+  });
+
   it('renames and saves the note', async () => {
     const { ctx, program } = await withProgram();
     renderApp(`/tabs/programs/${program.id}`, ctx);
@@ -146,10 +179,10 @@ describe('program editor', () => {
 
   it('changes a day in the weekday grid for the chosen week', async () => {
     const { ctx, program } = await withProgram();
-    renderApp(`/tabs/programs/${program.id}`, ctx);
+    const { user } = renderApp(`/tabs/programs/${program.id}`, ctx);
     await screen.findByText('Schedule');
     const legs = (await getProgram(ctx, program.id))?.dayTemplates.find((d) => d.name === 'Legs');
-    ionEvent(selectLabelled('Showing week'), 'ionChange', { value: 2 });
+    await user.click(screen.getByText('Week 2'));
     await waitFor(() => selectLabelled('Tuesday'));
     ionEvent(selectLabelled('Tuesday'), 'ionChange', { value: legs?.id });
     await waitFor(async () => {

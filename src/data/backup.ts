@@ -31,7 +31,7 @@ async function writeAll(ctx: DataContext, data: BackupData): Promise<void> {
 
 /** Every table except the restore snapshot, ready to save as a file. */
 export async function exportBackup(ctx: DataContext): Promise<BackupFile> {
-  return createBackup(await readAll(ctx), ctx.clock.now());
+  return createBackup(await readAll(ctx), ctx.clock.now(), ctx.profile);
 }
 
 export function backupToJson(backup: BackupFile): string {
@@ -48,9 +48,16 @@ export async function recordBackup(ctx: DataContext): Promise<void> {
  * the restore can be undone. Runs in one transaction: if any write fails, nothing changes.
  */
 export async function restoreBackup(ctx: DataContext, backup: BackupFile): Promise<void> {
+  if (backup.profile !== ctx.profile) {
+    throw new Error(
+      backup.profile === 'coach'
+        ? 'This is a coach backup. Switch to the coach profile in Settings to restore it.'
+        : 'This backup is from your own training. Switch to My training in Settings to restore it.',
+    );
+  }
   const { db } = ctx;
   await db.transaction('rw', db.tables, async () => {
-    const current = createBackup(await readAll(ctx), ctx.clock.now());
+    const current = createBackup(await readAll(ctx), ctx.clock.now(), ctx.profile);
     await writeAll(ctx, backup.data);
     await db.snapshots.put({ id: SNAPSHOT_ID, createdAt: ctx.clock.now(), backup: current });
   });

@@ -134,6 +134,30 @@ describe('logger cards', () => {
       expect((await getActiveSession(ctx))?.exercises.map((e) => e.exerciseId)).toEqual(['plank']),
     );
   });
+  it('makes your own exercise from the search and adds it', async () => {
+    const { ctx } = await empty();
+    const { user } = renderApp(`${WORKOUT}/add`, ctx);
+    ionEvent(await screen.findByLabelText('Search exercises'), 'ionInput', {
+      value: 'Ring Muscle-up',
+    });
+    await user.click(screen.getByText('Add your exercise'));
+    await waitFor(() =>
+      expect(
+        (screen.getByLabelText('Exercise name') as HTMLInputElement & { value: string }).value,
+      ).toBe('Ring Muscle-up'),
+    );
+    ionEvent(selectLabelled('Logged as'), 'ionChange', { value: 'bodyweight_reps' });
+    await user.click(screen.getByText('Add'));
+    await waitFor(async () => {
+      const view = await getActiveSession(ctx);
+      const id = view?.exercises[0]?.exerciseId ?? '';
+      expect(await ctx.db.exercises.get(id)).toMatchObject({
+        name: 'Ring Muscle-up',
+        trackingType: 'bodyweight_reps',
+        isCustom: true,
+      });
+    });
+  });
 });
 
 describe('set sheet', () => {
@@ -296,6 +320,18 @@ describe('rest bar', () => {
     return { ctx, view };
   }
 
+  it('takes 15 seconds off, and sets a rest time picked from the sheet', async () => {
+    const { ctx } = await resting();
+    const { user } = renderApp('/tabs/history', ctx);
+    expect(await screen.findByText('1:30')).toBeInTheDocument();
+    await user.click(screen.getByText('-15s'));
+    expect(await screen.findByText('1:15')).toBeInTheDocument();
+    await user.click(screen.getByLabelText('Change rest time'));
+    await user.click(await screen.findByText('3:00'));
+    expect(await screen.findByText('3:00')).toBeInTheDocument();
+    expect((await getRestTimer(ctx))?.endsAt).toBe(ctx.clock.now() + 180_000);
+  });
+
   it('shows the rest left as a bar that empties', async () => {
     const { ctx } = await resting();
     renderApp('/tabs/today', ctx);
@@ -363,7 +399,7 @@ describe('finish', () => {
 
     const { user } = renderApp(WORKOUT, ctx);
     await user.click(await screen.findByTestId('finish-workout'));
-    await confirmAlert(user, 'Finish');
+    await confirmAlert(user, 'End workout');
     expect(await screen.findByText('Summary')).toBeInTheDocument();
     expect(await screen.findByText('30m')).toBeInTheDocument();
     expect(screen.getByText('1')).toBeInTheDocument();
@@ -386,7 +422,7 @@ describe('finish', () => {
     });
     const { user } = renderApp(WORKOUT, ctx);
     await user.click(await screen.findByTestId('finish-workout'));
-    await confirmAlert(user, 'Finish');
+    await confirmAlert(user, 'End workout');
     await user.click(await screen.findByText('Continue'));
 
     const seconds = await screen.findByLabelText('Planche Hold best clean hold');

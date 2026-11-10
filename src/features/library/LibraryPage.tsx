@@ -11,14 +11,16 @@ import {
 } from '@ionic/react';
 import { add } from 'ionicons/icons';
 import { useMemo, useState } from 'react';
-import { useLive } from '../../app/DataProvider';
-import { listExercises } from '../../data/exercises';
+import { useData, useLive } from '../../app/DataProvider';
+import { archiveExercise, listExercises } from '../../data/exercises';
 import { filterExercises, type ExerciseFilter } from '../../domain/exercise-filter';
 import { MUSCLES, TRACKING_TYPES } from '../../domain/schemas';
 import { MUSCLE_LABELS, TRACKING_LABELS } from '../../ui/labels';
 import { PageShell } from '../../ui/PageShell';
+import { SwipeToDelete } from '../../ui/SwipeToDelete';
 
 export function LibraryPage() {
+  const ctx = useData();
   const exercises = useLive(listExercises);
   const [filter, setFilter] = useState<ExerciseFilter>({
     query: '',
@@ -81,10 +83,18 @@ export function LibraryPage() {
       {shown.length > 0 && (
         <IonList inset data-testid="exercise-list">
           {shown.map((e) => (
-            <IonItem key={e.id} routerLink={`/tabs/programs/library/${e.id}`} detail>
-              <IonLabel data-testid="exercise-name">{e.name}</IonLabel>
-              {e.isCustom && <IonNote slot="end">Custom</IonNote>}
-            </IonItem>
+            <SwipeToDelete
+              key={e.id}
+              label={e.name}
+              header={`Delete ${e.name}?`}
+              message="It leaves the library. Past workouts and programs that use it keep it."
+              onDelete={() => archiveExercise(ctx, e.id)}
+            >
+              <IonItem routerLink={`/tabs/programs/library/${e.id}`} detail>
+                <IonLabel data-testid="exercise-name">{e.name}</IonLabel>
+                {e.isCustom && <IonNote slot="end">Custom</IonNote>}
+              </IonItem>
+            </SwipeToDelete>
           ))}
         </IonList>
       )}

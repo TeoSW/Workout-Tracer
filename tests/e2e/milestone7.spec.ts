@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { card, openApp, openTab, startProgramC, visibleText } from './helpers';
+import { card, openApp, openTab, startProgramC, visibleText, startWorkout } from './helpers';
 
 test('Not today skips the day with a reason, shows the next one, and History keeps it', async ({
   page,
@@ -40,7 +40,7 @@ test('the Excel preset starts in the chosen week, and week 5 halves the sets', a
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await expect(visibleText(page, 'Heavy 1, planche (volume)')).toBeVisible();
   await expect(visibleText(page, 'Deload')).toBeVisible();
-  await visibleText(page, 'Start').click();
+  await startWorkout(page);
 
   // The sheet's deload: Planche Complex 3 sets become 2.
   const complex = card(page, 'Planche Complex');
@@ -50,7 +50,7 @@ test('the Excel preset starts in the chosen week, and week 5 halves the sets', a
 test('the check button logs a set in one tap and starts the rest', async ({ page }) => {
   await openApp(page);
   await startProgramC(page);
-  await visibleText(page, 'Start').click();
+  await startWorkout(page);
   await expect(visibleText(page, 'Weighted Dips')).toBeVisible();
   const dips = card(page, 'Weighted Dips');
   await dips.locator('ion-button[aria-label="Log set 1 of Weighted Dips"]').click();

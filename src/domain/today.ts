@@ -90,17 +90,16 @@ export function todayPlan(input: {
   const next = nextPlannedWeekday(program, today);
   if (plannedId === null) return { ...base, today: { status: 'rest' }, next };
 
-  const done = sessions.find(
-    (s) =>
-      s.programId === program.id &&
-      s.status === 'finished' &&
-      s.date === today &&
-      s.dayTemplateId === plannedId,
+  // Any day of the program trained today counts, since Start workout lets you pick another
+  // day or week. The planned day is preferred when there are several.
+  const finishedToday = sessions.filter(
+    (s) => s.programId === program.id && s.status === 'finished' && s.date === today,
   );
+  const done = finishedToday.find((s) => s.dayTemplateId === plannedId) ?? finishedToday[0];
   if (done) {
     return {
       ...base,
-      today: { status: 'done', sessionId: done.id, dayTemplateId: plannedId },
+      today: { status: 'done', sessionId: done.id, dayTemplateId: done.dayTemplateId ?? plannedId },
       next,
     };
   }

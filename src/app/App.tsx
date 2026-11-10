@@ -32,7 +32,15 @@ export function App({ ctx }: { ctx: DataContext }) {
           <IonReactHashRouter>
             <IonRouterOutlet>
               <Route path="/tabs/*" element={<Tabs />} />
-              <Route path="/" element={<Navigate to="/tabs/today" replace />} />
+              <Route
+                path="/"
+                element={
+                  <Navigate
+                    to={ctx.profile === 'coach' ? '/tabs/clients' : '/tabs/today'}
+                    replace
+                  />
+                }
+              />
             </IonRouterOutlet>
           </IonReactHashRouter>
           <UpdateToast update={update} />

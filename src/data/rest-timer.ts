@@ -1,4 +1,4 @@
-import { extendRest, startRest } from '../domain/rest';
+import { extendRest, setRestRemaining, startRest } from '../domain/rest';
 import type { RestTimer } from '../domain/schemas';
 import type { DataContext } from './context';
 
@@ -23,9 +23,20 @@ export async function extendRestTimer(ctx: DataContext, seconds: number): Promis
   return ctx.db.transaction('rw', ctx.db.restTimer, async () => {
     const timer = await ctx.db.restTimer.get(TIMER_ID);
     if (!timer) throw new Error('No rest timer is running.');
-    const extended = extendRest(timer, seconds);
+    const extended = extendRest(timer, seconds, ctx.clock.now());
     await ctx.db.restTimer.put(extended);
     return extended;
+  });
+}
+
+/** Restarts the running rest from now with a time the user picked. */
+export async function setRestTimerRemaining(ctx: DataContext, seconds: number): Promise<RestTimer> {
+  return ctx.db.transaction('rw', ctx.db.restTimer, async () => {
+    const timer = await ctx.db.restTimer.get(TIMER_ID);
+    if (!timer) throw new Error('No rest timer is running.');
+    const changed = setRestRemaining(timer, seconds, ctx.clock.now());
+    await ctx.db.restTimer.put(changed);
+    return changed;
   });
 }
 

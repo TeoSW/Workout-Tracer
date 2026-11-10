@@ -1,6 +1,10 @@
 import { IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs } from '@ionic/react';
-import { barbell, barChart, calendar, settings, today } from 'ionicons/icons';
+import { barbell, barChart, calendar, people, settings, today } from 'ionicons/icons';
 import { Navigate, Route } from 'react-router-dom';
+import { ClientPage } from '../features/coach/ClientPage';
+import { ClientsPage } from '../features/coach/ClientsPage';
+import { SendProgramPage } from '../features/coach/SendProgramPage';
+import { useData } from './DataProvider';
 import { HistoryPage } from '../features/history/HistoryPage';
 import { SessionEditPage } from '../features/history/SessionEditPage';
 import { SessionPage } from '../features/history/SessionPage';
@@ -22,7 +26,7 @@ import { ProgressPage } from '../features/progress/ProgressPage';
 import { SkillsPage } from '../features/progress/SkillsPage';
 import { BandsPage } from '../features/settings/BandsPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
-import { PickDayPage } from '../features/today/PickDayPage';
+import { StartWorkoutPage } from '../features/today/StartWorkoutPage';
 import { RestBar } from '../features/rest/RestBar';
 import { TodayPage } from '../features/today/TodayPage';
 import { AddExercisePage } from '../features/workout/AddExercisePage';
@@ -38,11 +42,21 @@ const TABS = [
   { tab: 'settings', label: 'Settings', icon: settings },
 ];
 
+/** The coach doesn't train in this profile, so Today, History and Progress make way. */
+const COACH_TABS = [
+  { tab: 'clients', label: 'Clients', icon: people },
+  { tab: 'programs', label: 'Programs', icon: barbell },
+  { tab: 'settings', label: 'Settings', icon: settings },
+];
+
 export function Tabs() {
+  const { profile } = useData();
+  const tabs = profile === 'coach' ? COACH_TABS : TABS;
   return (
     <IonTabs>
       <IonRouterOutlet>
-        <Route path="today/pick-day" element={<PickDayPage />} />
+        <Route path="today/start" element={<StartWorkoutPage />} />
+        <Route path="today/pick-day" element={<Navigate to="/tabs/today/start" replace />} />
         <Route path="today/workout/add" element={<AddExercisePage />} />
         <Route path="today/workout" element={<WorkoutPage />} />
         <Route path="today/summary/:id" element={<SummaryPage />} />
@@ -67,6 +81,9 @@ export function Tabs() {
         <Route path="programs/presets/:id" element={<PresetPage />} />
         <Route path="programs/import" element={<ImportProgramPage />} />
         <Route path="programs/:id/share" element={<ShareProgramPage />} />
+        <Route path="programs/:id/send" element={<SendProgramPage />} />
+        <Route path="clients/:id" element={<ClientPage />} />
+        <Route path="clients" element={<ClientsPage />} />
         <Route path="programs/:id/days/:dayId/blocks/:blockId" element={<BlockEditorPage />} />
         <Route path="programs/:id/days/:dayId/add-choice" element={<AddBlockPage asChoice />} />
         <Route path="programs/:id/days/:dayId/add" element={<AddBlockPage />} />
@@ -75,13 +92,16 @@ export function Tabs() {
         <Route path="programs" element={<ProgramsPage />} />
         <Route path="settings/bands" element={<BandsPage />} />
         <Route path="settings" element={<SettingsPage />} />
-        <Route index element={<Navigate to="today" replace />} />
+        <Route
+          index
+          element={<Navigate to={profile === 'coach' ? 'clients' : 'today'} replace />}
+        />
       </IonRouterOutlet>
       <div slot="bottom" className="rest-bar-slot">
         <RestBar />
       </div>
       <IonTabBar slot="bottom">
-        {TABS.map(({ tab, label, icon }) => (
+        {tabs.map(({ tab, label, icon }) => (
           <IonTabButton key={tab} tab={tab} href={`/tabs/${tab}`}>
             <IonIcon icon={icon} aria-hidden="true" />
             <IonLabel>{label}</IonLabel>

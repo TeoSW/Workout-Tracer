@@ -85,7 +85,7 @@ export async function getActiveSession(ctx: DataContext): Promise<SessionView | 
  */
 export async function startPlannedSession(
   ctx: DataContext,
-  input: { programId: string; dayTemplateId: string; rotationIndex?: number },
+  input: { programId: string; dayTemplateId: string; rotationIndex?: number; cycleWeek?: number },
 ): Promise<SessionView> {
   const { db } = ctx;
   const id = await db.transaction(
@@ -104,6 +104,7 @@ export async function startPlannedSession(
         dayTemplate,
         date,
         exercisesById: await loadExerciseMap(ctx),
+        ...(input.cycleWeek === undefined ? {} : { cycleWeek: input.cycleWeek }),
       });
 
       let rotationIndex: number | null = null;

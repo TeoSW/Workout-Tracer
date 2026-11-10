@@ -2,6 +2,7 @@ import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import type { DataContext } from '../../../src/data/context';
 import { createDb } from '../../../src/data/db';
 import { dateOfEpochMs } from '../../../src/domain/dates';
+import type { Profile } from '../../../src/domain/schemas';
 
 type Factory = InstanceType<typeof IDBFactory>;
 
@@ -30,7 +31,7 @@ export function testClock(startMs = START_MS): TestClock {
 
 /** A data context on a fresh in-memory IndexedDB, a fixed clock and counter ids. */
 export function testContext(
-  opts: { factory?: Factory; clock?: TestClock; idPrefix?: string } = {},
+  opts: { factory?: Factory; clock?: TestClock; idPrefix?: string; profile?: Profile } = {},
 ): DataContext & { clock: TestClock; factory: Factory } {
   const factory = opts.factory ?? new IDBFactory();
   const clock = opts.clock ?? testClock();
@@ -41,6 +42,7 @@ export function testContext(
     clock,
     factory,
     newId: () => `${prefix}-${++n}`,
+    profile: opts.profile ?? 'me',
   };
 }
 

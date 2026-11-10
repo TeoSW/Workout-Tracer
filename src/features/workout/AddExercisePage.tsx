@@ -7,6 +7,7 @@ import { filterExercises } from '../../domain/exercise-filter';
 import { useGoBack } from '../../ui/navigation';
 import { PageShell } from '../../ui/PageShell';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
+import { NewExerciseSheet } from '../library/NewExerciseSheet';
 
 const WORKOUT = '/tabs/today/workout';
 
@@ -17,6 +18,7 @@ export function AddExercisePage() {
   const view = useLive(getActiveSession);
   const { error, guard } = useGuard();
   const [query, setQuery] = useState('');
+  const [creating, setCreating] = useState(false);
   const shown = useMemo(
     () => filterExercises(exercises ?? [], { query, muscle: 'all', trackingType: 'all' }),
     [exercises, query],
@@ -32,6 +34,22 @@ export function AddExercisePage() {
         onIonInput={(e) => setQuery(e.detail.value ?? '')}
       />
       <ErrorNote error={error} />
+      <IonList inset>
+        <IonItem button detail={false} onClick={() => setCreating(true)}>
+          <IonLabel color="primary">Add your exercise</IonLabel>
+        </IonItem>
+      </IonList>
+      <NewExerciseSheet
+        open={creating}
+        initialName={query}
+        onClose={() => setCreating(false)}
+        onCreated={async (exercise) => {
+          if (!sessionId) return;
+          await addExercise(ctx, sessionId, exercise.id);
+          setCreating(false);
+          goBack();
+        }}
+      />
       <IonList inset>
         {shown.map((e) => (
           <IonItem

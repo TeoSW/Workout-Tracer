@@ -2,6 +2,7 @@ export * from './backup';
 export * from './bands';
 export * from './bodyweight';
 export * from './clean';
+export * from './clients';
 export * from './context';
 export * from './csv';
 export * from './db';

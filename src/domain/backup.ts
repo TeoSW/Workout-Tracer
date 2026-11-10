@@ -2,14 +2,17 @@ import { z } from 'zod';
 import { APP_ID } from './config';
 import { dateOfEpochMs, dayNumber, type DateStr } from './dates';
 import { firstIssue, type Result } from './errors';
+import type { Profile } from './schemas';
 import {
   BandSchema,
   BodyweightEntrySchema,
+  ClientSchema,
   DayTemplateSchema,
   EpochMsSchema,
   ExerciseSchema,
   LoggedSetSchema,
   MissedDaySchema,
+  ProfileSchema,
   ProgramSchema,
   RestTimerSchema,
   SessionExerciseSchema,
@@ -19,7 +22,7 @@ import {
 } from './schemas';
 
 /** Bump with every Dexie schema change, and add a migration from the previous version. */
-export const BACKUP_SCHEMA_VERSION = 2;
+export const BACKUP_SCHEMA_VERSION = 3;
 
 export const BackupDataSchema = z.object({
   exercises: z.array(ExerciseSchema),
@@ -34,11 +37,14 @@ export const BackupDataSchema = z.object({
   settings: z.array(SettingRowSchema),
   restTimer: z.array(RestTimerSchema),
   missedDays: z.array(MissedDaySchema),
+  clients: z.array(ClientSchema),
 });
 
 export const BackupFileSchema = z.object({
   app: z.literal(APP_ID),
   schemaVersion: z.literal(BACKUP_SCHEMA_VERSION),
+  /** Which profile the data comes from. Older backups are always your own training. */
+  profile: ProfileSchema.default('me'),
   exportedAt: EpochMsSchema,
   data: BackupDataSchema,
 });
@@ -58,6 +64,12 @@ export const BACKUP_MIGRATIONS: Readonly<Record<number, BackupMigration>> = {
     if (data === null || typeof data !== 'object') return { ...file, schemaVersion: 2 };
     return { ...file, schemaVersion: 2, data: { ...data, missedDays: [] } };
   },
+  // Version 3 adds clients, for the coach profile.
+  2: (file) => {
+    const data = file.data;
+    if (data === null || typeof data !== 'object') return { ...file, schemaVersion: 3 };
+    return { ...file, schemaVersion: 3, data: { ...data, clients: [] } };
+  },
 };
 
 export function emptyBackupData(): BackupData {
@@ -74,11 +86,16 @@ export function emptyBackupData(): BackupData {
     settings: [],
     restTimer: [],
     missedDays: [],
+    clients: [],
   };
 }
 
-export function createBackup(data: BackupData, exportedAt: number): BackupFile {
-  return { app: APP_ID, schemaVersion: BACKUP_SCHEMA_VERSION, exportedAt, data };
+export function createBackup(
+  data: BackupData,
+  exportedAt: number,
+  profile: Profile = 'me',
+): BackupFile {
+  return { app: APP_ID, schemaVersion: BACKUP_SCHEMA_VERSION, profile, exportedAt, data };
 }
 
 const EnvelopeSchema = z.looseObject({ app: z.literal(APP_ID), schemaVersion: z.number().int() });
@@ -122,8 +139,10 @@ export function parseBackup(
   return { ok: true, backup: parsed.data };
 }
 
-export function backupFileName(date: DateStr): string {
-  return `${APP_ID}-backup-${date}.json`;
+export function backupFileName(date: DateStr, profile: Profile = 'me'): string {
+  return profile === 'coach'
+    ? `${APP_ID}-coach-backup-${date}.json`
+    : `${APP_ID}-backup-${date}.json`;
 }
 
 export function recordCounts(backup: BackupFile): Record<BackupTable, number> {

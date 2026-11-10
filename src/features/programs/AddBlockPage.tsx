@@ -9,6 +9,7 @@ import { addChoiceBlock, addExerciseBlock } from '../../domain/program-edit';
 import type { Exercise } from '../../domain/schemas';
 import { useGoBack } from '../../ui/navigation';
 import { PageShell } from '../../ui/PageShell';
+import { NewExerciseSheet } from '../library/NewExerciseSheet';
 
 /** Picks an exercise for a day, as a new block or as the first option of a choice slot. */
 export function AddBlockPage({ asChoice = false }: { asChoice?: boolean }) {
@@ -18,6 +19,7 @@ export function AddBlockPage({ asChoice = false }: { asChoice?: boolean }) {
   const goBack = useGoBack(dayUrl);
   const exercises = useLive(listExercises);
   const [query, setQuery] = useState('');
+  const [creating, setCreating] = useState(false);
   const shown = useMemo(
     () => filterExercises(exercises ?? [], { query, muscle: 'all', trackingType: 'all' }),
     [exercises, query],
@@ -36,6 +38,20 @@ export function AddBlockPage({ asChoice = false }: { asChoice?: boolean }) {
         placeholder="Search"
         value={query}
         onIonInput={(e) => setQuery(e.detail.value ?? '')}
+      />
+      <IonList inset>
+        <IonItem button detail={false} onClick={() => setCreating(true)}>
+          <IonLabel color="primary">Add your exercise</IonLabel>
+        </IonItem>
+      </IonList>
+      <NewExerciseSheet
+        open={creating}
+        initialName={query}
+        onClose={() => setCreating(false)}
+        onCreated={async (exercise) => {
+          setCreating(false);
+          await add(exercise);
+        }}
       />
       <IonList inset>
         {shown.map((e) => (

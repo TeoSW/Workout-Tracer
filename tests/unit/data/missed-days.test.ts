@@ -159,13 +159,13 @@ describe('review fixes', () => {
   });
 });
 
-describe('backup version 2', () => {
+describe('backup version 2 and later', () => {
   it('backs up missed days and restores them', async () => {
     const ctx = testContext();
     await withProgram(ctx);
     await markDayMissed(ctx, { reason: 'travel', note: '' });
     const backup = await exportBackup(ctx);
-    expect(backup.schemaVersion).toBe(2);
+    expect(backup.schemaVersion).toBe(3);
     expect(backup.data.missedDays).toHaveLength(1);
 
     const fresh = testContext();
@@ -177,7 +177,7 @@ describe('backup version 2', () => {
     const { missedDays: _, ...v1Data } = emptyBackupData();
     const parsed = parseBackup({ app: APP_ID, schemaVersion: 1, exportedAt: 1, data: v1Data });
     if (!parsed.ok) throw new Error(parsed.error);
-    expect(parsed.backup.schemaVersion).toBe(2);
+    expect(parsed.backup.schemaVersion).toBe(3);
     expect(parsed.backup.data.missedDays).toEqual([]);
   });
 
@@ -211,7 +211,10 @@ describe('backup version 2', () => {
     expect(await upgraded.db.bodyweight.count()).toBe(1);
     expect(await upgraded.db.missedDays.count()).toBe(0);
     const snapshot = await upgraded.db.snapshots.get('pre-restore');
-    expect(snapshot?.backup).toMatchObject({ schemaVersion: 2, data: { missedDays: [] } });
+    expect(snapshot?.backup).toMatchObject({
+      schemaVersion: 3,
+      data: { missedDays: [], clients: [] },
+    });
     await undoLastRestore(upgraded);
     expect(await upgraded.db.bodyweight.count()).toBe(0);
   });

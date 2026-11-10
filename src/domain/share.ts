@@ -87,7 +87,7 @@ export function buildProgramShare(
     kind: 'program',
     schemaVersion: SHARE_SCHEMA_VERSION,
     program: {
-      ...structuredClone(program),
+      ...structuredClone(withoutCoachFields(program)),
       active: false,
       archived: false,
       anchorDate: null,
@@ -98,6 +98,12 @@ export function buildProgramShare(
     exercises: structuredClone(exercises),
     bands: structuredClone(bands),
   };
+}
+
+/** The client and the sent record belong to the coach, never to the shared program. */
+function withoutCoachFields(program: Program): Program {
+  const { clientId: _client, sentAt: _sentAt, sentHash: _sentHash, ...rest } = program;
+  return rest;
 }
 
 /** WT1. followed by base64url of the deflated JSON. */

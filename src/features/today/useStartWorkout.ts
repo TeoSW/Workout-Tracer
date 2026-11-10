@@ -12,7 +12,12 @@ export function useStartWorkout() {
   const router = useIonRouter();
 
   const startDay = useCallback(
-    async (input: { programId: string; dayTemplateId: string; rotationIndex?: number }) => {
+    async (input: {
+      programId: string;
+      dayTemplateId: string;
+      rotationIndex?: number;
+      cycleWeek?: number;
+    }) => {
       unlockAudio();
       await startPlannedSession(ctx, input);
       router.push(WORKOUT, 'forward', 'replace');

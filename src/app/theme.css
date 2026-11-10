@@ -515,3 +515,81 @@ ion-label.notice p {
   width: 40px;
   margin-inline-end: 8px;
 }
+
+.week-picker {
+  padding: 8px 4px 0;
+  background: var(--grouped-card);
+}
+
+.week-picker-label {
+  display: block;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--ion-color-medium);
+}
+
+.current-exercises {
+  margin: 12px 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.current-exercises li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 15px;
+  border-bottom: 1px solid var(--ion-color-step-150, #d9d9d9);
+}
+
+.current-exercises li:last-child {
+  border-bottom: none;
+}
+
+.sets-left {
+  color: var(--ion-color-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.sets-done {
+  color: var(--ion-color-success);
+  font-variant-numeric: tabular-nums;
+}
+
+.rest-bar-main {
+  cursor: pointer;
+}
+
+.rest-bar ion-button {
+  --padding-start: 6px;
+  --padding-end: 6px;
+}
+
+.profile-switch {
+  padding: 8px 12px;
+  background: var(--grouped-card);
+}
+
+.profile-note {
+  margin: 0;
+  padding: 8px 16px 12px;
+  background: var(--grouped-card);
+}
+
+.send-preview {
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: 14px;
+}
+
+.sent-changed {
+  color: var(--ion-color-warning-shade) !important;
+}
+
+.day-weekday {
+  width: 36px;
+  min-width: 36px;
+  margin-inline-end: 4px;
+  font-size: 15px;
+}

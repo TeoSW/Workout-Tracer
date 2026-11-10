@@ -9,6 +9,7 @@ import {
   openApp,
   openTab,
   startProgramC,
+  startWorkout,
   visibleText,
 } from './helpers';
 
@@ -31,7 +32,7 @@ test('flow 2: log a full Heavy day with rest, finish, and find it in History', a
   test.setTimeout(180_000); // 18 sets, each with a sheet opening and closing
   await openApp(page);
   await startProgramC(page);
-  await visibleText(page, 'Start').click();
+  await startWorkout(page);
   await expect(visibleText(page, 'Planche Complex')).toBeVisible();
 
   // Warm-up is a toggle, and starts no rest.
@@ -85,7 +86,7 @@ test('flow 2: log a full Heavy day with rest, finish, and find it in History', a
 test('flow 3: reload mid-workout, Resume restores the sets and the rest', async ({ page }) => {
   await openApp(page);
   await startProgramC(page);
-  await visibleText(page, 'Start').click();
+  await startWorkout(page);
   await logNextSet(page, 'Planche Complex');
   await expect(page.getByTestId('rest-bar')).toContainText(/^Rest[23]:\d\d/);
 
@@ -94,9 +95,9 @@ test('flow 3: reload mid-workout, Resume restores the sets and the rest', async 
   await page.goto('./#/tabs/today');
   await page.reload();
 
-  await expect(visibleText(page, 'Resume workout')).toBeVisible();
+  await expect(visibleText(page, 'Continue workout')).toBeVisible();
   await expect(page.getByTestId('rest-bar')).toContainText(/^Rest2:[0-3]\d/);
-  await visibleText(page, 'Resume workout').click();
+  await visibleText(page, 'Continue workout').click();
   await expect(card(page, 'Planche Complex')).toContainText('Set 1 ·');
   await expect(card(page, 'Planche Complex')).toContainText('band 25kg');
 });
@@ -104,7 +105,7 @@ test('flow 3: reload mid-workout, Resume restores the sets and the rest', async 
 test('the rest bar stays on every tab and says when rest is over', async ({ page }) => {
   await openApp(page, MONDAY);
   await startProgramC(page);
-  await visibleText(page, 'Start').click();
+  await startWorkout(page);
   await logNextSet(page, 'Planche Complex');
   await openTab(page, 'History');
   await expect(page.getByTestId('rest-bar')).toBeVisible();

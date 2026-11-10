@@ -35,6 +35,7 @@ export * from './skills';
 export * from './templates';
 export * from './today';
 export * from './volume';
+export * from './week-days';
 export { SEED_BANDS } from './fixtures/bands';
 export { PROGRESSION_LADDER, SEED_EXERCISES } from './fixtures/exercises';
 export * from './fixtures/templates';

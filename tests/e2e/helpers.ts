@@ -51,7 +51,7 @@ export async function logSets(page: Page, name: string, count: number): Promise<
 
 export async function finishWorkout(page: Page): Promise<void> {
   await page.getByTestId('finish-workout').filter({ visible: true }).click();
-  await page.locator('ion-alert button', { hasText: 'Finish' }).click();
+  await page.locator('ion-alert button', { hasText: 'End workout' }).click();
 }
 
 /** Page content runs behind the bottom bars, so check what is really on top at the bar. */
@@ -62,4 +62,16 @@ export async function expectRestBarOnTop(page: Page): Promise<void> {
     return bar.contains(document.elementFromPoint(box.left + 4, box.top + 4));
   });
   expect(onTop).toBe(true);
+}
+
+/** Taps Start workout on Today, then starts the previewed day. */
+export async function startWorkout(page: Page): Promise<void> {
+  await visibleText(page, 'Start workout').click();
+  await expect(page.getByTestId('start-preview').filter({ visible: true })).toBeVisible();
+  await page
+    .locator('ion-button', { hasText: 'Start workout' })
+    .filter({ visible: true })
+    .last()
+    .click();
+  await expect(page).toHaveURL(/#\/tabs\/today\/workout$/);
 }

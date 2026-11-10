@@ -9,7 +9,7 @@ import {
 import { addDays } from '../../../src/domain/dates';
 import { SEED_BANDS } from '../../../src/domain/fixtures/bands';
 import { PROGRAM_A, PROGRAM_B, PROGRAM_C } from '../../../src/domain/fixtures/templates';
-import { extendRest, restRemainingMs, startRest } from '../../../src/domain/rest';
+import { extendRest, setRestRemaining, restRemainingMs, startRest } from '../../../src/domain/rest';
 import {
   bestCleanHoldByLevel,
   bestCleanHoldInSession,
@@ -158,6 +158,12 @@ describe('rest timer', () => {
     expect(restRemainingMs(timer, 31_000)).toBe(60_000);
     expect(restRemainingMs(timer, 500_000)).toBe(0);
     expect(extendRest(timer, 15)).toMatchObject({ endsAt: 106_000, durationSec: 105 });
+    // Taking time off never ends the rest before now.
+    expect(extendRest(timer, -200, 50_000)).toMatchObject({ endsAt: 50_000, durationSec: 49 });
+    expect(setRestRemaining(timer, 60, 50_000)).toMatchObject({
+      endsAt: 110_000,
+      durationSec: 109,
+    });
   });
 });
 

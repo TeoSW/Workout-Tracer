@@ -21,7 +21,6 @@ import { startRestTimer } from '../../data/rest-timer';
 import {
   addSet,
   deleteSession,
-  finishSession,
   getActiveSession,
   lastSetsByExercise,
   moveExercise,
@@ -43,6 +42,7 @@ import { useConfirm } from '../../ui/useConfirm';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
 import { ExerciseCard, type CardActions } from './ExerciseCard';
 import { SetSheet, type SheetSet } from './SetSheet';
+import { useFinishWorkout } from './useFinishWorkout';
 import { useSetEditor } from './useSetEditor';
 
 const TODAY = '/tabs/today';
@@ -132,6 +132,7 @@ export function WorkoutPage() {
   const router = useIonRouter();
   const confirm = useConfirm();
   const { error, guard } = useGuard();
+  const endWorkout = useFinishWorkout(guard);
   const [presentSheet] = useIonActionSheet();
   const view = useLive(getActiveSession);
   const settings = useLive(getSettings);
@@ -258,15 +259,7 @@ export function WorkoutPage() {
     },
   };
 
-  async function finish() {
-    const yes = await confirm({ header: 'Finish this workout?', confirm: 'Finish' });
-    if (!yes) return;
-    await guard(async () => {
-      await finishSession(ctx, session.id);
-      await allowSleep();
-      router.push(`${TODAY}/summary/${session.id}`, 'forward', 'replace');
-    });
-  }
+  const finish = () => endWorkout(session.id);
 
   async function discard() {
     const yes = await confirm({
@@ -291,7 +284,7 @@ export function WorkoutPage() {
       back={TODAY}
       actions={
         <IonButton strong data-testid="finish-workout" onClick={() => void finish()}>
-          Done
+          End workout
         </IonButton>
       }
     >

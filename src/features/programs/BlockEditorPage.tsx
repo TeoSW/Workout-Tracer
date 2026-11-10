@@ -40,6 +40,7 @@ import type {
 } from '../../domain/schemas';
 import { useGoBack } from '../../ui/navigation';
 import { PageShell } from '../../ui/PageShell';
+import { SaveButton } from '../../ui/SaveButton';
 import { Stepper } from '../../ui/Stepper';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
 import { TargetFields } from './TargetFields';
@@ -278,7 +279,7 @@ export function BlockEditorPage() {
   const title = block.kind === 'choice' ? block.choiceSlot.label : (exercise?.name ?? 'Exercise');
 
   return (
-    <PageShell title={title} back={dayUrl}>
+    <PageShell title={title} back={dayUrl} actions={<SaveButton back={dayUrl} error={error} />}>
       {block.kind === 'choice' && (
         <ChoiceFields
           programId={id}
