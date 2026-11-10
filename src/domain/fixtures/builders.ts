@@ -4,6 +4,7 @@ import type {
   ComplexPartTarget,
   DayTemplate,
   DayType,
+  SetPlan,
   SetTarget,
   WeekGrid,
 } from '../schemas';
@@ -26,6 +27,9 @@ export const kg = (min: number, max?: number): SetTarget =>
 
 export const added = (addedKg: number): SetTarget => ({ addedKg });
 
+/** A planned RPE, stored as RIR. */
+export const rpe = (value: number): SetTarget => ({ rir: 10 - value });
+
 export const bands = (...bandIds: string[]): SetTarget => ({ bandIds });
 
 export const holdPart = (name: string, target: number): ComplexPartTarget => ({
@@ -42,7 +46,13 @@ export const repPart = (name: string, target: number): ComplexPartTarget => ({
 
 type Sets = number | [number, number];
 
-type BlockExtras = { note?: string; restSec?: number; supersetGroup?: string; warmupSets?: number };
+type BlockExtras = {
+  note?: string;
+  restSec?: number;
+  supersetGroup?: string;
+  warmupSets?: number;
+  setTargets?: SetPlan[];
+};
 
 export type BlockInput =
   | ({ kind: 'exercise'; exerciseId: string; sets: Sets; target: SetTarget } & BlockExtras)
@@ -95,6 +105,7 @@ function toBlock(input: BlockInput, id: string, order: number): Block {
     ...(input.note === undefined ? {} : { note: input.note }),
     ...(input.restSec === undefined ? {} : { restSec: input.restSec }),
     ...(input.supersetGroup === undefined ? {} : { supersetGroup: input.supersetGroup }),
+    ...(input.setTargets === undefined ? {} : { setTargets: input.setTargets }),
   };
   if (input.kind === 'exercise') {
     return { ...common, kind: 'exercise', exerciseId: input.exerciseId, target: input.target };
