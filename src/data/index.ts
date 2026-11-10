@@ -7,6 +7,7 @@ export * from './csv';
 export * from './db';
 export * from './exercises';
 export * from './history';
+export * from './missed-days';
 export * from './programs';
 export * from './rest-timer';
 export * from './seed';

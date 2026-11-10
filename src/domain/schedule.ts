@@ -1,5 +1,5 @@
 import { addDays, daysBetween, mondayOf, weekdayOf, type DateStr } from './dates';
-import type { Program, Session } from './schemas';
+import type { MissedDay, Program, Session } from './schemas';
 
 export type CyclePosition = { weeksSinceAnchor: number; cycleNumber: number; cycleWeek: number };
 
@@ -52,10 +52,38 @@ export function latestFinishedSession(sessions: Session[], programId: string): S
   return latest;
 }
 
-/** The rotation index of the latest finished session that has one. */
-export function lastRotationIndex(sessions: Session[], programId: string): number | null {
+/** The latest missed day of a program, by when it was marked. */
+export function latestMissedDay(
+  missedDays: readonly MissedDay[],
+  programId: string,
+): MissedDay | null {
+  let latest: MissedDay | null = null;
+  for (const m of missedDays) {
+    if (m.programId !== programId) continue;
+    if (latest === null || m.createdAt > latest.createdAt) latest = m;
+  }
+  return latest;
+}
+
+/**
+ * The rotation index of the latest finished session or missed day that has one, so a missed
+ * day moves the rotation past it.
+ */
+export function lastRotationIndex(
+  sessions: Session[],
+  programId: string,
+  missedDays: readonly MissedDay[] = [],
+): number | null {
   const placed = sessions.filter((s) => s.rotationIndex !== null);
-  return latestFinishedSession(placed, programId)?.rotationIndex ?? null;
+  const session = latestFinishedSession(placed, programId);
+  const missed = latestMissedDay(
+    missedDays.filter((m) => m.rotationIndex !== null),
+    programId,
+  );
+  if (missed !== null && (session === null || missed.createdAt > session.startedAt)) {
+    return missed.rotationIndex;
+  }
+  return session?.rotationIndex ?? null;
 }
 
 function rotationSequence(program: Program): string[] {

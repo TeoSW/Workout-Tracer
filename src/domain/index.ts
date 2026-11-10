@@ -17,6 +17,7 @@ export * from './format';
 export * from './import';
 export * from './last-time';
 export * from './load';
+export * from './missed-days';
 export * from './log-layout';
 export * from './plan';
 export * from './program-edit';

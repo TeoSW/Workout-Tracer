@@ -1,12 +1,13 @@
 import { Dexie, type EntityTable } from 'dexie';
 import { APP_ID } from '../domain/config';
-import type { BackupFile, BackupTable } from '../domain/backup';
+import { BACKUP_MIGRATIONS, type BackupFile, type BackupTable } from '../domain/backup';
 import type {
   Band,
   BodyweightEntry,
   DayTemplate,
   Exercise,
   LoggedSet,
+  MissedDay,
   Program,
   RestTimer,
   Session,
@@ -19,7 +20,7 @@ import type {
  * Bump together with BACKUP_SCHEMA_VERSION. Each bump adds a `version(n)` with its upgrader here
  * and a backup migration in src/domain/backup.ts.
  */
-export const DB_SCHEMA_VERSION = 1;
+export const DB_SCHEMA_VERSION = 2;
 
 /** The copy of all data kept before a restore, for "Undo last restore". Never backed up. */
 export type Snapshot = { id: 'pre-restore'; createdAt: number; backup: BackupFile };
@@ -36,6 +37,7 @@ export type WorkoutDb = Dexie & {
   testResults: EntityTable<TestResult, 'id'>;
   settings: EntityTable<SettingRow, 'key'>;
   restTimer: EntityTable<RestTimer, 'id'>;
+  missedDays: EntityTable<MissedDay, 'id'>;
   snapshots: EntityTable<Snapshot, 'id'>;
 };
 
@@ -54,6 +56,11 @@ const SCHEMA_V1 = {
   settings: 'key',
   restTimer: 'id',
   snapshots: 'id',
+};
+
+const SCHEMA_V2 = {
+  ...SCHEMA_V1,
+  missedDays: 'id, programId, date',
 } satisfies Record<BackupTable | 'snapshots', string>;
 
 export const BACKUP_TABLES: readonly BackupTable[] = [
@@ -68,6 +75,7 @@ export const BACKUP_TABLES: readonly BackupTable[] = [
   'testResults',
   'settings',
   'restTimer',
+  'missedDays',
 ];
 
 export type DbOptions = NonNullable<ConstructorParameters<typeof Dexie>[1]> & { name?: string };
@@ -76,6 +84,19 @@ export type DbOptions = NonNullable<ConstructorParameters<typeof Dexie>[1]> & { 
 export function createDb(options: DbOptions = {}): WorkoutDb {
   const { name = APP_ID, ...dexieOptions } = options;
   const db = new Dexie(name, dexieOptions) as WorkoutDb;
-  db.version(DB_SCHEMA_VERSION).stores(SCHEMA_V1);
+  db.version(1).stores(SCHEMA_V1);
+  db.version(2)
+    .stores(SCHEMA_V2)
+    .upgrade(async (tx) => {
+      // The copy kept for "Undo last restore" is a backup file, so it gets the same migration.
+      const migrate = BACKUP_MIGRATIONS[1];
+      if (!migrate) throw new Error('Missing backup migration from version 1');
+      await tx
+        .table('snapshots')
+        .toCollection()
+        .modify((snapshot: { backup: Record<string, unknown> }) => {
+          if (snapshot.backup.schemaVersion === 1) snapshot.backup = migrate(snapshot.backup);
+        });
+    });
   return db;
 }

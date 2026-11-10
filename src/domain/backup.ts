@@ -9,6 +9,7 @@ import {
   EpochMsSchema,
   ExerciseSchema,
   LoggedSetSchema,
+  MissedDaySchema,
   ProgramSchema,
   RestTimerSchema,
   SessionExerciseSchema,
@@ -18,7 +19,7 @@ import {
 } from './schemas';
 
 /** Bump with every Dexie schema change, and add a migration from the previous version. */
-export const BACKUP_SCHEMA_VERSION = 1;
+export const BACKUP_SCHEMA_VERSION = 2;
 
 export const BackupDataSchema = z.object({
   exercises: z.array(ExerciseSchema),
@@ -32,6 +33,7 @@ export const BackupDataSchema = z.object({
   testResults: z.array(TestResultSchema),
   settings: z.array(SettingRowSchema),
   restTimer: z.array(RestTimerSchema),
+  missedDays: z.array(MissedDaySchema),
 });
 
 export const BackupFileSchema = z.object({
@@ -48,8 +50,15 @@ export type BackupTable = keyof BackupData;
 /** A migration turns a whole backup file of version N into version N + 1. */
 export type BackupMigration = (file: Record<string, unknown>) => Record<string, unknown>;
 
-/** Keyed by the version a migration upgrades from. Empty while there is only version 1. */
-export const BACKUP_MIGRATIONS: Readonly<Record<number, BackupMigration>> = {};
+/** Keyed by the version a migration upgrades from. */
+export const BACKUP_MIGRATIONS: Readonly<Record<number, BackupMigration>> = {
+  // Version 2 adds missed days.
+  1: (file) => {
+    const data = file.data;
+    if (data === null || typeof data !== 'object') return { ...file, schemaVersion: 2 };
+    return { ...file, schemaVersion: 2, data: { ...data, missedDays: [] } };
+  },
+};
 
 export function emptyBackupData(): BackupData {
   return {
@@ -64,6 +73,7 @@ export function emptyBackupData(): BackupData {
     testResults: [],
     settings: [],
     restTimer: [],
+    missedDays: [],
   };
 }
 

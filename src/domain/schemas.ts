@@ -335,6 +335,24 @@ export const TestResultSchema = z.object({
   nextCycleChoice: z.object({ slotId: IdSchema, optionIndex: count }).nullable(),
 });
 
+export const MISSED_REASONS = ['sick', 'busy', 'pain', 'travel', 'other'] as const;
+export const MissedReasonSchema = z.enum(MISSED_REASONS);
+
+/** A planned day the user said they would not train. It is skipped, never moved. */
+export const MissedDaySchema = z.object({
+  id: IdSchema,
+  programId: IdSchema,
+  date: DateStrSchema,
+  dayTemplateId: IdSchema,
+  /** Kept so the record still reads right after the program is edited or deleted. */
+  dayName: z.string().min(1),
+  /** The rotation position it skipped. Null for weekday programs. */
+  rotationIndex: count.nullable(),
+  reason: MissedReasonSchema.nullable(),
+  note: z.string(),
+  createdAt: EpochMsSchema,
+});
+
 export const RestTimerSchema = z.object({
   id: z.literal('current'),
   sessionId: IdSchema,
@@ -383,6 +401,8 @@ export type Session = z.infer<typeof SessionSchema>;
 export type SessionExercise = z.infer<typeof SessionExerciseSchema>;
 export type LoggedPart = z.infer<typeof LoggedPartSchema>;
 export type LoggedSet = z.infer<typeof LoggedSetSchema>;
+export type MissedReason = z.infer<typeof MissedReasonSchema>;
+export type MissedDay = z.infer<typeof MissedDaySchema>;
 export type BodyweightEntry = z.infer<typeof BodyweightEntrySchema>;
 export type TestResult = z.infer<typeof TestResultSchema>;
 export type RestTimer = z.infer<typeof RestTimerSchema>;

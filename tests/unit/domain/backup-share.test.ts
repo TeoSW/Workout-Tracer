@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BACKUP_MIGRATIONS,
   BACKUP_SCHEMA_VERSION,
   backupFileName,
   createBackup,
@@ -111,17 +112,19 @@ describe('backup file', () => {
     const old = { app: 'workout-tracker', schemaVersion: -1, exportedAt: 1, legacy: true };
     const calls: number[] = [];
     const result = parseBackup(old, {
+      ...BACKUP_MIGRATIONS,
       [-1]: (file) => {
         calls.push(-1);
         return { ...file, schemaVersion: 0 };
       },
       0: (file) => {
         calls.push(0);
-        return { ...file, schemaVersion: 1, data: emptyBackupData(), legacy: undefined };
+        const { missedDays: _, ...v1 } = emptyBackupData();
+        return { ...file, schemaVersion: 1, data: v1, legacy: undefined };
       },
     });
     expect(calls).toEqual([-1, 0]);
-    expect(result.ok).toBe(true);
+    expect(result.ok && result.backup.data.missedDays).toEqual([]);
     expect(parseBackup({ ...old, schemaVersion: 0 })).toEqual({
       ok: false,
       error: 'This backup uses an old format the app cannot read.',
