@@ -62,7 +62,7 @@ export function NotTodaySheet(props: { open: boolean; dayName: string; onClose: 
         </IonToolbar>
       </IonHeader>
       <IonContent>
-        <p className="section-note sheet-intro">{`${props.dayName} is marked as missed and skipped. The plan doesn't move.`}</p>
+        <p className="section-note sheet-intro">{`${props.dayName} will be marked as missed and skipped. The plan stays as it is.`}</p>
         <IonList inset>
           <IonListHeader>
             <IonLabel>Reason</IonLabel>

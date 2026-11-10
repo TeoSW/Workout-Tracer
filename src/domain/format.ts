@@ -33,6 +33,12 @@ export function formatBandLevel(
 }
 
 /** "3 x 8-12", "3-4 x 5-10s", "4-6 attempts". Empty for a checklist item. */
+const LEG_MUSCLES = new Set(['glutes', 'quads', 'hamstrings', 'adductors', 'abductors', 'calves']);
+
+function worksLegs(exercise: Exercise): boolean {
+  return exercise.primaryMuscles.some((m) => LEG_MUSCLES.has(m));
+}
+
 export function formatSetsTarget(
   block: Pick<ExerciseBlock, 'setsMin' | 'setsMax' | 'target'>,
   exercise: Exercise,
@@ -56,7 +62,7 @@ export function formatSetsTarget(
     return `${sets} x ${range(target.secondsMin, target.secondsMax)}s`;
   }
   if (target.repsMin !== undefined) {
-    const perSide = exercise.unilateral ? ' /leg' : '';
+    const perSide = exercise.unilateral ? (worksLegs(exercise) ? ' /leg' : ' /arm') : '';
     return `${sets} x ${range(target.repsMin, target.repsMax)}${perSide}`;
   }
   return block.setsMin === 1 && block.setsMax === undefined ? '1 set' : `${sets} sets`;
