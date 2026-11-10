@@ -492,7 +492,8 @@ describe('finish', () => {
     await user.click(await screen.findByText('Continue'));
 
     const seconds = await screen.findByLabelText('Planche Hold best clean hold');
-    expect(seconds).toHaveValue(9);
+    // Ionic reports the value as a number before the field loads and as text after.
+    expect(String((seconds as HTMLElement & { value?: unknown }).value)).toBe('9');
     ionEvent(screen.getByLabelText('Planche Hold note'), 'ionInput', { value: 'Hips sag.' });
     await user.click(await screen.findByText('Hollow Body Hold'));
     await user.click(screen.getByText('Save results'));
