@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { listBodyweight, setBodyweight } from '../../src/data/bodyweight';
+import { listMissedDays } from '../../src/data/missed-days';
 import { activateProgram, createProgramFromTemplate } from '../../src/data/programs';
 import { seedIfNeeded } from '../../src/data/seed';
 import {
@@ -67,7 +68,7 @@ describe('Today', () => {
     const { ctx } = await withProgram(PROGRAM_C, 1); // Tuesday
     renderApp('/tabs/today', ctx);
     expect(await screen.findByText('Rest day')).toBeInTheDocument();
-    expect(screen.getByText('Next: Light (front lever first), 2026-11-04')).toBeInTheDocument();
+    expect(screen.getByText('Next: Light (front lever first), Wed 4 Nov')).toBeInTheDocument();
     expect(screen.getByText('Start another day')).toBeInTheDocument();
     expect(screen.getByText('Empty workout')).toBeInTheDocument();
   });
@@ -81,7 +82,7 @@ describe('Today', () => {
     await finishSession(ctx, started.session.id);
     renderApp('/tabs/today', ctx);
     expect(await screen.findByText('Done: Heavy (planche first)')).toBeInTheDocument();
-    expect(screen.getByText('Next: Light (front lever first), 2026-11-04')).toBeInTheDocument();
+    expect(screen.getByText('Next: Light (front lever first), Wed 4 Nov')).toBeInTheDocument();
     expect(screen.queryByText('Start')).not.toBeInTheDocument();
   });
 
@@ -122,12 +123,49 @@ describe('Today', () => {
     const { ctx } = await withProgram();
     await setBodyweight(ctx, '2026-11-01', 39);
     const { user } = renderApp('/tabs/today', ctx);
+    expect(await screen.findByText('Add today')).toBeInTheDocument();
+    await user.click(screen.getByText('Bodyweight'));
     ionEvent(await screen.findByLabelText('Bodyweight today'), 'ionInput', { value: '40,5' });
     await user.click(screen.getByText('Save weight'));
     await waitFor(async () =>
       expect((await listBodyweight(ctx)).at(-1)).toEqual({ date: '2026-11-02', kg: 40.5 }),
     );
-    expect(await screen.findByText('Saved: 40.5kg')).toBeInTheDocument();
+    expect(await screen.findByText('40.5kg')).toBeInTheDocument();
+  });
+});
+
+describe('Not today', () => {
+  it('asks first, then skips the day with a reason and shows the next one', async () => {
+    const { ctx } = await withProgram();
+    const { user } = renderApp('/tabs/today', ctx);
+    expect(await screen.findByText('Training today?')).toBeInTheDocument();
+    await user.click(screen.getByText('Not today'));
+    await user.click(await screen.findByText('Sick'));
+    ionEvent(screen.getByLabelText('Note'), 'ionInput', { value: 'Fever' });
+    await user.click(screen.getByText('Skip day'));
+
+    expect(await screen.findByText('Missed: Heavy (planche first)')).toBeInTheDocument();
+    expect(screen.getByText('Sick, Fever')).toBeInTheDocument();
+    expect(screen.getByText('Next: Light (front lever first), Wed 4 Nov')).toBeInTheDocument();
+    expect(screen.queryByText('Training today?')).not.toBeInTheDocument();
+    expect(await listMissedDays(ctx)).toMatchObject([{ reason: 'sick', note: 'Fever' }]);
+  });
+
+  it('can be undone from Today', async () => {
+    const { ctx } = await withProgram();
+    const { user } = renderApp('/tabs/today', ctx);
+    await user.click(await screen.findByText('Not today'));
+    await user.click(await screen.findByText('Skip day'));
+    await user.click(await screen.findByText('Undo'));
+    expect(await screen.findByText('Training today?')).toBeInTheDocument();
+    expect(await listMissedDays(ctx)).toEqual([]);
+  });
+
+  it('is not offered on a rest day or once the day is done', async () => {
+    const { ctx } = await withProgram(PROGRAM_C, 1);
+    renderApp('/tabs/today', ctx);
+    expect(await screen.findByText('Rest day')).toBeInTheDocument();
+    expect(screen.queryByText('Not today')).not.toBeInTheDocument();
   });
 });
 

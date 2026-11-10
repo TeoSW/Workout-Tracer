@@ -88,6 +88,9 @@ export const formatCycleWeek = (week: number, total: number) => `Week ${week} of
 /** "3 Nov". */
 export const formatShortDate = (date: DateStr) => format(parseDateStr(date), 'd MMM');
 
+/** "Wed 4 Nov". */
+export const formatWeekdayDate = (date: DateStr) => format(parseDateStr(date), 'EEE d MMM');
+
 /** "3 Nov 2026", for lists that run across years. */
 export const formatDateWithYear = (date: DateStr) => format(parseDateStr(date), 'd MMM yyyy');
 

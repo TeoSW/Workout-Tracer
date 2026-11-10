@@ -24,7 +24,7 @@ test('flow 1: a mocked Tuesday is a rest day, and Wednesday is Light', async ({ 
   await openApp(page, new Date('2026-11-03T09:00:00'));
   await startProgramC(page);
   await expect(visibleText(page, 'Rest day')).toBeVisible();
-  await expect(visibleText(page, 'Next: Light (front lever first), 2026-11-04')).toBeVisible();
+  await expect(visibleText(page, 'Next: Light (front lever first), Wed 4 Nov')).toBeVisible();
 });
 
 test('flow 2: log a full Heavy day with rest, finish, and find it in History', async ({ page }) => {
@@ -68,7 +68,7 @@ test('flow 2: log a full Heavy day with rest, finish, and find it in History', a
   await expect(card(page, 'Working sets')).toContainText('Working sets18');
   await visibleText(page, 'Close').click();
   await expect(visibleText(page, 'Done: Heavy (planche first)')).toBeVisible();
-  await expect(visibleText(page, 'Next: Light (front lever first), 2026-11-04')).toBeVisible();
+  await expect(visibleText(page, 'Next: Light (front lever first), Wed 4 Nov')).toBeVisible();
 
   await openTab(page, 'History');
   const day = page.getByRole('button', { name: 'Monday 2 November, Heavy (planche first)' });
