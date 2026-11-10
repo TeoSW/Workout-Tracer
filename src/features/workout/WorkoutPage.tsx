@@ -35,7 +35,7 @@ import { formatDuration } from '../../domain/format';
 import { logItems } from '../../domain/log-layout';
 import { restAfterSet } from '../../domain/rest-plan';
 import type { ChoiceBlock, Exercise, LoggedSet } from '../../domain/schemas';
-import type { SetDraft } from '../../domain/set-draft';
+import { draftFor, draftProblem, type SetDraft } from '../../domain/set-draft';
 import { unlockAudio } from '../../pwa/audio';
 import { allowSleep, isWakeLockSupported, keepAwake } from '../../pwa/wake-lock';
 import { PageShell } from '../../ui/PageShell';
@@ -217,6 +217,18 @@ export function WorkoutPage() {
     openSet: (entry, set, last) => {
       unlockAudio();
       editor.setActions.openSet(entry, set, last);
+    },
+    quickLog: (entry, set, last) => {
+      unlockAudio();
+      const exercise = exercises.get(entry.exerciseId);
+      if (!exercise) return;
+      const draft = draftFor({ exercise, target: set.target ?? {}, last });
+      // With nothing to prefill from, the sheet asks for the numbers instead.
+      if (draftProblem(draft, exercise) !== null) {
+        editor.setActions.openSet(entry, set, last);
+        return;
+      }
+      void saveSet({ set, exercise, draft, title: exercise.name }, draft);
     },
     openInfo: setInfo,
     openMenu: (entry) => {
