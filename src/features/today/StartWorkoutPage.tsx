@@ -1,4 +1,14 @@
-import { IonBadge, IonButton, IonItem, IonLabel, IonList, IonListHeader } from '@ionic/react';
+import {
+  IonBadge,
+  IonButton,
+  IonIcon,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonListHeader,
+  IonNote,
+} from '@ionic/react';
+import { checkmark } from 'ionicons/icons';
 import { useState } from 'react';
 import { useData, useLive } from '../../app/DataProvider';
 import { loadBandMap } from '../../data/bands';
@@ -8,7 +18,7 @@ import type { Weekday } from '../../domain/dates';
 import { formatCycleWeek, formatPlanLine } from '../../domain/format';
 import { resolvePlan } from '../../domain/plan';
 import type { DataContext } from '../../data/context';
-import { daysForWeek } from '../../domain/week-days';
+import { daysForWeek, type WeekDay } from '../../domain/week-days';
 import { Chips } from '../../ui/Chips';
 import { PageShell } from '../../ui/PageShell';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
@@ -84,6 +94,27 @@ export function StartWorkoutPage() {
     : null;
   const nameOf = (id: string) => overview.days.find((d) => d.id === id)?.name ?? 'Workout';
 
+  function dayRow(d: WeekDay) {
+    const selected = d.dayTemplateId === chosenId;
+    return (
+      <IonItem
+        key={d.dayTemplateId}
+        button
+        detail={false}
+        aria-pressed={selected}
+        onClick={() => setDayId(d.dayTemplateId)}
+      >
+        {d.weekday && (
+          <IonNote slot="start" className="day-weekday">
+            {WEEKDAY_SHORT[d.weekday]}
+          </IonNote>
+        )}
+        <IonLabel className="ion-text-wrap">{nameOf(d.dayTemplateId)}</IonLabel>
+        {selected && <IonIcon slot="end" icon={checkmark} color="primary" aria-label="Selected" />}
+      </IonItem>
+    );
+  }
+
   function start() {
     if (!day || busy || !program) return;
     setBusy(true);
@@ -124,27 +155,13 @@ export function StartWorkoutPage() {
         <IonListHeader>
           <IonLabel>Day</IonLabel>
         </IonListHeader>
-        {[...planned, ...others].map((d) => (
-          <IonItem
-            key={d.dayTemplateId}
-            button
-            detail={false}
-            aria-pressed={d.dayTemplateId === chosenId}
-            onClick={() => setDayId(d.dayTemplateId)}
-          >
-            {d.weekday && (
-              <IonLabel slot="start" className="preset-weekday" color="medium">
-                {WEEKDAY_SHORT[d.weekday]}
-              </IonLabel>
-            )}
-            <IonLabel>{nameOf(d.dayTemplateId)}</IonLabel>
-            {d.dayTemplateId === chosenId && (
-              <IonBadge slot="end" color="primary">
-                Selected
-              </IonBadge>
-            )}
-          </IonItem>
-        ))}
+        {planned.map(dayRow)}
+        {others.length > 0 && (
+          <IonListHeader>
+            <IonLabel>Other days</IonLabel>
+          </IonListHeader>
+        )}
+        {others.map(dayRow)}
       </IonList>
 
       {preview && day && (

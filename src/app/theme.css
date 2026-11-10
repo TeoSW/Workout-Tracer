@@ -586,3 +586,10 @@ ion-label.notice p {
 .sent-changed {
   color: var(--ion-color-warning-shade) !important;
 }
+
+.day-weekday {
+  width: 36px;
+  min-width: 36px;
+  margin-inline-end: 4px;
+  font-size: 15px;
+}
