@@ -18,6 +18,7 @@ import {
   addDayTemplate,
   archiveProgram,
   deactivateProgram,
+  deleteDayTemplate,
   deleteProgram,
   editProgram,
   getProgram,
@@ -32,6 +33,7 @@ import type { Program } from '../../domain/schemas';
 import { DAY_TYPE_LABELS } from '../../ui/labels';
 import { PageShell } from '../../ui/PageShell';
 import { SaveButton } from '../../ui/SaveButton';
+import { SwipeToDelete } from '../../ui/SwipeToDelete';
 import { Stepper } from '../../ui/Stepper';
 import { useConfirm } from '../../ui/useConfirm';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
@@ -178,12 +180,20 @@ export function ProgramEditorPage() {
           <IonLabel>Days</IonLabel>
         </IonListHeader>
         {days.map((d) => (
-          <IonItem key={d.id} routerLink={`${PROGRAMS}/${id}/days/${d.id}`} detail>
-            <IonLabel>
-              <h2>{d.name}</h2>
-              <p>{DAY_TYPE_LABELS[d.dayType]}</p>
-            </IonLabel>
-          </IonItem>
+          <SwipeToDelete
+            key={d.id}
+            label={d.name}
+            header={`Delete ${d.name}?`}
+            message="It comes out of the schedule too. Past workouts stay in History."
+            onDelete={() => guarded(() => deleteDayTemplate(ctx, d.id))}
+          >
+            <IonItem routerLink={`${PROGRAMS}/${id}/days/${d.id}`} detail>
+              <IonLabel>
+                <h2>{d.name}</h2>
+                <p>{DAY_TYPE_LABELS[d.dayType]}</p>
+              </IonLabel>
+            </IonItem>
+          </SwipeToDelete>
         ))}
         <IonItem>
           <IonInput

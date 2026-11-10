@@ -38,6 +38,28 @@ describe('program list', () => {
   });
 });
 
+describe('swipe to delete', () => {
+  it('deletes a program from the list after asking', async () => {
+    const { ctx, program } = await withProgram();
+    const { user } = renderApp('/tabs/programs', ctx);
+    await screen.findByText(program.name);
+    await user.click(screen.getByLabelText(`Delete ${program.name}`));
+    await confirmAlert(user, 'Delete');
+    await waitFor(async () => expect(await listPrograms(ctx)).toEqual([]));
+  });
+
+  it('removes an exercise from the library, keeping it for past workouts', async () => {
+    const ctx = testContext();
+    await seedIfNeeded(ctx);
+    const { user } = renderApp('/tabs/programs/library', ctx);
+    await screen.findByText('Plank');
+    await user.click(screen.getByLabelText('Delete Plank'));
+    await confirmAlert(user, 'Delete');
+    await waitFor(() => expect(screen.queryByText('Plank')).not.toBeInTheDocument());
+    expect((await ctx.db.exercises.get('plank'))?.archived).toBe(true);
+  });
+});
+
 describe('new program', () => {
   it('lists the presets, with the Excel cycle first and a one-line summary', async () => {
     renderApp('/tabs/programs/new');
