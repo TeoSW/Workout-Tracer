@@ -4,15 +4,17 @@ A free workout logger for iPhone. It logs sets, reps, load, bands, holds, skill 
 
 Everything stays on your phone. There are no accounts, no server and no shared data.
 
-## Install on an iPhone
+## Install
 
-You need iOS 17 or later.
+On an iPhone you need iOS 17 or later.
 
 1. Open https://teosw.github.io/Workout-Tracer/ in Safari.
 2. Tap Share, then Add to Home Screen.
 3. Open the app from the home screen, and use it from there.
 
-Data saved in a Safari tab stays in that tab and won't appear in the installed app. The first launch of the installed app needs a connection, and after that it works offline.
+On Android, open the site in Chrome, open the browser menu, then tap Install app or Add to Home screen. The app is tested on iPhone, not on Android.
+
+Data saved in a browser tab stays in that tab and won't appear in the installed app. The first launch of the installed app needs a connection, and after that it works offline.
 
 ## Keep a backup
 
