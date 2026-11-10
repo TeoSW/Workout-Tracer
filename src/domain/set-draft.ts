@@ -22,7 +22,7 @@ function partsFor(target: SetTarget, last: LoggedSet | null): LoggedPart[] {
   });
 }
 
-/** Prefills from last time, otherwise from the lower end of the plan. */
+/** Prefills from last time, otherwise from the lower end of the plan. Effort comes from the plan first. */
 export function draftFor(input: {
   exercise: Exercise;
   target: SetTarget;
@@ -41,7 +41,8 @@ export function draftFor(input: {
     attempts: 0,
     cleanAttempts: 0,
     clean: last?.clean ?? false,
-    rir: last?.rir ?? null,
+    // The planned effort is the goal for today, so it comes before last time's.
+    rir: target.rir ?? last?.rir ?? null,
   };
 }
 

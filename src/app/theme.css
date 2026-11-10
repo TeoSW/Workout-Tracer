@@ -593,3 +593,15 @@ ion-label.notice p {
   margin-inline-end: 4px;
   font-size: 15px;
 }
+
+.set-plan {
+  border-bottom: 1px solid var(--ion-color-step-150, #d9d9d9);
+}
+
+.set-plan:last-child {
+  border-bottom: none;
+}
+
+.set-plan-line {
+  color: var(--ion-color-primary) !important;
+}

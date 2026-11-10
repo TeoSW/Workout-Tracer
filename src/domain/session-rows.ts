@@ -1,4 +1,5 @@
 import type { ExerciseBlock, LoggedSet, PlanSnapshot, SessionExercise } from './schemas';
+import { targetForSet } from './set-plan';
 import type { NewId } from './templates';
 
 /**
@@ -32,7 +33,11 @@ export function buildRowsForBlock(input: {
     exerciseId: block.exerciseId,
     order,
     kind,
-    target: structuredClone(block.target),
+    // Warm-ups take the block's target; working sets add their own effort and note.
+    target:
+      kind === 'warmup'
+        ? structuredClone(block.target)
+        : targetForSet(block, order - block.warmupSets),
     rir: null,
     done: false,
     completedAt: null,

@@ -164,6 +164,31 @@ describe('block editor', () => {
   });
 });
 
+describe('each set', () => {
+  it('sets an effort for every set, and its own effort and note for one set', async () => {
+    const { ctx, day, dayUrl, load } = await setup('Legs');
+    const block = day.blocks[0] as Block; // Lumbar extension, 3 sets
+    renderApp(`${dayUrl}/blocks/${block.id}`, ctx);
+    const sets = within(await screen.findByTestId('set-plans'));
+    expect(sets.getByText('Set 3')).toBeInTheDocument();
+    ionEvent(selectLabelled('Effort for every set'), 'ionChange', { value: '2' });
+    await waitFor(async () => expect((await load()).blocks[0]?.target.rir).toBe(2));
+    ionEvent(selectLabelled('Set 3 effort'), 'ionChange', { value: '0.5' });
+    ionEvent(screen.getByLabelText('Set 3 note'), 'ionChange', { value: 'Top set' });
+    await waitFor(async () =>
+      expect((await load()).blocks[0]?.setTargets).toEqual([{}, {}, { rir: 0.5, note: 'Top set' }]),
+    );
+  });
+
+  it('offers only notes for a hold, which logs no effort', async () => {
+    const { ctx, day, dayUrl } = await setup('Light (front lever first)');
+    renderApp(`${dayUrl}/blocks/${blockOf(day, 'front-lever-hold').id}`, ctx);
+    const sets = within(await screen.findByTestId('set-plans'));
+    expect(sets.getByLabelText('Set 1 note')).toBeInTheDocument();
+    expect(sets.queryByText('Effort for every set')).not.toBeInTheDocument();
+  });
+});
+
 describe('choice slots', () => {
   it('edits a shared slot on both Heavy days', async () => {
     const { ctx, program, day, dayUrl } = await setup('Heavy (planche first)');

@@ -43,7 +43,10 @@ import { PageShell } from '../../ui/PageShell';
 import { SaveButton } from '../../ui/SaveButton';
 import { Stepper } from '../../ui/Stepper';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
+import { SetPlanFields } from './SetPlanFields';
 import { TargetFields } from './TargetFields';
+import { getSettings } from '../../data/settings';
+import { effortModeFor } from '../../domain/effort';
 
 type EditDay = (change: (day: DayTemplate) => DayTemplate) => void;
 
@@ -266,6 +269,7 @@ export function BlockEditorPage() {
   const byId = useLive(loadExerciseMap);
   const exercises = useLive(listExercises);
   const bands = useLive((c) => listBands(c, { includeArchived: true }));
+  const settings = useLive(getSettings);
   const { error, guard } = useGuard();
 
   const day = loaded?.dayTemplates.find((d) => d.id === dayId);
@@ -306,6 +310,13 @@ export function BlockEditorPage() {
           onEdit={edit}
         />
       </IonList>
+      {block.kind === 'exercise' && exercise && (
+        <SetPlanFields
+          block={block}
+          mode={effortModeFor(settings?.effortMode ?? 'rir', exercise)}
+          onEdit={edit}
+        />
+      )}
       <ErrorNote error={error} />
       <IonList inset>
         <IonItem

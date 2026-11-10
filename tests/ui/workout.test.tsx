@@ -184,6 +184,24 @@ describe('set sheet', () => {
     );
   });
 
+  it("shows each set's planned effort and note, and prefills the effort", async () => {
+    const { ctx } = await empty('squat');
+    const view = await getActiveSession(ctx);
+    const setId = view?.exercises[0]?.sets[0]?.id ?? '';
+    await updateSet(ctx, setId, {
+      target: { repsMin: 8, loadMinKg: 20, rir: 2, note: 'Pause at the bottom' },
+    });
+    const { user } = renderApp(WORKOUT, ctx);
+    expect(await screen.findByText('Plan: RIR 2 · Pause at the bottom')).toBeInTheDocument();
+    await user.click(await buttonLabelled('Log set 1 of Squat'));
+    await waitFor(async () =>
+      expect((await getActiveSession(ctx))?.exercises[0]?.sets[0]).toMatchObject({
+        rir: 2,
+        done: true,
+      }),
+    );
+  });
+
   it('logs a set in one tap with the check button and starts the rest', async () => {
     const { ctx, session } = await empty('squat');
     const view = await getActiveSession(ctx);
