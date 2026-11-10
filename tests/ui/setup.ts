@@ -7,8 +7,9 @@ import { afterEach } from 'vitest';
 
 setupIonicReact({ mode: 'ios' });
 
-// A first render seeds the database, which takes a while when every test file runs at once.
-configure({ asyncUtilTimeout: 8000 });
+// A first render seeds the database, which takes a while when every test file runs at once,
+// and longer on GitHub's slower runners.
+configure({ asyncUtilTimeout: 15_000 });
 
 afterEach(() => cleanup());
 
