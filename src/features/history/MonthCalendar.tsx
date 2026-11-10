@@ -3,7 +3,7 @@ import { chevronBack, chevronForward } from 'ionicons/icons';
 import { monthGrid, type MonthStr } from '../../domain/calendar';
 import type { DateStr } from '../../domain/dates';
 import { formatDayLabel, formatMonth } from '../../domain/format';
-import type { Session } from '../../domain/schemas';
+import type { MissedDay, Session } from '../../domain/schemas';
 import { dayTypeColor } from '../../ui/dayColors';
 
 const WEEKDAY_HEADERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -16,18 +16,20 @@ function Day(props: {
   today: boolean;
   selected: boolean;
   sessions: readonly Session[];
+  missed: readonly MissedDay[];
   onTap: () => void;
 }) {
-  const { date, inMonth, today, selected, sessions, onTap } = props;
+  const { date, inMonth, today, selected, sessions, missed, onTap } = props;
+  const named = [...sessions, ...missed.map((m) => ({ name: `missed ${m.dayName}` }))];
   if (!inMonth) return <span className="calendar-day calendar-day-outside" />;
   return (
     <button
       type="button"
       className="calendar-day"
-      aria-label={formatDayLabel(date, sessions)}
+      aria-label={formatDayLabel(date, named)}
       aria-pressed={selected}
       aria-current={today ? 'date' : undefined}
-      disabled={sessions.length === 0}
+      disabled={named.length === 0}
       onClick={onTap}
     >
       <span className="calendar-number">{Number(date.slice(8))}</span>
@@ -40,22 +42,27 @@ function Day(props: {
             style={{ background: dayTypeColor(session.dayType) }}
           />
         ))}
+        {sessions.length === 0 && missed.length > 0 && <span className="calendar-missed" />}
       </span>
     </button>
   );
 }
 
-/** A month, Monday first. Days with workouts carry a bar in the color of their day type. */
+/**
+ * A month, Monday first. Days with workouts carry a bar in the color of their day type, and
+ * missed days an outlined one.
+ */
 export function MonthCalendar(props: {
   month: MonthStr;
   today: DateStr;
   selected: DateStr | null;
   byDay: ReadonlyMap<DateStr, Session[]>;
+  missedByDay: ReadonlyMap<DateStr, MissedDay[]>;
   canGoForward: boolean;
   onStep: (months: number) => void;
   onSelect: (date: DateStr) => void;
 }) {
-  const { month, today, selected, byDay, canGoForward, onStep, onSelect } = props;
+  const { month, today, selected, byDay, missedByDay, canGoForward, onStep, onSelect } = props;
   return (
     <div className="calendar">
       <div className="calendar-head">
@@ -90,6 +97,7 @@ export function MonthCalendar(props: {
               today={date === today}
               selected={date === selected}
               sessions={byDay.get(date) ?? []}
+              missed={missedByDay.get(date) ?? []}
               onTap={() => onSelect(date)}
             />
           ))}

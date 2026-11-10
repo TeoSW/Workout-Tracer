@@ -45,7 +45,12 @@ export default function ProgressContent() {
     <>
       {!hasWorkouts && <p className="empty-note">Stats will show here once you log workouts.</p>}
       {hasWorkouts && (
-        <ConsistencySection sessions={data.sessions} program={data.program} today={today} />
+        <ConsistencySection
+          sessions={data.sessions}
+          program={data.program}
+          missedDays={data.missedDays}
+          today={today}
+        />
       )}
       {hasWorkouts && <MuscleSection data={data} today={today} />}
       {hasWorkouts && <RecentPrs data={data} />}

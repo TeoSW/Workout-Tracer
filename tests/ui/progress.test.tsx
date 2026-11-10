@@ -1,9 +1,11 @@
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { markDayMissed } from '../../src/data/missed-days';
 import { createProgramFromTemplate, activateProgram } from '../../src/data/programs';
+import { seedIfNeeded } from '../../src/data/seed';
 import { addExercise, finishSession, startEmptySession } from '../../src/data/sessions';
 import { setSetting } from '../../src/data/settings';
-import { PROGRAM_A } from '../../src/domain/fixtures/templates';
+import { PROGRAM_A, PROGRAM_C } from '../../src/domain/fixtures/templates';
 import { testContext } from '../unit/data/helpers';
 import { buttonLabelled, ionEvent, logWorkout, renderApp } from './helpers';
 
@@ -31,8 +33,22 @@ describe('progress overview', () => {
     await activateProgram(ctx, program.id, 'this_week');
     renderApp('/tabs/progress', ctx);
     expect(
-      await screen.findByText('1 week streak, this week 1 of 3, average 1h 00m'),
+      await screen.findByText(
+        '1 week streak, this week 1 of 3, average 1h 00m, missed this month 0',
+      ),
     ).toBeInTheDocument();
+  });
+
+  it('counts missed planned days this month, and says how many were marked', async () => {
+    const ctx = testContext();
+    await seedIfNeeded(ctx);
+    const { program } = await createProgramFromTemplate(ctx, PROGRAM_C);
+    await activateProgram(ctx, program.id, 'this_week');
+    await logWorkout(ctx, 'First'); // Monday, no program, so it doesn't start the count
+    await markDayMissed(ctx, { reason: 'busy', note: '' }); // Monday's Heavy
+    ctx.clock.advance(3 * DAY); // Thursday: Wednesday's Light was missed without a mark
+    renderApp('/tabs/progress', ctx);
+    expect(await screen.findByText(/missed this month 2 \(1 marked\)$/)).toBeInTheDocument();
   });
 
   it('says only what was finished without an active program', async () => {

@@ -441,3 +441,16 @@ ion-label.notice p {
 .sheet-intro {
   padding-top: 16px;
 }
+
+/* A missed day: outlined, so it never reads as a workout of some day type. */
+.calendar-missed {
+  width: 16px;
+  height: 4px;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px var(--ion-color-medium);
+}
+
+.day-dot-missed {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--ion-color-medium);
+}

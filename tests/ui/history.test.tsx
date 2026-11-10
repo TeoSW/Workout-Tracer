@@ -1,7 +1,11 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { markDayMissed } from '../../src/data/missed-days';
+import { activateProgram, createProgramFromTemplate } from '../../src/data/programs';
 import { getRestTimer } from '../../src/data/rest-timer';
+import { seedIfNeeded } from '../../src/data/seed';
+import { PROGRAM_C } from '../../src/domain/fixtures/templates';
 import {
   addSet,
   deleteSession,
@@ -13,6 +17,28 @@ import { testContext } from '../unit/data/helpers';
 import { buttonLabelled, confirmAlert, ionEvent, logWorkout, renderApp } from './helpers';
 
 const DAY = 86_400_000;
+
+describe('missed days in History', () => {
+  it('marks them on the calendar and lists them with the reason, and Undo removes them', async () => {
+    const ctx = testContext();
+    await seedIfNeeded(ctx);
+    const { program } = await createProgramFromTemplate(ctx, PROGRAM_C);
+    await activateProgram(ctx, program.id, 'this_week');
+    await markDayMissed(ctx, { reason: 'pain', note: 'Wrist' });
+    const { user } = renderApp('/tabs/history', ctx);
+
+    const day = await screen.findByRole('button', {
+      name: 'Monday 2 November, missed Heavy (planche first)',
+    });
+    expect(day.querySelector('.calendar-missed')).not.toBeNull();
+    expect(screen.getByText('Missed')).toBeInTheDocument();
+    expect(screen.getByText('2 Nov · Pain · Wrist')).toBeInTheDocument();
+
+    await user.click(await buttonLabelled('Undo missed Heavy (planche first)'));
+    await confirmAlert(user, 'Undo');
+    await waitFor(() => expect(screen.queryByText('2 Nov · Pain · Wrist')).toBeNull());
+  });
+});
 
 describe('history calendar', () => {
   it('marks days by day type and names them for screen readers', async () => {

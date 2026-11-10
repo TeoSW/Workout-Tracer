@@ -4,6 +4,7 @@ import type {
   BodyweightEntry,
   Exercise,
   LoggedSet,
+  MissedDay,
   Program,
   Session,
   TestResult,
@@ -23,21 +24,32 @@ export type StatsData = {
   testResults: TestResult[];
   program: Program | null;
   settings: AppSettings;
+  missedDays: MissedDay[];
 };
 
 /** Everything Progress reads, together so that it updates as one. Pure functions do the rest. */
 export async function loadStatsData(ctx: DataContext): Promise<StatsData> {
-  const [sessions, sets, exercisesById, bandsById, bodyweight, testResults, program, settings] =
-    await Promise.all([
-      ctx.db.sessions.where('status').equals('finished').toArray(),
-      ctx.db.sets.toArray(),
-      loadExerciseMap(ctx),
-      loadBandMap(ctx),
-      ctx.db.bodyweight.toArray(),
-      ctx.db.testResults.toArray(),
-      getActiveProgram(ctx),
-      getSettings(ctx),
-    ]);
+  const [
+    sessions,
+    sets,
+    exercisesById,
+    bandsById,
+    bodyweight,
+    testResults,
+    program,
+    settings,
+    missedDays,
+  ] = await Promise.all([
+    ctx.db.sessions.where('status').equals('finished').toArray(),
+    ctx.db.sets.toArray(),
+    loadExerciseMap(ctx),
+    loadBandMap(ctx),
+    ctx.db.bodyweight.toArray(),
+    ctx.db.testResults.toArray(),
+    getActiveProgram(ctx),
+    getSettings(ctx),
+    ctx.db.missedDays.toArray(),
+  ]);
   const finished = new Set(sessions.map((s) => s.id));
   return {
     sessions,
@@ -48,6 +60,7 @@ export async function loadStatsData(ctx: DataContext): Promise<StatsData> {
     testResults,
     program: program ?? null,
     settings,
+    missedDays,
   };
 }
 
