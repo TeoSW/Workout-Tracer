@@ -37,6 +37,7 @@ export function SendProgramPage() {
   const data = useLive((c) => loadSend(c, id), [id]);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
   const back = `/tabs/programs/${id}`;
 
   if (!data) return <PageShell title="Send program" back={back} children={null} />;
@@ -77,10 +78,13 @@ export function SendProgramPage() {
           onClick={() =>
             void run(async () => {
               const result = await shareText(text);
-              if (result === 'copied') setMessage('Message copied. Paste it in WhatsApp.');
+              if (result === 'copied') {
+                setMessage('Message copied. Paste it in WhatsApp, then tap Mark as sent.');
+                setCopied(true);
+              }
               if (result === 'shared') setMessage(`Sent to ${who}.`);
               if (result === 'failed') setMessage('The message could not be shared. Try the file.');
-              return result === 'shared' || result === 'copied';
+              return result === 'shared';
             })
           }
         >
@@ -105,6 +109,22 @@ export function SendProgramPage() {
         >
           Send as a file
         </IonButton>
+        {copied && (
+          <IonButton
+            expand="block"
+            fill="outline"
+            disabled={busy}
+            onClick={() =>
+              void run(async () => {
+                setCopied(false);
+                setMessage(`Marked as sent to ${who}.`);
+                return true;
+              })
+            }
+          >
+            Mark as sent
+          </IonButton>
+        )}
       </div>
       {message && (
         <p className="section-note" role="status">

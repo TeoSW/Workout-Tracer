@@ -279,7 +279,7 @@ export function BlockEditorPage() {
   const title = block.kind === 'choice' ? block.choiceSlot.label : (exercise?.name ?? 'Exercise');
 
   return (
-    <PageShell title={title} back={dayUrl} actions={<SaveButton back={dayUrl} />}>
+    <PageShell title={title} back={dayUrl} actions={<SaveButton back={dayUrl} error={error} />}>
       {block.kind === 'choice' && (
         <ChoiceFields
           programId={id}

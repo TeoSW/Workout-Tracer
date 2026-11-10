@@ -319,7 +319,17 @@ export type SentStatus = 'not_sent' | 'sent' | 'changed';
 /** Whether a coach's program was sent, and whether it changed since. */
 export function sentStatus(program: Program, currentCode: string): SentStatus {
   if (program.sentAt === undefined || program.sentAt === null) return 'not_sent';
-  return program.sentCode === currentCode ? 'sent' : 'changed';
+  return program.sentHash === codeHash(currentCode) ? 'sent' : 'changed';
+}
+
+/** FNV-1a, enough to tell whether a share code changed without keeping the whole code. */
+export function codeHash(code: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < code.length; i++) {
+    hash ^= code.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return `${code.length.toString(36)}-${hash.toString(36)}`;
 }
 
 /** Records that a program went to its client, with the code that was sent. */
@@ -328,7 +338,7 @@ export async function markProgramSent(
   id: string,
   code: string,
 ): Promise<Program> {
-  return editProgram(ctx, id, (p) => ({ ...p, sentAt: ctx.clock.now(), sentCode: code }));
+  return editProgram(ctx, id, (p) => ({ ...p, sentAt: ctx.clock.now(), sentHash: codeHash(code) }));
 }
 
 /** Deletes a program and its days. Sessions logged with it keep their plan snapshots. */

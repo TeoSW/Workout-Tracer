@@ -27,7 +27,11 @@ async function loadClient(ctx: DataContext, id: string) {
   const programs = await Promise.all(
     loaded.programs.map(async (program) => ({
       program,
-      status: sentStatus(program, (await shareProgram(ctx, program.id)).code),
+      // Only a sent program needs its code rebuilt, to see whether it changed since.
+      status:
+        program.sentAt === undefined || program.sentAt === null
+          ? ('not_sent' as const)
+          : sentStatus(program, (await shareProgram(ctx, program.id)).code),
     })),
   );
   return { client: loaded.client, programs };
@@ -56,7 +60,11 @@ export function ClientPage() {
   const { client, programs } = data;
 
   return (
-    <PageShell title={client.name} back={CLIENTS} actions={<SaveButton back={CLIENTS} />}>
+    <PageShell
+      title={client.name}
+      back={CLIENTS}
+      actions={<SaveButton back={CLIENTS} error={error} />}
+    >
       <IonList inset>
         <IonItem>
           <IonInput

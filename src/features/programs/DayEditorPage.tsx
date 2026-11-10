@@ -72,7 +72,11 @@ export function DayEditorPage() {
   const blocks = [...day.blocks].sort((a, b) => a.order - b.order);
 
   return (
-    <PageShell title={day.name} back={programUrl} actions={<SaveButton back={programUrl} />}>
+    <PageShell
+      title={day.name}
+      back={programUrl}
+      actions={<SaveButton back={programUrl} error={error} />}
+    >
       <IonList inset>
         <IonItem>
           <IonInput

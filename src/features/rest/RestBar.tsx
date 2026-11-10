@@ -72,6 +72,12 @@ export function RestBar() {
 
   if (!timer || remaining === null) return null;
 
+  function openChooser() {
+    if (remaining === null) return;
+    setCustom(Math.max(15, Math.round(remaining / 15000) * 15));
+    setChoosing(true);
+  }
+
   function choose(seconds: number) {
     setChoosing(false);
     void setRestTimerRemaining(ctx, seconds);
@@ -88,9 +94,12 @@ export function RestBar() {
         role="button"
         tabIndex={0}
         aria-label="Change rest time"
-        onClick={() => {
-          setCustom(Math.max(15, Math.round(remaining / 15000) * 15));
-          setChoosing(true);
+        onClick={openChooser}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openChooser();
+          }
         }}
       >
         <span className="rest-bar-label">Rest</span>

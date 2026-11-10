@@ -89,7 +89,11 @@ export function ProgramEditorPage() {
   }
 
   return (
-    <PageShell title={program.name} back={PROGRAMS} actions={<SaveButton back={PROGRAMS} />}>
+    <PageShell
+      title={program.name}
+      back={PROGRAMS}
+      actions={<SaveButton back={PROGRAMS} error={error} />}
+    >
       <IonList inset>
         <IonItem>
           <IonInput
@@ -98,7 +102,8 @@ export function ProgramEditorPage() {
             value={program.name}
             onIonChange={(e) => {
               const name = (e.detail.value ?? '').trim();
-              if (name !== '') save((p) => ({ ...p, name }));
+              if (name === '') setError('The program needs a name.');
+              else save((p) => ({ ...p, name }));
             }}
           />
         </IonItem>

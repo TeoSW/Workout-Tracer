@@ -240,9 +240,9 @@ export const ProgramSchema = z
     archived: z.boolean(),
     /** In the coach profile: the client the program is for. */
     clientId: IdSchema.nullable().optional(),
-    /** In the coach profile: when it was last sent, and the share code that was sent. */
+    /** In the coach profile: when it was last sent, and a hash of the share code sent. */
     sentAt: EpochMsSchema.nullable().optional(),
-    sentCode: z.string().optional(),
+    sentHash: z.string().optional(),
   })
   .refine((p) => p.schedule.kind !== 'weekday' || p.schedule.weeks.length === p.cycleWeeks, {
     message: 'A weekday grid needs one week per cycle week',

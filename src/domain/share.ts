@@ -102,7 +102,7 @@ export function buildProgramShare(
 
 /** The client and the sent record belong to the coach, never to the shared program. */
 function withoutCoachFields(program: Program): Program {
-  const { clientId: _client, sentAt: _sentAt, sentCode: _sentCode, ...rest } = program;
+  const { clientId: _client, sentAt: _sentAt, sentHash: _sentHash, ...rest } = program;
   return rest;
 }
 

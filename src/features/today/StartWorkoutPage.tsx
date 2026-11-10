@@ -71,12 +71,8 @@ export function StartWorkoutPage() {
   const chosenWeek = week ?? currentWeek;
   const weekly = program.schedule.kind === 'weekday' && cycleWeeks > 1;
   const { planned, others } = daysForWeek(program, overview.days, chosenWeek);
-  const todays =
-    plan.today.status === 'planned'
-      ? plan.today.day
-      : plan.next && (plan.next.date === null || plan.next.date === ctx.clock.today())
-        ? plan.next
-        : null;
+  // Today's plan, or the next planned day when today is done, missed or a rest day.
+  const todays = plan.today.status === 'planned' ? plan.today.day : plan.next;
   const defaultDay =
     chosenWeek === currentWeek && todays
       ? todays.dayTemplateId

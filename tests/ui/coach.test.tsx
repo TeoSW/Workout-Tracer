@@ -34,6 +34,27 @@ describe('profile switch', () => {
     expect(reloadApp).toHaveBeenCalledOnce();
   });
 
+  it('puts the switch back when the switch is cancelled', async () => {
+    const { user } = renderApp('/tabs/settings');
+    const segment = await screen.findByLabelText('Profile');
+    ionEvent(segment, 'ionChange', { value: 'coach' });
+    await confirmAlert(user, 'Cancel');
+    await waitFor(() => {
+      const fresh = screen.getByLabelText('Profile') as HTMLElement & { value?: string };
+      expect(fresh).not.toBe(segment);
+      expect(fresh.value).toBe('me');
+    });
+    expect(getStoredProfile()).toBe('me');
+    expect(reloadApp).not.toHaveBeenCalled();
+  });
+
+  it('keeps only the settings the coach uses', async () => {
+    renderApp('/tabs/settings', await coach());
+    expect(await screen.findByText('Bands')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Sound')).not.toBeInTheDocument();
+    expect(screen.queryByText('Backup reminder')).not.toBeInTheDocument();
+  });
+
   it('shows Clients, Programs and Settings in the coach profile, opening on Clients', async () => {
     renderApp('/', await coach());
     expect(
@@ -94,6 +115,36 @@ describe('sending a program', () => {
       expect((await getProgram(ctx, program.id))?.program.sentAt).toBe(ctx.clock.now()),
     );
     expect(await screen.findByText('Sent to Ana.')).toBeInTheDocument();
+  });
+
+  it('does not count a copied message as sent until the coach says so', async () => {
+    const ctx = await coach();
+    const ana = await addClient(ctx, { name: 'Ana', note: '' });
+    const { program } = await createProgramFromTemplate(ctx, PROGRAM_B, undefined, {
+      clientId: ana.id,
+    });
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const { user } = renderApp(`/tabs/programs/${program.id}/send`, ctx);
+    await user.click(await screen.findByText('Send message'));
+    expect(await screen.findByText(/Message copied/)).toBeInTheDocument();
+    expect((await getProgram(ctx, program.id))?.program.sentAt).toBeUndefined();
+    await user.click(screen.getByText('Mark as sent'));
+    await waitFor(async () =>
+      expect((await getProgram(ctx, program.id))?.program.sentAt).toBe(ctx.clock.now()),
+    );
+    Reflect.deleteProperty(navigator, 'clipboard');
+  });
+
+  it('stays on the client page when Save meets a name that was cleared', async () => {
+    const ctx = await coach();
+    const ana = await addClient(ctx, { name: 'Ana', note: '' });
+    const { user } = renderApp(`/tabs/clients/${ana.id}`, ctx);
+    ionEvent(await screen.findByLabelText('Client name'), 'ionChange', { value: '' });
+    await user.click(screen.getByText('Save'));
+    expect(await screen.findByText('Give the client a name.')).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 300));
+    expect(window.location.hash).toBe(`#/tabs/clients/${ana.id}`);
   });
 
   it('lists the sent state on the client page', async () => {

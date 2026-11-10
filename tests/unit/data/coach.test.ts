@@ -77,7 +77,7 @@ describe('sending a program', () => {
     await markProgramSent(ctx, program.id, 'old');
     const { share } = await shareProgram(ctx, program.id);
     expect(share.program).not.toHaveProperty('clientId');
-    expect(share.program).not.toHaveProperty('sentCode');
+    expect(share.program).not.toHaveProperty('sentHash');
     expect(JSON.stringify(share)).not.toContain('sentAt');
   });
 });

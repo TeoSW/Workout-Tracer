@@ -65,6 +65,18 @@ describe('a missed weekday', () => {
   });
 });
 
+describe('training another day of the program', () => {
+  it('counts as today done, so Today stops asking', () => {
+    const { program, dayTemplates } = activeProgram(PROGRAM_C);
+    const planned = plannedDayTemplateId(program, D);
+    const other = dayTemplates.find((d) => d.id !== planned);
+    if (!other) throw new Error('no other day');
+    const s = makeSession({ date: D, programId: program.id, dayTemplateId: other.id });
+    const plan = todayPlan({ program, sessions: [s], today: D });
+    expect(plan.today).toEqual({ status: 'done', sessionId: s.id, dayTemplateId: other.id });
+  });
+});
+
 describe('a missed rotation day', () => {
   it('is skipped, so the rotation moves on to the day after it', () => {
     const { program, dayName } = activeProgram(PROGRAM_A);

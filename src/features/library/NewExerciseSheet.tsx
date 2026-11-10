@@ -43,7 +43,10 @@ export function NewExerciseSheet(props: {
   const { error, guard, setError } = useGuard();
 
   useEffect(() => {
-    if (props.open) setName(props.initialName);
+    if (!props.open) return;
+    setName(props.initialName);
+    setTrackingType('weight_reps');
+    setMuscle('chest');
   }, [props.open, props.initialName]);
 
   function save() {
