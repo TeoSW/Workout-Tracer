@@ -134,6 +134,30 @@ describe('logger cards', () => {
       expect((await getActiveSession(ctx))?.exercises.map((e) => e.exerciseId)).toEqual(['plank']),
     );
   });
+  it('makes your own exercise from the search and adds it', async () => {
+    const { ctx } = await empty();
+    const { user } = renderApp(`${WORKOUT}/add`, ctx);
+    ionEvent(await screen.findByLabelText('Search exercises'), 'ionInput', {
+      value: 'Ring Muscle-up',
+    });
+    await user.click(screen.getByText('Add your exercise'));
+    await waitFor(() =>
+      expect(
+        (screen.getByLabelText('Exercise name') as HTMLInputElement & { value: string }).value,
+      ).toBe('Ring Muscle-up'),
+    );
+    ionEvent(selectLabelled('Logged as'), 'ionChange', { value: 'bodyweight_reps' });
+    await user.click(screen.getByText('Add'));
+    await waitFor(async () => {
+      const view = await getActiveSession(ctx);
+      const id = view?.exercises[0]?.exerciseId ?? '';
+      expect(await ctx.db.exercises.get(id)).toMatchObject({
+        name: 'Ring Muscle-up',
+        trackingType: 'bodyweight_reps',
+        isCustom: true,
+      });
+    });
+  });
 });
 
 describe('set sheet', () => {
