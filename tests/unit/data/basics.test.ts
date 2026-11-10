@@ -17,11 +17,11 @@ describe('seedIfNeeded', () => {
   it('writes bands and exercises on the first run only', async () => {
     const ctx = testContext();
     expect(await seedIfNeeded(ctx)).toBe(true);
-    expect(await ctx.db.bands.count()).toBe(3);
-    expect(await ctx.db.exercises.count()).toBe(54);
+    expect(await ctx.db.bands.count()).toBe(4);
+    expect(await ctx.db.exercises.count()).toBe(60);
     expect((await ctx.db.settings.get('seedVersion'))?.value).toBe(SEED_VERSION);
     expect(await seedIfNeeded(ctx)).toBe(false);
-    expect(await ctx.db.exercises.count()).toBe(54);
+    expect(await ctx.db.exercises.count()).toBe(60);
   });
 
   it('never overwrites or re-adds built-in exercises the user changed', async () => {
@@ -36,6 +36,20 @@ describe('seedIfNeeded', () => {
     expect((await getExercise(ctx, 'squat'))?.cues).toBe('Knees out.');
     expect((await getExercise(ctx, 'plank'))?.archived).toBe(true);
     expect(await getExercise(ctx, '540')).toBeUndefined();
+  });
+  it('adds the version 2 exercises and the 5kg band to an install seeded at version 1', async () => {
+    const ctx = testContext();
+    await seedIfNeeded(ctx);
+    await ctx.db.bands.delete('band-5');
+    for (const id of ['push-ups', 'planche-press', 'dips']) await ctx.db.exercises.delete(id);
+    await archiveExercise(ctx, 'plank');
+    await ctx.db.settings.put({ key: 'seedVersion', value: 1 });
+
+    expect(await seedIfNeeded(ctx)).toBe(true);
+    expect(await ctx.db.bands.get('band-5')).toMatchObject({ ratedKg: 5 });
+    expect((await getExercise(ctx, 'planche-press'))?.name).toBe('Planche Press');
+    expect((await getExercise(ctx, 'plank'))?.archived).toBe(true);
+    expect(await ctx.db.exercises.count()).toBe(60);
   });
 });
 
@@ -65,12 +79,17 @@ describe('bands', () => {
   it('lists by rated kg, renames and archives without deleting', async () => {
     const ctx = testContext();
     await seedIfNeeded(ctx);
-    const purple = await addBand(ctx, { label: 'Purple', ratedKg: 5, color: '#7a3cff' });
-    expect((await listBands(ctx)).map((b) => b.ratedKg)).toEqual([5, 15, 25, 35]);
+    const purple = await addBand(ctx, { label: 'Purple', ratedKg: 10, color: '#7a3cff' });
+    expect((await listBands(ctx)).map((b) => b.ratedKg)).toEqual([5, 10, 15, 25, 35]);
     await updateBand(ctx, purple.id, { label: 'Thin purple' });
     await archiveBand(ctx, 'band-25');
-    expect((await listBands(ctx)).map((b) => b.label)).toEqual(['Thin purple', '15kg', '35kg']);
-    expect(await listBands(ctx, { includeArchived: true })).toHaveLength(4);
+    expect((await listBands(ctx)).map((b) => b.label)).toEqual([
+      '5kg',
+      'Thin purple',
+      '15kg',
+      '35kg',
+    ]);
+    expect(await listBands(ctx, { includeArchived: true })).toHaveLength(5);
     await expect(addBand(ctx, { label: '', ratedKg: 5 })).rejects.toThrow();
   });
 });
@@ -93,7 +112,7 @@ describe('exercises', () => {
     expect(ring).toMatchObject({ id: 'id-1', isCustom: true, archived: false });
     await archiveExercise(ctx, 'plank');
     const names = (await listExercises(ctx)).map((e) => e.name);
-    expect(names).toHaveLength(54);
+    expect(names).toHaveLength(60);
     expect(names).toContain('Ring Row');
     expect(names).not.toContain('Plank');
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));

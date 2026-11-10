@@ -70,8 +70,8 @@ describe('backup file', () => {
 
   it('counts records per table', () => {
     expect(recordCounts(backup)).toMatchObject({
-      exercises: 54,
-      bands: 3,
+      exercises: 60,
+      bands: 4,
       sessions: 1,
       sets: 1,
       programs: 0,

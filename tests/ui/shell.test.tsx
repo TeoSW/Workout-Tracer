@@ -10,7 +10,7 @@ describe('shell', () => {
     for (const label of ['Today', 'History', 'Progress', 'Programs', 'Settings']) {
       expect(screen.getAllByText(label).length).toBeGreaterThan(0);
     }
-    expect(await ctx.db.exercises.count()).toBe(54);
+    expect(await ctx.db.exercises.count()).toBe(60);
   });
 
   it('opens a tab from a deep link', async () => {

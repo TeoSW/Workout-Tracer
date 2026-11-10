@@ -37,17 +37,17 @@ function day(name: string): DayTemplate {
 }
 
 describe('seed bands', () => {
-  it('has 15, 25 and 35kg bands', () => {
-    expect(SEED_BANDS.map((b) => BandSchema.parse(b).ratedKg)).toEqual([15, 25, 35]);
+  it('has 5, 15, 25 and 35kg bands', () => {
+    expect(SEED_BANDS.map((b) => BandSchema.parse(b).ratedKg)).toEqual([5, 15, 25, 35]);
   });
 });
 
 describe('seed exercises', () => {
-  it('has the 54 exercises from the spec, all valid, with unique ids and names', () => {
-    expect(SEED_EXERCISES).toHaveLength(54);
+  it('has 54 exercises from the spec plus 6 for the presets, all valid, with unique ids and names', () => {
+    expect(SEED_EXERCISES).toHaveLength(60);
     for (const e of SEED_EXERCISES) ExerciseSchema.parse(e);
-    expect(exerciseIds.size).toBe(54);
-    expect(new Set(SEED_EXERCISES.map((e) => e.name.toLowerCase())).size).toBe(54);
+    expect(exerciseIds.size).toBe(60);
+    expect(new Set(SEED_EXERCISES.map((e) => e.name.toLowerCase())).size).toBe(60);
   });
 
   it('only points alternatives at exercises that exist', () => {

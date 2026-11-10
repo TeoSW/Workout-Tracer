@@ -268,4 +268,21 @@ export const SEED_EXERCISES: Exercise[] = [
   e('hammer-curl', 'Hammer Curl', 'weight_reps', ['biceps'], ['forearms'], 75, perHand),
   e('face-pull', 'Face Pull', 'weight_reps', ['rear_delts'], ['upper_back'], 75),
   e('plank', 'Plank', 'hold', ['abs'], [], 60),
+  // Seed version 2.
+  e('push-ups', 'Push-ups', 'bodyweight_reps', ['chest'], ['triceps', 'front_delts'], 90),
+  e('inverted-row', 'Inverted Row', 'bodyweight_reps', ['upper_back'], ['lats', 'biceps'], 90),
+  e('dips', 'Dips', 'bodyweight_reps', ['chest'], ['triceps', 'front_delts'], 120),
+  e('pike-push-ups', 'Pike Push-ups', 'bodyweight_reps', ['front_delts'], ['triceps'], 90),
+  e(
+    'planche-press',
+    'Planche Press',
+    'bodyweight_reps',
+    ['front_delts'],
+    ['chest', 'triceps'],
+    240,
+    {
+      ladder: true,
+    },
+  ),
+  e('oblique-extension', 'Oblique Extension', 'weight_reps', ['abs'], ['lower_back'], 75),
 ];

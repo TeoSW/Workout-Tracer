@@ -7,8 +7,16 @@ import type { DataContext } from './context';
  * Bump when a release adds built-in exercises or bands, and list the new ids in
  * INTRODUCED_IN with the version that adds them. Ids not listed count as version 1.
  */
-export const SEED_VERSION = 1;
-const INTRODUCED_IN: Readonly<Record<string, number>> = {};
+export const SEED_VERSION = 2;
+const INTRODUCED_IN: Readonly<Record<string, number>> = {
+  'band-5': 2,
+  'push-ups': 2,
+  'inverted-row': 2,
+  dips: 2,
+  'pike-push-ups': 2,
+  'planche-press': 2,
+  'oblique-extension': 2,
+};
 
 const SEED_VERSION_KEY = 'seedVersion';
 
