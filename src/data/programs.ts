@@ -63,13 +63,17 @@ export async function createProgramFromTemplate(
   ctx: DataContext,
   template: BuiltInTemplate,
   name?: string,
+  opts: { clientId?: string } = {},
 ): Promise<ProgramWithDays> {
   const mapExerciseId = await builtInExerciseResolver(ctx);
-  const { program, dayTemplates } = instantiateTemplate(template, {
+  const copied = instantiateTemplate(template, {
     newId: ctx.newId,
     mapExerciseId,
     ...(name === undefined ? {} : { name }),
   });
+  const program =
+    opts.clientId === undefined ? copied.program : { ...copied.program, clientId: opts.clientId };
+  const { dayTemplates } = copied;
   const days = dayTemplates.map((d) => DayTemplateSchema.parse(clean(d)));
   const saved = validProgram(program, new Set(days.map((d) => d.id)));
   await ctx.db.transaction('rw', [ctx.db.programs, ctx.db.dayTemplates], async () => {
@@ -308,6 +312,23 @@ export async function deleteDayTemplate(ctx: DataContext, id: string): Promise<v
 
 export async function archiveProgram(ctx: DataContext, id: string): Promise<void> {
   await editProgram(ctx, id, (p) => ({ ...p, archived: true, active: false }));
+}
+
+export type SentStatus = 'not_sent' | 'sent' | 'changed';
+
+/** Whether a coach's program was sent, and whether it changed since. */
+export function sentStatus(program: Program, currentCode: string): SentStatus {
+  if (program.sentAt === undefined || program.sentAt === null) return 'not_sent';
+  return program.sentCode === currentCode ? 'sent' : 'changed';
+}
+
+/** Records that a program went to its client, with the code that was sent. */
+export async function markProgramSent(
+  ctx: DataContext,
+  id: string,
+  code: string,
+): Promise<Program> {
+  return editProgram(ctx, id, (p) => ({ ...p, sentAt: ctx.clock.now(), sentCode: code }));
 }
 
 /** Deletes a program and its days. Sessions logged with it keep their plan snapshots. */
