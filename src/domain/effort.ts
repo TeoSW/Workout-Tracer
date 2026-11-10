@@ -24,9 +24,9 @@ export function rirToRpe(rir: number): number {
   return 10 - rir;
 }
 
-/** Only rep-based sets take RIR or RPE. Holds and complexes use a clean flag instead. */
+/** Every set takes RIR or RPE, holds and complexes included. A checklist item is only done. */
 export function usesEffort(trackingType: TrackingType): boolean {
-  return trackingType === 'weight_reps' || trackingType === 'bodyweight_reps';
+  return trackingType !== 'checklist';
 }
 
 export function effortModeFor(globalMode: EffortMode, exercise: Exercise): EffortMode {

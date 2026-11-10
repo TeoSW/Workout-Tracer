@@ -49,7 +49,12 @@ describe('logger cards', () => {
     const { ctx } = await setup('Heavy (planche first)');
     renderApp(WORKOUT, ctx);
     expect(await screen.findByText('Planche Complex')).toBeInTheDocument();
-    expect(screen.getByText('3 x hold 3s, press 3, push-up 3 · band 25kg')).toBeInTheDocument();
+    expect(screen.getByText('3 x hold 3s, press 3, push-up 3')).toBeInTheDocument();
+    // The band and the block note stand out on their own, not inside the plan line.
+    expect(screen.getAllByText('Band 25kg')[0]).toHaveClass('tag-band');
+    expect(
+      screen.getAllByText(/Thinner band once every set is clean two sessions in a row/)[0],
+    ).toHaveClass('card-note');
     expect(screen.getByText('2 x 8 · +25kg')).toBeInTheDocument();
     expect(screen.getAllByText('tap to log').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Weak-point accessory: pick one')).toHaveLength(1);
@@ -218,10 +223,27 @@ describe('set sheet', () => {
       target: { repsMin: 8, loadMinKg: 20, rir: 2, note: 'Pause at the bottom' },
     });
     const { user } = renderApp(WORKOUT, ctx);
-    expect(await screen.findByText('Plan: RIR 2 · Pause at the bottom')).toBeInTheDocument();
+    expect(await screen.findByText('RIR 2 · Pause at the bottom')).toHaveClass('set-plan-line');
     await user.click(await buttonLabelled('Log set 1 of Squat'));
     await waitFor(async () =>
       expect((await getActiveSession(ctx))?.exercises[0]?.sets[0]).toMatchObject({
+        rir: 2,
+        done: true,
+      }),
+    );
+  });
+
+  it('logs an effort on a hold too, not only on reps', async () => {
+    const { ctx } = await empty('plank');
+    const view = await getActiveSession(ctx);
+    await updateSet(ctx, view?.exercises[0]?.sets[0]?.id ?? '', {
+      target: { secondsMin: 30, rir: 2 },
+    });
+    const { user } = renderApp(WORKOUT, ctx);
+    await user.click(await buttonLabelled('Log set 1 of Plank'));
+    await waitFor(async () =>
+      expect((await getActiveSession(ctx))?.exercises[0]?.sets[0]).toMatchObject({
+        seconds: 30,
         rir: 2,
         done: true,
       }),

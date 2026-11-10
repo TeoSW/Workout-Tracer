@@ -19,7 +19,13 @@ import {
 import { Fragment } from 'react';
 import type { SessionExerciseView } from '../../data/sessions';
 import { formatEffort } from '../../domain/effort';
-import { formatLastTime, formatPlanLine, formatSetResult } from '../../domain/format';
+import {
+  formatBandLevel,
+  formatLastTime,
+  formatLoad,
+  formatSetResult,
+  formatSetsTarget,
+} from '../../domain/format';
 import { lastTimeSet } from '../../domain/last-time';
 import { setLabel } from '../../domain/log-layout';
 import type { Band, Block, EffortMode, Exercise, LoggedSet } from '../../domain/schemas';
@@ -63,7 +69,7 @@ function SetRow(props: {
             <>
               {label.text}
               <p>{hint}</p>
-              {plan !== '' && <p className="set-plan-line">{`Plan: ${plan}`}</p>}
+              {plan !== '' && <div className="set-plan-line">{plan}</div>}
             </>
           )}
         </IonLabel>
@@ -105,7 +111,28 @@ function ExerciseRows(props: {
   actions: CardActions;
 }) {
   const { entry, exercise, block, lastSets, effortMode, bands, actions } = props;
-  const plan = block?.kind === 'exercise' ? formatPlanLine(block, exercise, bands, effortMode) : '';
+  const target = block?.kind === 'exercise' ? block.target : undefined;
+  // Sets, reps and load on one line; band and effort get their own tags so they stand out.
+  const plan =
+    block?.kind === 'exercise' && target
+      ? [
+          formatSetsTarget(block, exercise),
+          target.bandIds === undefined ? formatLoad(target, exercise) : '',
+          target.progressionLevel !== undefined && target.progressionLevel !== 'current'
+            ? target.progressionLevel
+            : '',
+        ]
+          .filter((p) => p !== '')
+          .join(' · ')
+      : '';
+  const band =
+    target?.bandIds === undefined
+      ? null
+      : target.bandIds.length > 0
+        ? `Band ${formatBandLevel(target.bandIds, bands)}`
+        : 'No band';
+  const effort = target?.rir === undefined ? '' : formatEffort(target.rir, effortMode);
+  const notes = [block?.note, entry.note].filter((n): n is string => n !== undefined && n !== '');
   const isChecklist = exercise.trackingType === 'checklist';
   const upTo = block?.setsMax;
 
@@ -115,8 +142,18 @@ function ExerciseRows(props: {
         <IonLabel>
           <h2>{exercise.name}</h2>
           {plan !== '' && <p>{plan}</p>}
+          {(band !== null || effort !== '') && (
+            <div className="card-tags">
+              {band !== null && <span className="tag tag-band">{band}</span>}
+              {effort !== '' && <span className="tag tag-effort">{effort}</span>}
+            </div>
+          )}
           {entry.swappedFromExerciseId !== null && <p>Swapped for this workout</p>}
-          {entry.note !== '' && <p>{entry.note}</p>}
+          {notes.map((note) => (
+            <div key={note} className="card-note">
+              {note}
+            </div>
+          ))}
         </IonLabel>
         {actions.openInfo && (
           <IonButton

@@ -84,7 +84,7 @@ export function draftToPatch(draft: SetDraft, exercise: Exercise): Partial<Logge
         progressionLevel: draft.progressionLevel,
         bandIds: draft.bandIds.length > 0 ? draft.bandIds : undefined,
         clean: draft.clean,
-        rir: null,
+        rir: draft.rir,
         done: true,
       };
     case 'complex':
@@ -93,14 +93,14 @@ export function draftToPatch(draft: SetDraft, exercise: Exercise): Partial<Logge
         progressionLevel: draft.progressionLevel,
         bandIds: draft.bandIds.length > 0 ? draft.bandIds : undefined,
         clean: draft.clean,
-        rir: null,
+        rir: draft.rir,
         done: true,
       };
     case 'attempts':
       return {
         attempts: draft.attempts,
         cleanAttempts: draft.cleanAttempts,
-        rir: null,
+        rir: draft.rir,
         done: true,
       };
     case 'checklist':

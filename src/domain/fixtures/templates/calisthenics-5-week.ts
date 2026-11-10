@@ -34,18 +34,23 @@ const accessory = choice(
     option(
       'planche-lean',
       3,
-      secs(20),
+      { ...secs(20), ...rpe(7) },
       "Your shoulders don't get far enough in front of your hands. This cycle's pick in your sheet.",
     ),
     option(
       'front-lever-raises',
       3,
-      { ...reps(5), bandIds: [] },
+      { ...reps(5), ...rpe(7), bandIds: [] },
       "Your front lever line is fine, but you can't hold it horizontal.",
     ),
-    option('hollow-body-hold', 3, secs(30), 'Your body line breaks on either element.'),
+    option(
+      'hollow-body-hold',
+      3,
+      { ...secs(30), ...rpe(7) },
+      'Your body line breaks on either element.',
+    ),
   ],
-  { restSec: MIN, note: 'RPE 7.' },
+  { restSec: MIN },
 );
 
 type Phase = 'intensity' | 'volume';
@@ -57,15 +62,13 @@ function plancheComplex(sets: number, phase: Phase): BlockInput {
     sets,
     {
       parts: [holdPart('Hold', n), repPart('Push-up', n)],
+      ...rpe(8),
       ...bands(phase === 'intensity' ? 'band-25' : 'band-35'),
       progressionLevel: 'current',
     },
     {
       restSec: 4.5 * MIN,
-      note:
-        phase === 'intensity'
-          ? 'RPE 8. Rest 4-5 min. Use 25+5kg if a set fails.'
-          : 'RPE 8. Rest 4-5 min.',
+      note: phase === 'intensity' ? 'Rest 4-5 min. Use 25+5kg if a set fails.' : 'Rest 4-5 min.',
     },
   );
 }
@@ -90,6 +93,7 @@ function frontLeverComplex(sets: number, phase: Phase): BlockInput {
     sets,
     {
       parts: [repPart('Touch', n), repPart('Pull-up', 5), holdPart('Hold', n)],
+      ...rpe(8),
       ...bands(phase === 'intensity' ? 'band-25' : 'band-15'),
       progressionLevel: 'current',
     },
@@ -97,8 +101,8 @@ function frontLeverComplex(sets: number, phase: Phase): BlockInput {
       restSec: 3 * MIN,
       note:
         phase === 'intensity'
-          ? 'RPE 8. Band 25kg on one loop, about 12.5kg. Use 15kg on a double loop if a set fails.'
-          : 'RPE 8. Band 15kg on a double loop.',
+          ? 'Band 25kg on one loop, about 12.5kg. Use 15kg on a double loop if a set fails.'
+          : 'Band 15kg on a double loop.',
     },
   );
 }

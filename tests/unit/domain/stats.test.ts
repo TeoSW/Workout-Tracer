@@ -54,12 +54,14 @@ describe('acceptance 7: effort', () => {
     ]);
   });
 
-  it('lets an exercise override the global mode, and turns effort off where it does not apply', () => {
+  it('lets an exercise override the global mode, and turns effort off only for a checklist', () => {
     expect(effortModeFor('rir', exercise('squat'))).toBe('rir');
     expect(effortModeFor('rir', { ...exercise('squat'), effortInput: 'rpe' })).toBe('rpe');
     expect(effortModeFor('rpe', { ...exercise('squat'), effortInput: 'off' })).toBe('off');
-    expect(effortModeFor('rir', exercise('planche-hold'))).toBe('off');
-    expect(effortModeFor('rir', exercise('540'))).toBe('off');
+    // Holds, complexes and skill attempts take effort too; only a checklist item doesn't.
+    expect(effortModeFor('rpe', exercise('planche-hold'))).toBe('rpe');
+    expect(effortModeFor('rir', exercise('planche-complex'))).toBe('rir');
+    expect(effortModeFor('rir', exercise('540'))).toBe('rir');
     expect(effortModeFor('rir', exercise('warm-up'))).toBe('off');
   });
 });

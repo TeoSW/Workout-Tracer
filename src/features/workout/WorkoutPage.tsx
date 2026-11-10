@@ -289,8 +289,13 @@ export function WorkoutPage() {
       subtitle={elapsed}
       back={TODAY}
       actions={
-        <IonButton strong data-testid="finish-workout" onClick={() => void finish()}>
-          End workout
+        <IonButton
+          strong
+          data-testid="finish-workout"
+          aria-label="End workout"
+          onClick={() => void finish()}
+        >
+          End
         </IonButton>
       }
     >
