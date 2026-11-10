@@ -1,6 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { isStandalone } from '../../src/pwa/install';
+import { isAndroid, isStandalone } from '../../src/pwa/install';
 import { getStorageStatus, requestPersistentStorage } from '../../src/pwa/storage';
 import { renderApp } from './helpers';
 
@@ -18,7 +18,15 @@ function setStorage(storage: Partial<StorageManager> | undefined) {
   Object.defineProperty(navigator, 'storage', { value: storage, configurable: true });
 }
 
+const ANDROID_CHROME =
+  'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36';
+
+function setUserAgent(userAgent: string) {
+  Object.defineProperty(navigator, 'userAgent', { value: userAgent, configurable: true });
+}
+
 afterEach(() => {
+  Reflect.deleteProperty(navigator, 'userAgent');
   Reflect.deleteProperty(navigator, 'standalone');
   Reflect.deleteProperty(navigator, 'storage');
   window.matchMedia = realMatchMedia;
@@ -37,11 +45,36 @@ describe('standalone detection', () => {
   });
 });
 
+describe('Android detection', () => {
+  it('sees Android, and not an iPhone', () => {
+    setUserAgent(ANDROID_CHROME);
+    expect(isAndroid()).toBe(true);
+    setUserAgent(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1',
+    );
+    expect(isAndroid()).toBe(false);
+  });
+});
+
 describe('install banner', () => {
   it('shows in a browser tab, with the warning', async () => {
     renderApp();
     expect(await screen.findByText('Install this app')).toBeInTheDocument();
+    expect(screen.getByText(/^Tap Share, then Add to Home Screen./)).toBeInTheDocument();
     expect(screen.getByText(/won't appear in the installed app/)).toBeInTheDocument();
+  });
+
+  it('gives the Android steps on Android', async () => {
+    setUserAgent(ANDROID_CHROME);
+    renderApp();
+    expect(await screen.findByText('Install this app')).toBeInTheDocument();
+    expect(
+      screen.getByText(/^Open the browser menu, then tap Install app or Add to Home screen./),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/this browser tab won't appear in the installed app/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Safari|Tap Share/)).not.toBeInTheDocument();
   });
 
   it('is gone in the installed app', async () => {
