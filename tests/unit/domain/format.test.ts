@@ -89,6 +89,12 @@ describe('plan lines', () => {
     expect(formatSetsTarget({ setsMin: 2, target: { repsMin: 8, repsMax: 10 } }, cable)).toBe(
       '2 x 8-10 /arm',
     );
+    expect(
+      formatSetsTarget(
+        { setsMin: 2, target: { repsMin: 10 } },
+        { ...cable, primaryMuscles: ['abs'], secondaryMuscles: [] },
+      ),
+    ).toBe('2 x 10 /side');
   });
 
   it('writes every tracking type', () => {

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useData, useLive, useToday } from '../../app/DataProvider';
 import { hasFinishedSession, listMissedInMonth, sessionsInMonth } from '../../data/history';
 import { undoMissedDay } from '../../data/missed-days';
-import { dayTypesIn, monthOf, sessionsByDay, stepMonth } from '../../domain/calendar';
+import { dayTypesIn, groupByDate, monthOf, sessionsByDay, stepMonth } from '../../domain/calendar';
 import { sessionDurationMs } from '../../domain/consistency';
 import type { DateStr } from '../../domain/dates';
 import { formatDuration, formatMonth, formatShortDate } from '../../domain/format';
@@ -62,12 +62,6 @@ function MissedRow({ missed, onUndo }: { missed: MissedDay; onUndo: () => void }
   );
 }
 
-function missedByDate(missed: readonly MissedDay[]): Map<DateStr, MissedDay[]> {
-  const days = new Map<DateStr, MissedDay[]>();
-  for (const m of missed) days.set(m.date, [...(days.get(m.date) ?? []), m]);
-  return days;
-}
-
 export function HistoryPage() {
   const ctx = useData();
   const confirm = useConfirm();
@@ -80,7 +74,7 @@ export function HistoryPage() {
   const missed = useLive((c) => listMissedInMonth(c, month), [month]);
 
   const byDay = sessionsByDay(sessions ?? []);
-  const missedByDay = missedByDate(missed ?? []);
+  const missedByDay = groupByDate(missed ?? []);
   // A deleted session can leave the picked day empty, and an empty day can't be tapped off.
   const day =
     selected !== null && (byDay.has(selected) || missedByDay.has(selected)) ? selected : null;

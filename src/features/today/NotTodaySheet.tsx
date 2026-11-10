@@ -25,6 +25,7 @@ export function NotTodaySheet(props: { open: boolean; dayName: string; onClose: 
   const ctx = useData();
   const [reason, setReason] = useState<MissedReason | null>(null);
   const [note, setNote] = useState('');
+  const [saving, setSaving] = useState(false);
   const { error, guard } = useGuard();
 
   function close() {
@@ -49,12 +50,15 @@ export function NotTodaySheet(props: { open: boolean; dayName: string; onClose: 
           <IonButtons slot="end">
             <IonButton
               strong
-              onClick={() =>
+              disabled={saving}
+              onClick={() => {
+                if (saving) return;
+                setSaving(true);
                 void guard(async () => {
                   await markDayMissed(ctx, { reason, note });
                   close();
-                })
-              }
+                }).finally(() => setSaving(false));
+              }}
             >
               Skip day
             </IonButton>

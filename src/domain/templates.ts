@@ -125,7 +125,7 @@ export function copyProgramStructure(
 /** Copies a built-in template into a user program. The template itself is never changed. */
 export function instantiateTemplate(
   template: BuiltInTemplate,
-  opts: { newId: NewId; name?: string },
+  opts: Pick<CopyOptions, 'newId' | 'name' | 'mapExerciseId'>,
 ): { program: Program; dayTemplates: DayTemplate[] } {
   return copyProgramStructure(template, opts);
 }

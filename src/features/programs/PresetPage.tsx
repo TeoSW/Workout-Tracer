@@ -44,6 +44,7 @@ export function PresetPage() {
   const template = BUILT_IN_TEMPLATES.find((t) => t.id === id);
   const library = useLive(loadLibrary);
   const [week, setWeek] = useState(1);
+  const [busy, setBusy] = useState(false);
   const { error, guard } = useGuard();
 
   if (!template) {
@@ -56,9 +57,16 @@ export function PresetPage() {
   const cycleWeeks = template.cycleWeeks ?? 1;
   const weeks = presetWeeks(template);
 
+  /** One create at a time, so a double tap doesn't make two programs. */
+  function once(action: () => Promise<void>) {
+    if (busy) return;
+    setBusy(true);
+    void guard(action).finally(() => setBusy(false));
+  }
+
   function use() {
     if (!template) return;
-    void guard(async () => {
+    once(async () => {
       await startFromPreset(ctx, template, week);
       router.push('/tabs/today', 'root', 'replace');
     });
@@ -66,7 +74,7 @@ export function PresetPage() {
 
   function editFirst() {
     if (!template) return;
-    void guard(async () => {
+    once(async () => {
       const { program } = await createProgramFromTemplate(ctx, template);
       router.push(`/tabs/programs/${program.id}`, 'forward', 'replace');
     });
@@ -159,10 +167,10 @@ export function PresetPage() {
           </IonList>
         )}
         <div className="ion-padding">
-          <IonButton expand="block" size="large" onClick={use}>
+          <IonButton expand="block" size="large" disabled={busy} onClick={use}>
             Use this program
           </IonButton>
-          <IonButton expand="block" fill="clear" onClick={editFirst}>
+          <IonButton expand="block" fill="clear" disabled={busy} onClick={editFirst}>
             Edit before using
           </IonButton>
         </div>

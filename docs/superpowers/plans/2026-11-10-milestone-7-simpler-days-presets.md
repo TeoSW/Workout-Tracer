@@ -4,16 +4,16 @@ Status: draft, waiting for approval.
 
 ## What you asked for, and where it stands
 
-| Request | Today | This milestone |
-|---|---|---|
-| Simpler design | Native iOS look, but some flows take extra taps and presets are hidden | Simplify Today, the logger and New program (section 1) |
-| Say when I missed a day | Missed days only show up as gaps in the consistency stats | "Not today" button, a reason, evidence in History (section 2) |
-| Skip a missed day | Weekday programs already keep the calendar; rotations wait for you | A missed day is skipped in both kinds of program (section 2) |
-| Cycle presets, yours from the Excel | Six templates exist, but only behind the Split picker | A Presets list, the Excel cycle, three new presets (section 3) |
-| Ask before each workout if I'll do it | Nothing | A check-in on Today when you open the app (section 4) |
-| Workout timer | Already there: the logger header shows elapsed time, and the summary shows duration | Add the duration to History rows |
-| Rest times with alarms | Already there: the rest timer starts on Done, beeps and flashes at zero | Bigger timer bar; a lock screen alarm needs Phase 2 (section 4) |
-| Button for "set done" that starts rest | Already there, but it takes two taps (open the set, tap Done) | One tap on a check button per set (section 1) |
+| Request                                | Today                                                                               | This milestone                                                  |
+| -------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Simpler design                         | Native iOS look, but some flows take extra taps and presets are hidden              | Simplify Today, the logger and New program (section 1)          |
+| Say when I missed a day                | Missed days only show up as gaps in the consistency stats                           | "Not today" button, a reason, evidence in History (section 2)   |
+| Skip a missed day                      | Weekday programs already keep the calendar; rotations wait for you                  | A missed day is skipped in both kinds of program (section 2)    |
+| Cycle presets, yours from the Excel    | Six templates exist, but only behind the Split picker                               | A Presets list, the Excel cycle, three new presets (section 3)  |
+| Ask before each workout if I'll do it  | Nothing                                                                             | A check-in on Today when you open the app (section 4)           |
+| Workout timer                          | Already there: the logger header shows elapsed time, and the summary shows duration | Add the duration to History rows                                |
+| Rest times with alarms                 | Already there: the rest timer starts on Done, beeps and flashes at zero             | Bigger timer bar; a lock screen alarm needs Phase 2 (section 4) |
+| Button for "set done" that starts rest | Already there, but it takes two taps (open the set, tap Done)                       | One tap on a check button per set (section 1)                   |
 
 ## 1. Simpler screens
 

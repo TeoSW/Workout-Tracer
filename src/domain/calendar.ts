@@ -33,18 +33,22 @@ export function monthGrid(month: MonthStr): CalendarDay[][] {
   return weeks;
 }
 
-/** Finished sessions by day, earliest first. */
-export function sessionsByDay(sessions: readonly Session[]): Map<DateStr, Session[]> {
-  const days = new Map<DateStr, Session[]>();
-  const finished = sessions
-    .filter((s) => s.status === 'finished')
-    .sort((a, b) => a.startedAt - b.startedAt);
-  for (const session of finished) {
-    const list = days.get(session.date);
-    if (list) list.push(session);
-    else days.set(session.date, [session]);
+/** Items by their date, in the order given. */
+export function groupByDate<T extends { date: DateStr }>(items: readonly T[]): Map<DateStr, T[]> {
+  const days = new Map<DateStr, T[]>();
+  for (const item of items) {
+    const list = days.get(item.date);
+    if (list) list.push(item);
+    else days.set(item.date, [item]);
   }
   return days;
+}
+
+/** Finished sessions by day, earliest first. */
+export function sessionsByDay(sessions: readonly Session[]): Map<DateStr, Session[]> {
+  return groupByDate(
+    sessions.filter((s) => s.status === 'finished').sort((a, b) => a.startedAt - b.startedAt),
+  );
 }
 
 export function dayTypesIn(sessions: readonly Session[]): DayType[] {

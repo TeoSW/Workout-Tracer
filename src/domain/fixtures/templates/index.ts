@@ -52,8 +52,3 @@ export function blankTemplate(splitType: SplitType): BuiltInTemplate {
     dayTemplates: [],
   };
 }
-
-/** What the new program flow offers after a split type is picked. */
-export function templatesForSplit(splitType: SplitType): BuiltInTemplate[] {
-  return [...BUILT_IN_TEMPLATES.filter((t) => t.splitType === splitType), blankTemplate(splitType)];
-}

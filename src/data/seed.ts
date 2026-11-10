@@ -39,6 +39,13 @@ export async function seedIfNeeded(ctx: DataContext): Promise<boolean> {
     const existingExercises = new Set(
       await db.exercises.bulkGet(exercises.map((e) => e.id)).then(ids),
     );
+    // A custom exercise the user already made under the same name stays the only one.
+    const names = new Set((await db.exercises.toArray()).map((e) => e.name.toLowerCase()));
+    for (const e of exercises) {
+      if (!existingExercises.has(e.id) && names.has(e.name.toLowerCase())) {
+        existingExercises.add(e.id);
+      }
+    }
     await db.bands.bulkPut(clean(bands.filter((b) => !existingBands.has(b.id))));
     await db.exercises.bulkPut(clean(exercises.filter((e) => !existingExercises.has(e.id))));
     await db.settings.put({ key: SEED_VERSION_KEY, value: SEED_VERSION });

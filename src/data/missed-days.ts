@@ -27,7 +27,16 @@ export async function markDayMissed(
       createdAt: ctx.clock.now(),
     }),
   );
-  await ctx.db.missedDays.add(record);
+  await ctx.db.transaction('rw', ctx.db.missedDays, async () => {
+    // A double tap reads 'planned' twice before either write lands, so check again here.
+    const existing = await ctx.db.missedDays
+      .where('date')
+      .equals(record.date)
+      .filter((m) => m.programId === record.programId)
+      .count();
+    if (existing > 0) throw new Error('This day is already marked as missed.');
+    await ctx.db.missedDays.add(record);
+  });
   return record;
 }
 

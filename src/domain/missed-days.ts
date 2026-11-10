@@ -36,9 +36,12 @@ export function missedDaysInMonth(input: {
   if (from === undefined) return { total: markedInMonth, marked: markedInMonth };
 
   let total = 0;
+  let markedCounted = 0;
   for (let d = `${month}-01`; inMonth(d); d = addDays(d, 1)) {
     if (d < from || done.has(d) || plannedDayTemplateId(program, d) === null) continue;
+    if (markedDates.has(d)) markedCounted += 1;
     if (d < today || markedDates.has(d)) total += 1;
   }
-  return { total, marked: markedInMonth };
+  // A marked day that is no longer planned, or was done after all, is not counted at all.
+  return { total, marked: markedCounted };
 }

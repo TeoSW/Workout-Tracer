@@ -46,7 +46,8 @@ function nextLine(overview: TodayOverview, next: PlannedDay | null): string | nu
 function TodayCard({ overview, onError }: { overview: TodayOverview; onError: Guard }) {
   const ctx = useData();
   const { startDay } = useStartWorkout();
-  const [skipping, setSkipping] = useState(false);
+  /** The day being skipped, kept while the sheet closes after the day turns to missed. */
+  const [skipping, setSkipping] = useState<string | null>(null);
   const { plan, program } = overview;
   if (!plan || !program) return null;
   const { today, cycle } = plan;
@@ -99,14 +100,13 @@ function TodayCard({ overview, onError }: { overview: TodayOverview; onError: Gu
           >
             Start
           </IonButton>
-          <IonButton expand="block" fill="clear" onClick={() => setSkipping(true)}>
+          <IonButton
+            expand="block"
+            fill="clear"
+            onClick={() => setSkipping(nameOf(overview, planned.dayTemplateId))}
+          >
             Not today
           </IonButton>
-          <NotTodaySheet
-            open={skipping}
-            dayName={nameOf(overview, planned.dayTemplateId)}
-            onClose={() => setSkipping(false)}
-          />
         </>
       )}
       {missed && (
@@ -120,6 +120,11 @@ function TodayCard({ overview, onError }: { overview: TodayOverview; onError: Gu
         </IonButton>
       )}
       {next && <p className="today-card-next">{next}</p>}
+      <NotTodaySheet
+        open={skipping !== null}
+        dayName={skipping ?? ''}
+        onClose={() => setSkipping(null)}
+      />
     </section>
   );
 }

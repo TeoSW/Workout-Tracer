@@ -6,7 +6,6 @@ import {
   PROGRAM_A,
   PROGRAM_C,
   blankTemplate,
-  templatesForSplit,
 } from '../../../src/domain/fixtures/templates';
 import {
   BandSchema,
@@ -95,12 +94,6 @@ describe('built-in templates', () => {
       const ids = t.dayTemplates.flatMap((d) => d.blocks.map((b) => b.id));
       expect(new Set(ids).size).toBe(ids.length);
     }
-  });
-
-  it('offers built-in templates per split type plus a blank one', () => {
-    expect(templatesForSplit('ulu_lul_rotation').map((t) => t.name)).toEqual(['ULU/LUL', 'Blank']);
-    expect(templatesForSplit('ppll').map((t) => t.name)).toEqual(['PPLL', 'Blank']);
-    expect(templatesForSplit('custom').map((t) => t.name)).toEqual(['Blank']);
   });
 
   it('builds Program A as a 4-day rotation, 3 sessions a week', () => {

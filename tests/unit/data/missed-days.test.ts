@@ -5,12 +5,23 @@ import { exportBackup, restoreBackup, undoLastRestore } from '../../../src/data/
 import type { DataContext } from '../../../src/data/context';
 import { createDb } from '../../../src/data/db';
 import { listMissedDays, markDayMissed, undoMissedDay } from '../../../src/data/missed-days';
-import { activateProgram, createProgramFromTemplate } from '../../../src/data/programs';
+import { addCustomExercise } from '../../../src/data/exercises';
+import {
+  activateProgram,
+  createProgramFromTemplate,
+  getProgram,
+  updateProgram,
+} from '../../../src/data/programs';
 import { seedIfNeeded } from '../../../src/data/seed';
+import { finishSession, startPlannedSession } from '../../../src/data/sessions';
 import { getTodayOverview } from '../../../src/data/today';
 import { emptyBackupData, parseBackup } from '../../../src/domain/backup';
 import { APP_ID } from '../../../src/domain/config';
-import { PROGRAM_A, PROGRAM_C } from '../../../src/domain/fixtures/templates';
+import {
+  BEGINNER_CALISTHENICS,
+  PROGRAM_A,
+  PROGRAM_C,
+} from '../../../src/domain/fixtures/templates';
 import { testContext } from './helpers';
 
 // The test clock starts on Monday 2026-11-02.
@@ -67,6 +78,84 @@ describe('marking a day missed', () => {
     await undoMissedDay(ctx, record.id);
     expect(await listMissedDays(ctx)).toEqual([]);
     expect((await getTodayOverview(ctx)).plan?.today.status).toBe('planned');
+  });
+});
+
+describe('review fixes', () => {
+  it('records a day once, even when Skip day is tapped twice', async () => {
+    const ctx = testContext();
+    await withProgram(ctx);
+    const results = await Promise.allSettled([
+      markDayMissed(ctx, { reason: null, note: '' }),
+      markDayMissed(ctx, { reason: null, note: '' }),
+    ]);
+    expect(results.map((r) => r.status).sort()).toEqual(['fulfilled', 'rejected']);
+    expect(await listMissedDays(ctx)).toHaveLength(1);
+  });
+
+  it('counts a missed rotation day when a repeated day is started by hand', async () => {
+    const ctx = testContext();
+    const program = await withProgram(ctx, PROGRAM_A);
+    const loaded = await getProgram(ctx, program.id);
+    const [upperA, lowerA, upperB] =
+      loaded?.program.schedule.kind === 'rotation' ? loaded.program.schedule.sequence : [];
+    if (!upperA || !lowerA || !upperB || !loaded) throw new Error('unexpected rotation');
+    // [Upper A, Lower A, Upper B, Lower A]: Lower A appears twice.
+    await updateProgram(ctx, {
+      ...loaded.program,
+      schedule: {
+        kind: 'rotation',
+        sequence: [upperA, lowerA, upperB, lowerA],
+        sessionsPerWeek: 3,
+      },
+    });
+    const first = await startPlannedSession(ctx, { programId: program.id, dayTemplateId: upperA });
+    await finishSession(ctx, first.session.id);
+    ctx.clock.advance(86_400_000);
+    await markDayMissed(ctx, { reason: null, note: '' }); // skips Lower A at 1
+    ctx.clock.advance(60_000);
+    const byHand = await startPlannedSession(ctx, { programId: program.id, dayTemplateId: lowerA });
+    expect(byHand.session.rotationIndex).toBe(3);
+  });
+
+  it('lets a preset use a custom exercise that already had the built-in name', async () => {
+    const ctx = testContext();
+    await seedIfNeeded(ctx);
+    await ctx.db.exercises.delete('push-ups');
+    await ctx.db.settings.put({ key: 'seedVersion', value: 1 });
+    const mine = await addCustomExercise(ctx, {
+      name: 'Push-ups',
+      trackingType: 'bodyweight_reps',
+      primaryMuscles: ['chest'],
+      secondaryMuscles: [],
+      unilateral: false,
+      loadUnit: 'total',
+      defaultRestSec: 90,
+      cues: '',
+      alternativeIds: [],
+    });
+    await seedIfNeeded(ctx);
+    expect(await ctx.db.exercises.get('push-ups')).toBeUndefined();
+    const { dayTemplates } = await createProgramFromTemplate(ctx, BEGINNER_CALISTHENICS);
+    const ids = dayTemplates.flatMap((d) =>
+      d.blocks.map((b) => (b.kind === 'exercise' ? b.exerciseId : '')),
+    );
+    expect(ids).toContain(mine.id);
+    expect(ids).not.toContain('push-ups');
+  });
+
+  it('adds the newer built-ins after restoring a backup from an older release', async () => {
+    const old = testContext();
+    await seedIfNeeded(old);
+    await old.db.bands.delete('band-5');
+    await old.db.exercises.delete('planche-press');
+    await old.db.settings.put({ key: 'seedVersion', value: 1 });
+    const backup = await exportBackup(old);
+
+    const ctx = testContext();
+    await restoreBackup(ctx, backup);
+    expect(await ctx.db.bands.get('band-5')).toBeDefined();
+    expect(await ctx.db.exercises.get('planche-press')).toBeDefined();
   });
 });
 

@@ -2,6 +2,7 @@ import { createBackup, type BackupData, type BackupFile } from '../domain/backup
 import { clean } from './clean';
 import type { DataContext } from './context';
 import { BACKUP_TABLES } from './db';
+import { seedIfNeeded } from './seed';
 import { setSetting } from './settings';
 
 const SNAPSHOT_ID = 'pre-restore';
@@ -53,6 +54,8 @@ export async function restoreBackup(ctx: DataContext, backup: BackupFile): Promi
     await writeAll(ctx, backup.data);
     await db.snapshots.put({ id: SNAPSHOT_ID, createdAt: ctx.clock.now(), backup: current });
   });
+  // A backup from an older release lacks the built-ins added since, which presets rely on.
+  await seedIfNeeded(ctx);
 }
 
 export async function hasUndoSnapshot(ctx: DataContext): Promise<{ createdAt: number } | null> {
@@ -69,4 +72,5 @@ export async function undoLastRestore(ctx: DataContext): Promise<void> {
     await writeAll(ctx, snapshot.backup.data);
     await db.snapshots.delete(SNAPSHOT_ID);
   });
+  await seedIfNeeded(ctx);
 }

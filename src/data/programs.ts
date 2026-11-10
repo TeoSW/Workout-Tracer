@@ -1,6 +1,7 @@
 import { addDays, mondayOf, WEEKDAYS } from '../domain/dates';
 import { removeOptionFromSelections } from '../domain/choice';
 import { addManualDeloadWeek, removeManualDeloadWeek } from '../domain/deload';
+import { SEED_EXERCISES } from '../domain/fixtures/exercises';
 import type { BuiltInTemplate } from '../domain/fixtures/templates';
 import { updateChoiceSlot } from '../domain/program-edit';
 import { setCurrentWeek } from '../domain/schedule';
@@ -63,8 +64,10 @@ export async function createProgramFromTemplate(
   template: BuiltInTemplate,
   name?: string,
 ): Promise<ProgramWithDays> {
+  const mapExerciseId = await builtInExerciseResolver(ctx);
   const { program, dayTemplates } = instantiateTemplate(template, {
     newId: ctx.newId,
+    mapExerciseId,
     ...(name === undefined ? {} : { name }),
   });
   const days = dayTemplates.map((d) => DayTemplateSchema.parse(clean(d)));
@@ -74,6 +77,23 @@ export async function createProgramFromTemplate(
     await ctx.db.dayTemplates.bulkAdd(days);
   });
   return { program: saved, dayTemplates: sortDays(saved, days) };
+}
+
+/**
+ * Maps a built-in exercise id to the one to use. A built-in that is not in the database (seeded
+ * later than a custom exercise of the same name, or removed) falls back to an exercise with the
+ * same name, so a preset logs to the exercise the user already has.
+ */
+async function builtInExerciseResolver(ctx: DataContext): Promise<(id: string) => string> {
+  const all = await ctx.db.exercises.toArray();
+  const ids = new Set(all.map((e) => e.id));
+  const byName = new Map(all.map((e) => [e.name.toLowerCase(), e.id]));
+  const seedNames = new Map(SEED_EXERCISES.map((e) => [e.id, e.name.toLowerCase()]));
+  return (id) => {
+    if (ids.has(id)) return id;
+    const name = seedNames.get(id);
+    return (name === undefined ? undefined : byName.get(name)) ?? id;
+  };
 }
 
 /** Active program first, then by name. */

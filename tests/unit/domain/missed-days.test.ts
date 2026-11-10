@@ -123,6 +123,21 @@ describe('missed days in a month', () => {
     expect(result).toEqual({ total: 1, marked: 1 });
   });
 
+  it('leaves out a marked day that is no longer planned', () => {
+    const { program } = activeProgram(PROGRAM_C, '2026-11-02');
+    const rest = addDays('2026-11-02', 1); // Tuesday is a rest day in Program C
+    expect(plannedDayTemplateId(program, rest)).toBeNull();
+    const result = missedDaysInMonth({
+      program,
+      sessions: [],
+      missedDays: [missed({ programId: program.id, date: rest })],
+      month: '2026-11',
+      today: '2026-11-03',
+    });
+    expect(result.marked).toBeLessThanOrEqual(result.total);
+    expect(result.marked).toBe(0);
+  });
+
   it('starts counting at the first workout or missed day, not at an earlier anchor', () => {
     const { program } = activeProgram(PROGRAM_C, '2026-10-05');
     expect(
