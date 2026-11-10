@@ -23,6 +23,7 @@ import { DAY_TYPES, type Block, type DayTemplate, type DayType } from '../../dom
 import { DAY_TYPE_LABELS } from '../../ui/labels';
 import { useGoBack } from '../../ui/navigation';
 import { PageShell } from '../../ui/PageShell';
+import { SaveButton } from '../../ui/SaveButton';
 import { useConfirm } from '../../ui/useConfirm';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
 
@@ -70,7 +71,7 @@ export function DayEditorPage() {
   const blocks = [...day.blocks].sort((a, b) => a.order - b.order);
 
   return (
-    <PageShell title={day.name} back={programUrl}>
+    <PageShell title={day.name} back={programUrl} actions={<SaveButton back={programUrl} />}>
       <IonList inset>
         <IonItem>
           <IonInput

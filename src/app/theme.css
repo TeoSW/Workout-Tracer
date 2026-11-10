@@ -515,3 +515,15 @@ ion-label.notice p {
   width: 40px;
   margin-inline-end: 8px;
 }
+
+.week-picker {
+  padding: 8px 4px 0;
+  background: var(--grouped-card);
+}
+
+.week-picker-label {
+  display: block;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--ion-color-medium);
+}

@@ -122,6 +122,17 @@ describe('program editor', () => {
     );
   });
 
+  it('has a Save button that confirms and goes back', async () => {
+    const { ctx, program } = await withProgram();
+    const { user } = renderApp(`/tabs/programs/${program.id}`, ctx);
+    ionEvent(await screen.findByLabelText('Program note'), 'ionChange', {
+      value: 'Planche first.',
+    });
+    await user.click(screen.getByText('Save'));
+    await waitFor(() => expect(window.location.hash).toBe('#/tabs/programs'));
+    expect((await getProgram(ctx, program.id))?.program.note).toBe('Planche first.');
+  });
+
   it('renames and saves the note', async () => {
     const { ctx, program } = await withProgram();
     renderApp(`/tabs/programs/${program.id}`, ctx);
@@ -146,10 +157,10 @@ describe('program editor', () => {
 
   it('changes a day in the weekday grid for the chosen week', async () => {
     const { ctx, program } = await withProgram();
-    renderApp(`/tabs/programs/${program.id}`, ctx);
+    const { user } = renderApp(`/tabs/programs/${program.id}`, ctx);
     await screen.findByText('Schedule');
     const legs = (await getProgram(ctx, program.id))?.dayTemplates.find((d) => d.name === 'Legs');
-    ionEvent(selectLabelled('Showing week'), 'ionChange', { value: 2 });
+    await user.click(screen.getByText('Week 2'));
     await waitFor(() => selectLabelled('Tuesday'));
     ionEvent(selectLabelled('Tuesday'), 'ionChange', { value: legs?.id });
     await waitFor(async () => {

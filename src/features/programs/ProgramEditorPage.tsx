@@ -31,6 +31,7 @@ import { cyclePosition } from '../../domain/schedule';
 import type { Program } from '../../domain/schemas';
 import { DAY_TYPE_LABELS } from '../../ui/labels';
 import { PageShell } from '../../ui/PageShell';
+import { SaveButton } from '../../ui/SaveButton';
 import { Stepper } from '../../ui/Stepper';
 import { useConfirm } from '../../ui/useConfirm';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
@@ -78,7 +79,7 @@ export function ProgramEditorPage() {
   }
 
   return (
-    <PageShell title={program.name} back={PROGRAMS}>
+    <PageShell title={program.name} back={PROGRAMS} actions={<SaveButton back={PROGRAMS} />}>
       <IonList inset>
         <IonItem>
           <IonInput

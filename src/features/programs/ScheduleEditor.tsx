@@ -25,6 +25,7 @@ import {
   toggleDeloadWeek,
 } from '../../domain/program-edit';
 import type { DayTemplate, Program, RotationSchedule, WeekdaySchedule } from '../../domain/schemas';
+import { Chips } from '../../ui/Chips';
 import { Stepper } from '../../ui/Stepper';
 
 const WEEKDAY_LABELS: Record<Weekday, string> = {
@@ -77,21 +78,17 @@ function WeekdayGrid(props: Props & { schedule: WeekdaySchedule }) {
         onChange={(n) => onChange((p) => resizeCycle(p, n))}
       />
       <DeloadWeeks program={program} onChange={onChange} />
-      <IonItem>
-        <IonSelect
-          aria-label="Showing week"
-          label="Showing week"
-          interface="action-sheet"
-          value={shown + 1}
-          onIonChange={(e) => setWeekIndex(Number(e.detail.value) - 1)}
-        >
-          {schedule.weeks.map((_, i) => (
-            <IonSelectOption key={i} value={i + 1}>
-              Week {i + 1}
-            </IonSelectOption>
-          ))}
-        </IonSelect>
-      </IonItem>
+      {schedule.weeks.length > 1 && (
+        <div role="group" aria-label="Week to edit" className="week-picker">
+          <IonLabel className="week-picker-label">Week to edit</IonLabel>
+          <Chips
+            options={schedule.weeks.map((_, i) => i)}
+            label={(i) => `Week ${i + 1}`}
+            isOn={(i) => i === shown}
+            onTap={setWeekIndex}
+          />
+        </div>
+      )}
       {WEEKDAYS.map((weekday) => (
         <IonItem key={weekday}>
           <IonSelect
