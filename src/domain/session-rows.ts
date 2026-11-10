@@ -2,6 +2,12 @@ import type { ExerciseBlock, LoggedSet, PlanSnapshot, SessionExercise } from './
 import { targetForSet } from './set-plan';
 import type { NewId } from './templates';
 
+/** A warm-up aims at the same reps and load, but not at the working sets' effort. */
+function warmupTarget(block: ExerciseBlock) {
+  const { rir: _rir, ...rest } = structuredClone(block.target);
+  return rest;
+}
+
 /**
  * The session exercise and empty set rows for one block: `warmupSets` warm-ups, then `setsMin`
  * working sets, each with its own copy of the target. Set `order` counts within the exercise.
@@ -34,10 +40,7 @@ export function buildRowsForBlock(input: {
     order,
     kind,
     // Warm-ups take the block's target; working sets add their own effort and note.
-    target:
-      kind === 'warmup'
-        ? structuredClone(block.target)
-        : targetForSet(block, order - block.warmupSets),
+    target: kind === 'warmup' ? warmupTarget(block) : targetForSet(block, order - block.warmupSets),
     rir: null,
     done: false,
     completedAt: null,

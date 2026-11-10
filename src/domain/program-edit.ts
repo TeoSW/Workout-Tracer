@@ -187,7 +187,14 @@ export function updateBlock(
 ): DayTemplate {
   return {
     ...day,
-    blocks: day.blocks.map((b) => (b.id === blockId ? ({ ...b, ...patch } as Block) : b)),
+    blocks: day.blocks.map((b) => {
+      if (b.id !== blockId) return b;
+      // An explicit undefined clears the field, rather than leaving the old value behind.
+      const merged: Record<string, unknown> = { ...b, ...patch };
+      return Object.fromEntries(
+        Object.entries(merged).filter(([, value]) => value !== undefined),
+      ) as Block;
+    }),
   };
 }
 

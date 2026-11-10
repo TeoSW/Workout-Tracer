@@ -184,6 +184,32 @@ describe('set sheet', () => {
     );
   });
 
+  it("gives an added set the plan for its position, not the last set's note", async () => {
+    const { ctx, program } = await setup();
+    const day = (await getProgram(ctx, program.id))?.dayTemplates.find((d) => d.name === 'Legs');
+    if (!day) throw new Error('no Legs');
+    const { editDayTemplate } = await import('../../src/data/programs');
+    await editDayTemplate(ctx, day.id, (d) => ({
+      ...d,
+      blocks: d.blocks.map((b, i) =>
+        i === 0
+          ? {
+              ...b,
+              setsMin: 2,
+              setsMax: 3,
+              setTargets: [{}, { note: 'Last of two' }, { note: 'Drop set' }],
+            }
+          : b,
+      ),
+    }));
+    const view = await startPlannedSession(ctx, { programId: program.id, dayTemplateId: day.id });
+    const entry = view.exercises[0];
+    if (!entry) throw new Error('no exercise');
+    const { addSet } = await import('../../src/data/sessions');
+    const added = await addSet(ctx, entry.id);
+    expect(added.target?.note).toBe('Drop set');
+  });
+
   it("shows each set's planned effort and note, and prefills the effort", async () => {
     const { ctx } = await empty('squat');
     const view = await getActiveSession(ctx);

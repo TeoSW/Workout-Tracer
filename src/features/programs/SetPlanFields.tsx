@@ -8,8 +8,8 @@ import {
   IonSelect,
   IonSelectOption,
 } from '@ionic/react';
-import { RIR_VALUES, RPE_VALUES, rirToRpe, rpeToRir } from '../../domain/effort';
-import type { EffortMode, ExerciseBlock, SetTarget } from '../../domain/schemas';
+import { RIR_VALUES, RPE_VALUES, formatEffort, rpeToRir } from '../../domain/effort';
+import type { ChoiceBlock, EffortMode, ExerciseBlock, SetTarget } from '../../domain/schemas';
 import { updateBlockTarget } from '../../domain/program-edit';
 import { updateSetPlan } from '../../domain/set-plan';
 import type { DayTemplate } from '../../domain/schemas';
@@ -51,7 +51,7 @@ function EffortSelect(props: {
         const rir = mode === 'rpe' ? rpeToRir(v) : v;
         return (
           <IonSelectOption key={v} value={String(rir)}>
-            {mode === 'rpe' ? `RPE ${v}` : rir >= 5 ? 'RIR 5+' : `RIR ${v}`}
+            {formatEffort(rir, mode)}
           </IonSelectOption>
         );
       })}
@@ -60,15 +60,18 @@ function EffortSelect(props: {
 }
 
 function effortText(rir: number | null | undefined, mode: Exclude<EffortMode, 'off'>): string {
-  if (rir === undefined || rir === null) return 'none';
-  return mode === 'rpe' ? `RPE ${rirToRpe(rir)}` : `RIR ${rir}`;
+  return rir === undefined || rir === null ? 'none' : formatEffort(rir, mode);
 }
 
 /**
  * The effort for every set, then each working set's own effort and note. Holds and complexes
  * don't log effort, so they only get notes.
  */
-export function SetPlanFields(props: { block: ExerciseBlock; mode: EffortMode; onEdit: EditDay }) {
+export function SetPlanFields(props: {
+  block: ExerciseBlock | ChoiceBlock;
+  mode: EffortMode;
+  onEdit: EditDay;
+}) {
   const { block, mode, onEdit } = props;
   const count = block.setsMax ?? block.setsMin;
   const target: SetTarget = block.target;

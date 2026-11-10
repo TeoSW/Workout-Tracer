@@ -105,7 +105,7 @@ function ExerciseRows(props: {
   actions: CardActions;
 }) {
   const { entry, exercise, block, lastSets, effortMode, bands, actions } = props;
-  const plan = block?.kind === 'exercise' ? formatPlanLine(block, exercise, bands) : '';
+  const plan = block?.kind === 'exercise' ? formatPlanLine(block, exercise, bands, effortMode) : '';
   const isChecklist = exercise.trackingType === 'checklist';
   const upTo = block?.setsMax;
 
