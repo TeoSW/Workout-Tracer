@@ -1,6 +1,8 @@
 import { useIonAlert } from '@ionic/react';
 import { useState } from 'react';
-import { useData } from '../../app/DataProvider';
+import { useData, useLive } from '../../app/DataProvider';
+import { getSettings } from '../../data/settings';
+import { effortModeFor } from '../../domain/effort';
 import {
   addSet,
   removeSet,
@@ -24,6 +26,7 @@ export function useSetEditor(exercises: ReadonlyMap<string, Exercise> | undefine
   const ctx = useData();
   const [presentAlert] = useIonAlert();
   const [openSet, setOpenSet] = useState<SheetSet | null>(null);
+  const settings = useLive(getSettings);
 
   async function saveSet(open: SheetSet, draft: SetDraft, afterSave?: () => Promise<void>) {
     setOpenSet(null);
@@ -54,7 +57,12 @@ export function useSetEditor(exercises: ReadonlyMap<string, Exercise> | undefine
       if (!exercise) return;
       const draft = set.done
         ? draftFromSet(set, exercise)
-        : draftFor({ exercise, target: set.target ?? {}, last });
+        : draftFor({
+            exercise,
+            target: set.target ?? {},
+            last,
+            effortMode: effortModeFor(settings?.effortMode ?? 'rir', exercise),
+          });
       setOpenSet({ set, exercise, draft, title: exercise.name });
     },
     toggleChecklist: (set, done) => void guard(() => updateSet(ctx, set.id, { done })),

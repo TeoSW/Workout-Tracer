@@ -9,6 +9,7 @@ import {
   option,
   repPart,
   reps,
+  rpe,
   secs,
   week,
   type BlockInput,
@@ -73,8 +74,12 @@ function planchePress(phase: Phase): BlockInput {
   return ex(
     'planche-press',
     2,
-    { ...reps(1, 3), ...bands(...(phase === 'intensity' ? ['band-35'] : ['band-35', 'band-5'])) },
-    { restSec: 4.5 * MIN, note: 'RPE 9. Rest 4-5 min.' },
+    {
+      ...reps(1, 3),
+      ...rpe(9),
+      ...bands(...(phase === 'intensity' ? ['band-35'] : ['band-35', 'band-5'])),
+    },
+    { restSec: 4.5 * MIN, note: 'Rest 4-5 min.' },
   );
 }
 
@@ -108,26 +113,29 @@ function heavyBlocks(phase: Phase, plancheSets: number, leverSets: number): Bloc
     ex(
       'weighted-pull-ups',
       2,
-      { ...reps(6, 8), ...added(intensity ? 20 : 15) },
-      { restSec: 2.5 * MIN, note: 'RPE 8. Add 2.5kg when both sets reach 8 reps at 1-2 RIR.' },
+      { ...reps(6, 8), ...rpe(8), ...added(intensity ? 20 : 15) },
+      { restSec: 2.5 * MIN, note: 'Add 2.5kg when both sets reach 8 reps at 1-2 RIR.' },
     ),
     ex(
       'weighted-dips',
       2,
-      { ...(intensity ? reps(8) : reps(8, 10)), ...added(intensity ? 25 : 20) },
-      { restSec: 2.5 * MIN, note: 'RPE 7. Add 2.5kg when both sets reach the top at 1-2 RIR.' },
+      { ...(intensity ? reps(8) : reps(8, 10)), ...rpe(7), ...added(intensity ? 25 : 20) },
+      { restSec: 2.5 * MIN, note: 'Add 2.5kg when both sets reach the top at 1-2 RIR.' },
     ),
     ex(
       'cable-lateral-raise',
       2,
-      { ...(intensity ? reps(8, 10) : reps(6, 8)), ...kg(15) },
-      { restSec: 1.5 * MIN, note: 'RPE 8. Cable on 2:1, so about 7.5kg on the arm.' },
+      { ...(intensity ? reps(8, 10) : reps(6, 8)), ...rpe(8), ...kg(15) },
+      { restSec: 1.5 * MIN, note: 'Cable on 2:1, so about 7.5kg on the arm.' },
     ),
     ex('bicep-curl', 2, reps(8, 10), {
       restSec: 1.5 * MIN,
-      note: intensity
-        ? 'One preacher curl set at RPE 6 (7.5kg), then one dumbbell curl set at RPE 7 (15kg).'
-        : 'One preacher curl set, then one dumbbell curl set, 15kg.',
+      setTargets: intensity
+        ? [
+            { rir: 4, note: 'Preacher curl, 7.5kg' },
+            { rir: 3, note: 'Dumbbell curl, 15kg' },
+          ]
+        : [{ note: 'Preacher curl, 15kg' }, { note: 'Dumbbell curl, 15kg' }],
     }),
   ];
 }
@@ -233,20 +241,28 @@ const legs = dayTemplate(
   'Legs',
   'hypertrophy',
   [
-    ex('lumbar-extension', 2, { ...reps(10), ...kg(20, 25) }, { note: 'Hip hinge. RPE 7.' }),
-    ex('squat', 3, { ...reps(8), ...kg(20, 40) }, { note: 'Squat machine or BSS. RPE 9.' }),
-    ex('hip-thrust', 2, { ...reps(8), ...kg(25, 30) }, { note: 'Machine. RPE 8.' }),
-    ex('leg-extension', 2, { ...reps(10), ...kg(30, 40) }, { note: 'Machine. RPE 8.' }),
-    ex('hamstring-curl', 2, reps(8), { note: '7.5kg per side. RPE 7.' }),
-    ex('adductors', 2, { ...reps(8), ...kg(43, 50) }, { note: 'Inner. RPE 8.' }),
-    ex('abductors', 2, { ...reps(10, 12), ...kg(84, 97) }, { note: 'Outer. RPE 7.' }),
-    ex('calf-raise', 2, { ...reps(8), ...kg(70, 80) }, { note: 'RPE 7.' }),
-    ex('oblique-extension', 2, { ...reps(8, 10), ...kg(6) }, { note: '6kg each side. RPE 8.' }),
+    ex('lumbar-extension', 2, { ...reps(10), ...rpe(7), ...kg(20, 25) }, { note: 'Hip hinge.' }),
+    ex('squat', 3, { ...reps(8), ...rpe(9), ...kg(20, 40) }, { note: 'Squat machine or BSS.' }),
+    ex('hip-thrust', 2, { ...reps(8), ...rpe(8), ...kg(25, 30) }, { note: 'Machine.' }),
+    ex('leg-extension', 2, { ...reps(10), ...rpe(8), ...kg(30, 40) }, { note: 'Machine.' }),
+    ex('hamstring-curl', 2, { ...reps(8), ...rpe(7) }, { note: '7.5kg per side.' }),
+    ex('adductors', 2, { ...reps(8), ...rpe(8), ...kg(43, 50) }, { note: 'Inner.' }),
+    ex(
+      'abductors',
+      2,
+      { ...reps(10, 12), ...rpe(7), ...kg(84, 97) },
+      {
+        note: 'Outer.',
+        setTargets: [{ note: '12 reps at 84kg' }, { note: '10 reps at 97kg' }],
+      },
+    ),
+    ex('calf-raise', 2, { ...reps(8), ...rpe(7), ...kg(70, 80) }),
+    ex('oblique-extension', 2, { ...reps(8, 10), ...rpe(8), ...kg(6) }, { note: '6kg each side.' }),
     ex(
       'ab-crunch',
       2,
-      { ...reps(8), ...kg(35, 40) },
-      { note: 'Cable on 2:1, so 2.5kg on the stack is 5kg. RPE 7.' },
+      { ...reps(8), ...rpe(7), ...kg(35, 40) },
+      { note: 'Cable on 2:1, so 2.5kg on the stack is 5kg.' },
     ),
   ],
   { deloadExempt: true, note: 'Every week, deload included.' },

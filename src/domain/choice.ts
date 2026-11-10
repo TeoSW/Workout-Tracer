@@ -70,7 +70,13 @@ export function resolveChoiceBlock(block: ChoiceBlock, optionIndex: number): Blo
     exerciseId: option.exerciseId,
     setsMin: option.setsMin,
     ...(option.setsMax === undefined ? {} : { setsMax: option.setsMax }),
-    target: structuredClone(option.target),
+    target: {
+      ...structuredClone(option.target),
+      ...(option.target.rir === undefined && block.target.rir !== undefined
+        ? { rir: block.target.rir }
+        : {}),
+    },
+    ...(block.setTargets === undefined ? {} : { setTargets: structuredClone(block.setTargets) }),
     warmupSets: block.warmupSets,
     ...(block.restSec === undefined ? {} : { restSec: block.restSec }),
     ...(block.supersetGroup === undefined ? {} : { supersetGroup: block.supersetGroup }),

@@ -125,6 +125,14 @@ export const SetTargetSchema = z.object({
   parts: z.array(ComplexPartTargetSchema).optional(),
   isMax: z.boolean().optional(),
   note: z.string().optional(),
+  /** Planned effort, stored as RIR like logged sets. Null means none for this set. */
+  rir: RirSchema.optional(),
+});
+
+/** One working set's own plan, on top of the block's target. */
+export const SetPlanSchema = z.object({
+  rir: RirSchema.optional(),
+  note: z.string().optional(),
 });
 
 const setsRangeOk = (v: { setsMin: number; setsMax?: number | undefined }) =>
@@ -158,6 +166,8 @@ const blockCommon = {
   supersetGroup: z.string().min(1).optional(),
   warmupSets: count,
   note: z.string().optional(),
+  /** Each working set's own effort and note, by position. Missing ones use the block's. */
+  setTargets: z.array(SetPlanSchema).optional(),
 };
 
 export const ExerciseBlockSchema = z
@@ -401,6 +411,7 @@ export type Exercise = z.infer<typeof ExerciseSchema>;
 export type Band = z.infer<typeof BandSchema>;
 export type ComplexPartTarget = z.infer<typeof ComplexPartTargetSchema>;
 export type SetTarget = z.infer<typeof SetTargetSchema>;
+export type SetPlan = z.infer<typeof SetPlanSchema>;
 export type ChoiceOption = z.infer<typeof ChoiceOptionSchema>;
 export type ChoiceSlot = z.infer<typeof ChoiceSlotSchema>;
 export type ExerciseBlock = z.infer<typeof ExerciseBlockSchema>;

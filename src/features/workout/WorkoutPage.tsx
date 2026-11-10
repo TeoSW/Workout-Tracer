@@ -30,6 +30,7 @@ import {
   type SessionExerciseView,
 } from '../../data/sessions';
 import { getSettings, setSetting } from '../../data/settings';
+import { effortModeFor } from '../../domain/effort';
 import { formatDuration } from '../../domain/format';
 import { logItems } from '../../domain/log-layout';
 import { restAfterSet } from '../../domain/rest-plan';
@@ -223,7 +224,12 @@ export function WorkoutPage() {
       unlockAudio();
       const exercise = exercises.get(entry.exerciseId);
       if (!exercise) return;
-      const draft = draftFor({ exercise, target: set.target ?? {}, last });
+      const draft = draftFor({
+        exercise,
+        target: set.target ?? {},
+        last,
+        effortMode: effortModeFor(settings?.effortMode ?? 'rir', exercise),
+      });
       // With nothing to prefill from, the sheet asks for the numbers instead.
       if (draftProblem(draft, exercise) !== null) {
         editor.setActions.openSet(entry, set, last);

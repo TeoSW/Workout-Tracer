@@ -14,6 +14,7 @@ import {
 import { arrowUp } from 'ionicons/icons';
 import { useParams } from 'react-router-dom';
 import { useData, useLive } from '../../app/DataProvider';
+import { getSettings } from '../../data/settings';
 import { loadBandMap } from '../../data/bands';
 import { loadExerciseMap } from '../../data/exercises';
 import { deleteDayTemplate, editDayTemplate, getProgram } from '../../data/programs';
@@ -38,6 +39,7 @@ export function DayEditorPage() {
   const loaded = useLive((c) => getProgram(c, id), [id]);
   const exercises = useLive(loadExerciseMap);
   const bands = useLive(loadBandMap);
+  const settings = useLive(getSettings);
   const day = loaded?.dayTemplates.find((d) => d.id === dayId);
 
   if (!day || !exercises || !bands) {
@@ -53,7 +55,7 @@ export function DayEditorPage() {
   const lineOf = (block: Block) => {
     if (block.kind === 'choice') return `Pick one of ${block.choiceSlot.options.length}`;
     const exercise = exercises.get(block.exerciseId);
-    return exercise ? formatPlanLine(block, exercise, bands) : '';
+    return exercise ? formatPlanLine(block, exercise, bands, settings?.effortMode) : '';
   };
 
   async function remove() {

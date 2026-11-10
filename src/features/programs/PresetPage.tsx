@@ -10,6 +10,7 @@ import {
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useData, useLive } from '../../app/DataProvider';
+import { getSettings } from '../../data/settings';
 import { loadBandMap } from '../../data/bands';
 import { loadExerciseMap } from '../../data/exercises';
 import { createProgramFromTemplate, startFromPreset } from '../../data/programs';
@@ -43,6 +44,7 @@ export function PresetPage() {
   const { id } = useParams();
   const template = BUILT_IN_TEMPLATES.find((t) => t.id === id);
   const library = useLive(loadLibrary);
+  const settings = useLive(getSettings);
   const clientId = new URLSearchParams(useLocation().search).get('client');
   const client = useLive(
     async (c) => (clientId ? ((await c.db.clients.get(clientId)) ?? null) : null),
@@ -148,7 +150,7 @@ export function PresetPage() {
                 <IonLabel className="ion-text-wrap">
                   <h3>{title ?? ''}</h3>
                   {exercise && library && block.kind === 'exercise' && (
-                    <p>{formatPlanLine(block, exercise, library.bands)}</p>
+                    <p>{formatPlanLine(block, exercise, library.bands, settings?.effortMode)}</p>
                   )}
                   {block.kind === 'choice' && (
                     <p>

@@ -11,6 +11,7 @@ import {
 import { checkmark } from 'ionicons/icons';
 import { useState } from 'react';
 import { useData, useLive } from '../../app/DataProvider';
+import { getSettings } from '../../data/settings';
 import { loadBandMap } from '../../data/bands';
 import { loadExerciseMap } from '../../data/exercises';
 import { getTodayOverview } from '../../data/today';
@@ -50,6 +51,7 @@ async function loadStart(ctx: DataContext) {
 export function StartWorkoutPage() {
   const ctx = useData();
   const data = useLive(loadStart);
+  const settings = useLive(getSettings);
   const { startDay } = useStartWorkout();
   const { error, guard } = useGuard();
   const [week, setWeek] = useState<number | null>(null);
@@ -183,7 +185,7 @@ export function StartWorkoutPage() {
                     {block.kind === 'choice' ? block.choiceSlot.label : (exercise?.name ?? '')}
                   </h3>
                   {exercise && block.kind === 'exercise' && (
-                    <p>{formatPlanLine(block, exercise, bands)}</p>
+                    <p>{formatPlanLine(block, exercise, bands, settings?.effortMode)}</p>
                   )}
                 </IonLabel>
               </IonItem>

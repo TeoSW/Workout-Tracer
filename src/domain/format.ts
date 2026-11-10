@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { parseDateStr, type DateStr } from './dates';
-import { formatEffort } from './effort';
+import { effortModeFor, formatEffort } from './effort';
 import type { PrFlag } from './prs';
 import type { Band, EffortMode, Exercise, ExerciseBlock, LoggedSet, SetTarget } from './schemas';
 import { round2 } from './sets';
@@ -88,6 +88,8 @@ export function formatPlanLine(
   block: Pick<ExerciseBlock, 'setsMin' | 'setsMax' | 'target'>,
   exercise: Exercise,
   bandsById: ReadonlyMap<string, Band>,
+  /** Adds the planned effort for every set, in this mode. Left out, the effort isn't shown. */
+  effortMode?: EffortMode,
 ): string {
   const { target } = block;
   const parts = [formatSetsTarget(block, exercise)];
@@ -100,6 +102,9 @@ export function formatPlanLine(
   }
   if (target.progressionLevel !== undefined && target.progressionLevel !== 'current') {
     parts.push(target.progressionLevel);
+  }
+  if (effortMode !== undefined && target.rir !== undefined) {
+    parts.push(formatEffort(target.rir, effortModeFor(effortMode, exercise)));
   }
   return parts.filter((p) => p !== '').join(' · ');
 }

@@ -65,6 +65,18 @@ describe('the Calisthenics 5-week cycle from the Excel sheet', () => {
     expect(lever?.restSec).toBe(180);
   });
 
+  it('plans the RPE from the sheet as an effort, and one per curl set', () => {
+    const heavy = day('Heavy 1, planche (intensity)');
+    const byExercise = (id: string) =>
+      heavy.blocks.find((b) => b.kind === 'exercise' && b.exerciseId === id);
+    expect(byExercise('weighted-pull-ups')?.target.rir).toBe(2); // RPE 8
+    expect(byExercise('planche-press')?.target.rir).toBe(1); // RPE 9
+    expect(byExercise('bicep-curl')?.setTargets).toEqual([
+      { rir: 4, note: 'Preacher curl, 7.5kg' },
+      { rir: 3, note: 'Dumbbell curl, 15kg' },
+    ]);
+  });
+
   it("lets the test pick next cycle's weak-point accessory", () => {
     const slot = day('Heavy 1, planche (intensity)').blocks.find((b) => b.kind === 'choice');
     expect(slot?.kind === 'choice' && slot.choiceSlot.options.map((o) => o.exerciseId)).toEqual([

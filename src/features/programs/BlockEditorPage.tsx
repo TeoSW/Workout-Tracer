@@ -37,15 +37,26 @@ import type {
   DayTemplate,
   Exercise,
   ExerciseBlock,
+  SetPlan,
 } from '../../domain/schemas';
 import { useGoBack } from '../../ui/navigation';
 import { PageShell } from '../../ui/PageShell';
 import { SaveButton } from '../../ui/SaveButton';
 import { Stepper } from '../../ui/Stepper';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
+import { SetPlanFields } from './SetPlanFields';
 import { TargetFields } from './TargetFields';
+import { getSettings } from '../../data/settings';
+import { effortModeFor } from '../../domain/effort';
 
 type EditDay = (change: (day: DayTemplate) => DayTemplate) => void;
+
+/** Per-set plans only for the sets the block still has, or none at all. */
+function trimPlans(plans: SetPlan[] | undefined, count: number): SetPlan[] | undefined {
+  if (plans === undefined) return undefined;
+  const kept = plans.slice(0, count);
+  return kept.length === 0 ? undefined : kept;
+}
 
 /** Sets, rest, warm-ups, superset and note: the fields every block has. */
 function CommonFields(props: {
@@ -72,15 +83,15 @@ function CommonFields(props: {
             value={block.setsMin}
             min={1}
             max={20}
-            onChange={(setsMin) =>
+            onChange={(setsMin) => {
+              const setsMax =
+                block.setsMax !== undefined && block.setsMax > setsMin ? block.setsMax : undefined;
               patch({
                 setsMin,
-                setsMax:
-                  block.setsMax !== undefined && block.setsMax > setsMin
-                    ? block.setsMax
-                    : undefined,
-              })
-            }
+                setsMax,
+                setTargets: trimPlans(block.setTargets, setsMax ?? setsMin),
+              });
+            }}
           />
           <Stepper
             label="Up to"
@@ -89,7 +100,10 @@ function CommonFields(props: {
             min={block.setsMin}
             max={20}
             onChange={(setsMax) =>
-              patch({ setsMax: setsMax > block.setsMin ? setsMax : undefined })
+              patch({
+                setsMax: setsMax > block.setsMin ? setsMax : undefined,
+                setTargets: trimPlans(block.setTargets, setsMax),
+              })
             }
           />
         </>
@@ -266,6 +280,7 @@ export function BlockEditorPage() {
   const byId = useLive(loadExerciseMap);
   const exercises = useLive(listExercises);
   const bands = useLive((c) => listBands(c, { includeArchived: true }));
+  const settings = useLive(getSettings);
   const { error, guard } = useGuard();
 
   const day = loaded?.dayTemplates.find((d) => d.id === dayId);
@@ -306,6 +321,17 @@ export function BlockEditorPage() {
           onEdit={edit}
         />
       </IonList>
+      {(block.kind === 'choice' || exercise) && (
+        <SetPlanFields
+          block={block}
+          mode={
+            exercise
+              ? effortModeFor(settings?.effortMode ?? 'rir', exercise)
+              : (settings?.effortMode ?? 'rir')
+          }
+          onEdit={edit}
+        />
+      )}
       <ErrorNote error={error} />
       <IonList inset>
         <IonItem

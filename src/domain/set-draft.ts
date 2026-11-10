@@ -1,4 +1,4 @@
-import type { Exercise, LoggedPart, LoggedSet, SetTarget } from './schemas';
+import type { EffortMode, Exercise, LoggedPart, LoggedSet, SetTarget } from './schemas';
 
 /** What the set sheet edits. Holds every value a set can have; the tracking type picks which count. */
 export type SetDraft = {
@@ -22,11 +22,13 @@ function partsFor(target: SetTarget, last: LoggedSet | null): LoggedPart[] {
   });
 }
 
-/** Prefills from last time, otherwise from the lower end of the plan. */
+/** Prefills from last time, otherwise from the lower end of the plan. Effort comes from the plan first. */
 export function draftFor(input: {
   exercise: Exercise;
   target: SetTarget;
   last: LoggedSet | null;
+  /** 'off' means effort isn't logged, so none is prefilled. */
+  effortMode?: EffortMode;
 }): SetDraft {
   const { target, last } = input;
   const plannedLevel = target.progressionLevel === 'current' ? undefined : target.progressionLevel;
@@ -41,7 +43,8 @@ export function draftFor(input: {
     attempts: 0,
     cleanAttempts: 0,
     clean: last?.clean ?? false,
-    rir: last?.rir ?? null,
+    // The planned effort is the goal for today, so it comes before last time's.
+    rir: input.effortMode === 'off' ? null : (target.rir ?? last?.rir ?? null),
   };
 }
 

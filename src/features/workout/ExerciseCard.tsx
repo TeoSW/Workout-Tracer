@@ -18,6 +18,7 @@ import {
 } from 'ionicons/icons';
 import { Fragment } from 'react';
 import type { SessionExerciseView } from '../../data/sessions';
+import { formatEffort } from '../../domain/effort';
 import { formatLastTime, formatPlanLine, formatSetResult } from '../../domain/format';
 import { lastTimeSet } from '../../domain/last-time';
 import { setLabel } from '../../domain/log-layout';
@@ -48,6 +49,9 @@ function SetRow(props: {
   const label = setLabel(entry.sets, set);
   const last = lastTimeSet(lastSets, set.kind, label.number);
   const hint = last ? formatLastTime(last, exercise, bands) : 'tap to log';
+  const plan = [formatEffort(set.target?.rir ?? null, effortMode), set.target?.note ?? '']
+    .filter((part) => part !== '')
+    .join(' · ');
 
   return (
     <IonItemSliding>
@@ -59,6 +63,7 @@ function SetRow(props: {
             <>
               {label.text}
               <p>{hint}</p>
+              {plan !== '' && <p className="set-plan-line">{`Plan: ${plan}`}</p>}
             </>
           )}
         </IonLabel>
@@ -100,7 +105,7 @@ function ExerciseRows(props: {
   actions: CardActions;
 }) {
   const { entry, exercise, block, lastSets, effortMode, bands, actions } = props;
-  const plan = block?.kind === 'exercise' ? formatPlanLine(block, exercise, bands) : '';
+  const plan = block?.kind === 'exercise' ? formatPlanLine(block, exercise, bands, effortMode) : '';
   const isChecklist = exercise.trackingType === 'checklist';
   const upTo = block?.setsMax;
 

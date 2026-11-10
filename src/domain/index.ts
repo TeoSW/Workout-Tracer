@@ -29,6 +29,7 @@ export * from './schedule';
 export * from './schemas';
 export * from './session-rows';
 export * from './set-draft';
+export * from './set-plan';
 export * from './sets';
 export * from './share';
 export * from './skills';

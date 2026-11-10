@@ -2,6 +2,7 @@ import { resolveChoiceBlock, saveChoice } from '../domain/choice';
 import { resolvePlan } from '../domain/plan';
 import { detectPrs, type PrFlag, type SessionSets } from '../domain/prs';
 import { lastRotationIndex, nextRotationIndex, rotationIndexForPick } from '../domain/schedule';
+import { targetForSet } from '../domain/set-plan';
 import {
   LoggedSetSchema,
   SessionExerciseSchema,
@@ -10,6 +11,7 @@ import {
   type LoggedSet,
   type Session,
   type SessionExercise,
+  type SetTarget,
 } from '../domain/schemas';
 import { buildRowsForBlock, buildSessionRows } from '../domain/session-rows';
 import { loadBandMap } from './bands';
@@ -206,29 +208,46 @@ export async function updateSet(
   });
 }
 
-/** Adds a working set after the last one, with the same target. */
+/**
+ * Adds a working set after the last one. It takes the plan for its position when the exercise
+ * came from the plan, otherwise the last set's target without that set's own effort and note.
+ */
 export async function addSet(ctx: DataContext, sessionExerciseId: string): Promise<LoggedSet> {
-  return ctx.db.transaction('rw', [ctx.db.sessionExercises, ctx.db.sets], async () => {
-    const se = await requireSessionExercise(ctx, sessionExerciseId);
-    const sets = await ctx.db.sets.where('sessionExerciseId').equals(sessionExerciseId).toArray();
-    const last = sets.sort((a, b) => a.order - b.order).at(-1);
-    const set = LoggedSetSchema.parse(
-      clean({
-        id: ctx.newId(),
-        sessionId: se.sessionId,
-        sessionExerciseId,
-        exerciseId: se.exerciseId,
-        order: last === undefined ? 0 : last.order + 1,
-        kind: 'working',
-        target: last?.target === undefined ? undefined : structuredClone(last.target),
-        rir: null,
-        done: false,
-        completedAt: null,
-      }),
-    );
-    await ctx.db.sets.add(set);
-    return set;
-  });
+  return ctx.db.transaction(
+    'rw',
+    [ctx.db.sessions, ctx.db.sessionExercises, ctx.db.sets],
+    async () => {
+      const se = await requireSessionExercise(ctx, sessionExerciseId);
+      const sets = await ctx.db.sets.where('sessionExerciseId').equals(sessionExerciseId).toArray();
+      const last = sets.sort((a, b) => a.order - b.order).at(-1);
+      const session = await ctx.db.sessions.get(se.sessionId);
+      const block = session?.planSnapshot?.blocks.find((b) => b.id === se.blockId);
+      const working = sets.filter((s) => s.kind === 'working').length;
+      let target: SetTarget | undefined;
+      if (block?.kind === 'exercise' && block.exerciseId === se.exerciseId) {
+        target = targetForSet(block, working);
+      } else if (last?.target !== undefined) {
+        const { rir: _rir, note: _note, ...rest } = structuredClone(last.target);
+        target = rest;
+      }
+      const set = LoggedSetSchema.parse(
+        clean({
+          id: ctx.newId(),
+          sessionId: se.sessionId,
+          sessionExerciseId,
+          exerciseId: se.exerciseId,
+          order: last === undefined ? 0 : last.order + 1,
+          kind: 'working',
+          target,
+          rir: null,
+          done: false,
+          completedAt: null,
+        }),
+      );
+      await ctx.db.sets.add(set);
+      return set;
+    },
+  );
 }
 
 export async function removeSet(ctx: DataContext, setId: string): Promise<void> {
