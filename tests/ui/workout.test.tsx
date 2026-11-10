@@ -363,7 +363,7 @@ describe('finish', () => {
 
     const { user } = renderApp(WORKOUT, ctx);
     await user.click(await screen.findByTestId('finish-workout'));
-    await confirmAlert(user, 'Finish');
+    await confirmAlert(user, 'End workout');
     expect(await screen.findByText('Summary')).toBeInTheDocument();
     expect(await screen.findByText('30m')).toBeInTheDocument();
     expect(screen.getByText('1')).toBeInTheDocument();
@@ -386,7 +386,7 @@ describe('finish', () => {
     });
     const { user } = renderApp(WORKOUT, ctx);
     await user.click(await screen.findByTestId('finish-workout'));
-    await confirmAlert(user, 'Finish');
+    await confirmAlert(user, 'End workout');
     await user.click(await screen.findByText('Continue'));
 
     const seconds = await screen.findByLabelText('Planche Hold best clean hold');

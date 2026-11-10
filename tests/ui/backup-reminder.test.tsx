@@ -72,7 +72,7 @@ describe('backup reminder', () => {
     const ctx = await overdue();
     await startEmptySession(ctx);
     renderApp('/tabs/today', ctx);
-    await screen.findByText('Resume workout');
+    await screen.findByText('Current workout');
     expect(screen.queryByText(TITLE)).not.toBeInTheDocument();
   });
 

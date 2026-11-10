@@ -22,7 +22,7 @@ import { ProgressPage } from '../features/progress/ProgressPage';
 import { SkillsPage } from '../features/progress/SkillsPage';
 import { BandsPage } from '../features/settings/BandsPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
-import { PickDayPage } from '../features/today/PickDayPage';
+import { StartWorkoutPage } from '../features/today/StartWorkoutPage';
 import { RestBar } from '../features/rest/RestBar';
 import { TodayPage } from '../features/today/TodayPage';
 import { AddExercisePage } from '../features/workout/AddExercisePage';
@@ -42,7 +42,8 @@ export function Tabs() {
   return (
     <IonTabs>
       <IonRouterOutlet>
-        <Route path="today/pick-day" element={<PickDayPage />} />
+        <Route path="today/start" element={<StartWorkoutPage />} />
+        <Route path="today/pick-day" element={<Navigate to="/tabs/today/start" replace />} />
         <Route path="today/workout/add" element={<AddExercisePage />} />
         <Route path="today/workout" element={<WorkoutPage />} />
         <Route path="today/summary/:id" element={<SummaryPage />} />

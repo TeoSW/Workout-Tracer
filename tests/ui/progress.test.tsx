@@ -95,7 +95,7 @@ describe('progress overview', () => {
 
     await user.click(screen.getByText('Today'));
     await waitFor(() => expect(window.location.hash).toBe('#/tabs/today'));
-    await screen.findByText('Resume workout').catch(() => undefined);
+    await screen.findByText('Current workout').catch(() => undefined);
     const reads = vi.spyOn(ctx.db.sets, 'toArray');
     const { session } = await startEmptySession(ctx);
     await addExercise(ctx, session.id, 'squat');

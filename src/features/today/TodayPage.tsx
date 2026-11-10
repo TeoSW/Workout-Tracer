@@ -29,8 +29,52 @@ import { BackupReminder } from './BackupReminder';
 import { InstallBanner } from './InstallBanner';
 import { NotTodaySheet } from './NotTodaySheet';
 import { useStartWorkout } from './useStartWorkout';
+import { loadExerciseMap } from '../../data/exercises';
+import type { SessionView } from '../../data/sessions';
+import { useFinishWorkout } from '../workout/useFinishWorkout';
 
 type Guard = (action: () => Promise<unknown>) => Promise<void>;
+
+const START = '/tabs/today/start';
+
+/** The workout in progress, with each exercise and how many of its sets are done. */
+function CurrentWorkout({ active, onError }: { active: SessionView; onError: Guard }) {
+  const exercises = useLive(loadExerciseMap);
+  const { resume } = useStartWorkout();
+  const endWorkout = useFinishWorkout(onError);
+  const { session } = active;
+  return (
+    <section className="today-card" aria-label="Current workout">
+      <div className="today-card-kicker">Current workout</div>
+      <h2 className="today-card-title">{session.name}</h2>
+      <ul className="current-exercises">
+        {active.exercises.map((entry) => {
+          const working = entry.sets.filter((s) => s.kind === 'working');
+          const done = working.filter((s) => s.done).length;
+          return (
+            <li key={entry.id}>
+              <span>{exercises?.get(entry.exerciseId)?.name ?? ''}</span>
+              <span className={done === working.length && done > 0 ? 'sets-done' : 'sets-left'}>
+                {`${done}/${working.length}`}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      <IonButton expand="block" size="large" onClick={resume}>
+        Continue workout
+      </IonButton>
+      <IonButton
+        expand="block"
+        fill="clear"
+        color="danger"
+        onClick={() => void endWorkout(session.id)}
+      >
+        End workout
+      </IonButton>
+    </section>
+  );
+}
 
 function nameOf(overview: TodayOverview, dayTemplateId: string | null): string {
   return overview.days.find((d) => d.id === dayTemplateId)?.name ?? 'Workout';
@@ -45,7 +89,6 @@ function nextLine(overview: TodayOverview, next: PlannedDay | null): string | nu
 /** The one card at the top: what today is, and the one thing to do about it. */
 function TodayCard({ overview, onError }: { overview: TodayOverview; onError: Guard }) {
   const ctx = useData();
-  const { startDay } = useStartWorkout();
   /** The day being skipped, kept while the sheet closes after the day turns to missed. */
   const [skipping, setSkipping] = useState<string | null>(null);
   const { plan, program } = overview;
@@ -83,22 +126,8 @@ function TodayCard({ overview, onError }: { overview: TodayOverview; onError: Gu
       {planned && (
         <>
           <p className="today-card-line">Training today?</p>
-          <IonButton
-            expand="block"
-            size="large"
-            onClick={() =>
-              void onError(() =>
-                startDay({
-                  programId: program.id,
-                  dayTemplateId: planned.dayTemplateId,
-                  ...(planned.rotationIndex === null
-                    ? {}
-                    : { rotationIndex: planned.rotationIndex }),
-                }),
-              )
-            }
-          >
-            Start
+          <IonButton expand="block" size="large" routerLink={START}>
+            Start workout
           </IonButton>
           <IonButton
             expand="block"
@@ -117,6 +146,11 @@ function TodayCard({ overview, onError }: { overview: TodayOverview; onError: Gu
           onClick={() => void onError(() => undoMissedDay(ctx, missed.id))}
         >
           Undo
+        </IonButton>
+      )}
+      {!planned && (
+        <IonButton expand="block" fill="outline" routerLink={START}>
+          Start workout
         </IonButton>
       )}
       {next && <p className="today-card-next">{next}</p>}
@@ -199,31 +233,18 @@ function BodyweightRow({ overview }: { overview: TodayOverview }) {
 export function TodayPage() {
   const today = useToday();
   const overview = useLive(getTodayOverview, [today]);
-  const { startEmpty, resume } = useStartWorkout();
+  const { startEmpty } = useStartWorkout();
   const { error, guard } = useGuard();
   const idle = overview !== undefined && overview.active === null;
 
   return (
     <PageShell title="Today">
-      {overview?.active && (
-        <IonList inset>
-          <IonItem button detail onClick={resume}>
-            <IonLabel>
-              <h2>Resume workout</h2>
-              <p>{overview.active.session.name}</p>
-            </IonLabel>
-          </IonItem>
-        </IonList>
-      )}
+      {overview?.active && <CurrentWorkout active={overview.active} onError={guard} />}
       {idle && <TodayCard overview={overview} onError={guard} />}
       <ErrorNote error={error} />
       {idle && (
         <IonList inset>
-          {overview.program ? (
-            <IonItem routerLink="/tabs/today/pick-day" detail>
-              <IonLabel>Start another day</IonLabel>
-            </IonItem>
-          ) : (
+          {!overview.program && (
             <IonItem routerLink="/tabs/programs" routerDirection="root" detail>
               <IonLabel>Pick a program</IonLabel>
             </IonItem>

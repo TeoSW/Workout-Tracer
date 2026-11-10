@@ -7,6 +7,7 @@ import {
   openApp,
   openTab,
   startProgramC,
+  startWorkout,
   visibleText,
 } from './helpers';
 
@@ -40,7 +41,7 @@ async function clearStorage(page: Page): Promise<void> {
 test('flow 4: export a backup, clear storage, restore, same data', async ({ page }, testInfo) => {
   await openApp(page);
   await startProgramC(page);
-  await visibleText(page, 'Start').click();
+  await startWorkout(page);
   await logNextSet(page, 'Planche Complex');
   await page.clock.fastForward('10:00');
   await page.clock.resume();

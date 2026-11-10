@@ -66,7 +66,7 @@ describe('update toast', () => {
     await seedIfNeeded(ctx);
     const session = await startEmptySession(ctx);
     renderApp('/tabs/today', ctx);
-    await screen.findByText('Resume workout');
+    await screen.findByText('Current workout');
     await expectToast(false);
     await finishSession(ctx, session.session.id);
     await expectToast(true);

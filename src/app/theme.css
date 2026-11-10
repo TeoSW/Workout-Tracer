@@ -527,3 +527,32 @@ ion-label.notice p {
   font-size: 13px;
   color: var(--ion-color-medium);
 }
+
+.current-exercises {
+  margin: 12px 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.current-exercises li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 15px;
+  border-bottom: 1px solid var(--ion-color-step-150, #d9d9d9);
+}
+
+.current-exercises li:last-child {
+  border-bottom: none;
+}
+
+.sets-left {
+  color: var(--ion-color-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.sets-done {
+  color: var(--ion-color-success);
+  font-variant-numeric: tabular-nums;
+}

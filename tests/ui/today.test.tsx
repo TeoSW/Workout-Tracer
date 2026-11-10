@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { listBodyweight, setBodyweight } from '../../src/data/bodyweight';
 import { listMissedDays } from '../../src/data/missed-days';
@@ -13,7 +13,7 @@ import {
 import { PROGRAM_A, PROGRAM_C } from '../../src/domain/fixtures/templates';
 import type { DayTemplate } from '../../src/domain/schemas';
 import { START_MS, testClock, testContext } from '../unit/data/helpers';
-import { ionEvent, renderApp } from './helpers';
+import { confirmAlert, ionEvent, renderApp } from './helpers';
 
 const DAY = 86_400_000;
 
@@ -32,16 +32,20 @@ describe('Today', () => {
     renderApp('/tabs/today');
     expect(await screen.findByText('Pick a program')).toBeInTheDocument();
     expect(screen.getByText('Empty workout')).toBeInTheDocument();
-    expect(screen.queryByText('Start another day')).not.toBeInTheDocument();
+    expect(screen.queryByText('Start workout')).not.toBeInTheDocument();
   });
 
-  it('shows the planned day with the week and starts it', async () => {
+  it('shows the planned day with the week and starts it from the preview', async () => {
     const { ctx } = await withProgram();
     const { user } = renderApp('/tabs/today', ctx);
     expect(await screen.findByText('Heavy (planche first)')).toBeInTheDocument();
     expect(screen.getByText('Week 1 of 6')).toBeInTheDocument();
     expect(screen.queryByText('Deload')).not.toBeInTheDocument();
-    await user.click(screen.getByText('Start'));
+    await user.click(screen.getByText('Start workout'));
+    await waitFor(() => expect(window.location.hash).toBe('#/tabs/today/start'));
+    const preview = within(await screen.findByTestId('start-preview'));
+    expect(await preview.findByText('Planche Complex')).toBeInTheDocument();
+    await user.click(screen.getAllByText('Start workout').at(-1) as HTMLElement);
     await waitFor(async () =>
       expect((await getActiveSession(ctx))?.session.name).toBe('Heavy (planche first)'),
     );
@@ -69,7 +73,7 @@ describe('Today', () => {
     renderApp('/tabs/today', ctx);
     expect(await screen.findByText('Rest day')).toBeInTheDocument();
     expect(screen.getByText('Next: Light (front lever first), Wed 4 Nov')).toBeInTheDocument();
-    expect(screen.getByText('Start another day')).toBeInTheDocument();
+    expect(screen.getByText('Start workout')).toBeInTheDocument();
     expect(screen.getByText('Empty workout')).toBeInTheDocument();
   });
 
@@ -83,7 +87,7 @@ describe('Today', () => {
     renderApp('/tabs/today', ctx);
     expect(await screen.findByText('Done: Heavy (planche first)')).toBeInTheDocument();
     expect(screen.getByText('Next: Light (front lever first), Wed 4 Nov')).toBeInTheDocument();
-    expect(screen.queryByText('Start')).not.toBeInTheDocument();
+    expect(screen.queryByText('Training today?')).not.toBeInTheDocument();
   });
 
   it('shows the next rotation day', async () => {
@@ -92,15 +96,29 @@ describe('Today', () => {
     expect(await screen.findByText('Upper A')).toBeInTheDocument();
   });
 
-  it('shows a Resume card instead while a workout is open', async () => {
-    const { ctx } = await withProgram();
-    await startEmptySession(ctx);
+  it('shows the current workout with its exercises while one is open', async () => {
+    const { ctx, program, day } = await withProgram();
+    await startPlannedSession(ctx, {
+      programId: program.id,
+      dayTemplateId: day('Heavy (planche first)').id,
+    });
     const { user } = renderApp('/tabs/today', ctx);
-    expect(await screen.findByText('Resume workout')).toBeInTheDocument();
-    expect(screen.queryByText('Start')).not.toBeInTheDocument();
-    expect(screen.queryByText('Start another day')).not.toBeInTheDocument();
-    await user.click(screen.getByText('Resume workout'));
+    expect(await screen.findByText('Current workout')).toBeInTheDocument();
+    expect(await screen.findByText('Planche Complex')).toBeInTheDocument();
+    expect(screen.getAllByText('0/3').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Start workout')).not.toBeInTheDocument();
+    await user.click(screen.getByText('Continue workout'));
     await waitFor(() => expect(window.location.hash).toBe('#/tabs/today/workout'));
+  });
+
+  it('ends the current workout from Today after asking', async () => {
+    const { ctx } = await withProgram();
+    const { session } = await startEmptySession(ctx);
+    const { user } = renderApp('/tabs/today', ctx);
+    await user.click(await screen.findByText('End workout'));
+    await confirmAlert(user, 'End workout');
+    await waitFor(() => expect(window.location.hash).toBe(`#/tabs/today/summary/${session.id}`));
+    expect(await getActiveSession(ctx)).toBeNull();
   });
 
   it('starts an empty workout', async () => {
@@ -111,12 +129,28 @@ describe('Today', () => {
     );
   });
 
-  it('starts another day from the list, Test included', async () => {
+  it('starts any day from the preview, Test included', async () => {
     const { ctx } = await withProgram(PROGRAM_C, 1);
-    const { user } = renderApp('/tabs/today/pick-day', ctx);
-    const [test] = await screen.findAllByText('Test');
-    await user.click(test as HTMLElement);
+    const { user } = renderApp('/tabs/today/start', ctx);
+    const days = within(await screen.findByTestId('start-days'));
+    await user.click(await days.findByText('Test'));
+    await user.click(screen.getAllByText('Start workout').at(-1) as HTMLElement);
     await waitFor(async () => expect((await getActiveSession(ctx))?.session.name).toBe('Test'));
+  });
+
+  it('trains a day as another week, with that week deloaded', async () => {
+    const { ctx } = await withProgram(PROGRAM_C, 0);
+    const { user } = renderApp('/tabs/today/start', ctx);
+    await user.click(await screen.findByText('Week 6'));
+    expect(await screen.findByText('Half the sets this week.')).toBeInTheDocument();
+    await user.click(screen.getAllByText('Start workout').at(-1) as HTMLElement);
+    await waitFor(async () =>
+      expect((await getActiveSession(ctx))?.session).toMatchObject({
+        name: 'Heavy (planche first)',
+        cycleWeek: 6,
+        isDeload: true,
+      }),
+    );
   });
 
   it('saves today’s bodyweight and shows it', async () => {
