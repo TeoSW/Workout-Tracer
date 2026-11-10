@@ -296,6 +296,18 @@ describe('rest bar', () => {
     return { ctx, view };
   }
 
+  it('takes 15 seconds off, and sets a rest time picked from the sheet', async () => {
+    const { ctx } = await resting();
+    const { user } = renderApp('/tabs/history', ctx);
+    expect(await screen.findByText('1:30')).toBeInTheDocument();
+    await user.click(screen.getByText('-15s'));
+    expect(await screen.findByText('1:15')).toBeInTheDocument();
+    await user.click(screen.getByLabelText('Change rest time'));
+    await user.click(await screen.findByText('3:00'));
+    expect(await screen.findByText('3:00')).toBeInTheDocument();
+    expect((await getRestTimer(ctx))?.endsAt).toBe(ctx.clock.now() + 180_000);
+  });
+
   it('shows the rest left as a bar that empties', async () => {
     const { ctx } = await resting();
     renderApp('/tabs/today', ctx);
