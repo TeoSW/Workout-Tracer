@@ -291,6 +291,8 @@ export const SessionSchema = z.object({
   status: z.enum(['active', 'finished']),
   notes: z.string(),
   planSnapshot: PlanSnapshotSchema.nullable(),
+  /** Time spent resting, from the rest timer, in milliseconds. Older workouts have none. */
+  restMs: count.optional(),
 });
 
 export const SessionExerciseSchema = z.object({

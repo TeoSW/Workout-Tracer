@@ -55,7 +55,7 @@ describe('history calendar', () => {
     expect(screen.getByRole('heading', { name: 'November 2026' })).toBeInTheDocument();
     expect(screen.getByText('Skill heavy')).toBeInTheDocument();
     expect(screen.getByText('Hypertrophy')).toBeInTheDocument();
-    expect(screen.getByText('2 Nov · Skill heavy · 1h 00m')).toBeInTheDocument();
+    expect(screen.getByText('2 Nov · Skill heavy · 1h 00m · 1h 00m working')).toBeInTheDocument();
   });
 
   it('shows two sessions on one day, and leaves out a running workout', async () => {

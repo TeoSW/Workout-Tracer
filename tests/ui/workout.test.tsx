@@ -527,7 +527,11 @@ describe('finish', () => {
     await user.click(await screen.findByTestId('finish-workout'));
     await confirmAlert(user, 'End workout');
     expect(await screen.findByText('Summary')).toBeInTheDocument();
-    expect(await screen.findByText('30m')).toBeInTheDocument();
+    // No rest was taken, so all 30 minutes count as working time.
+    expect(await screen.findByText('Total time')).toBeInTheDocument();
+    expect(screen.getByText('Working time')).toBeInTheDocument();
+    expect(screen.getAllByText('30m')).toHaveLength(2);
+    expect(screen.getByText('0m')).toBeInTheDocument();
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(await screen.findByText('Squat: best e1RM trend 35.83kg')).toBeInTheDocument();
     expect(screen.getByText('Squat: 11 reps at 25kg')).toBeInTheDocument();

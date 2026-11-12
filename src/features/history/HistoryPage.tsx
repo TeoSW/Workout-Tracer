@@ -4,7 +4,7 @@ import { useData, useLive, useToday } from '../../app/DataProvider';
 import { hasFinishedSession, listMissedInMonth, sessionsInMonth } from '../../data/history';
 import { undoMissedDay } from '../../data/missed-days';
 import { dayTypesIn, groupByDate, monthOf, sessionsByDay, stepMonth } from '../../domain/calendar';
-import { sessionDurationMs } from '../../domain/consistency';
+import { sessionDurationMs, sessionTimes } from '../../domain/consistency';
 import type { DateStr } from '../../domain/dates';
 import { formatDuration, formatMonth, formatShortDate } from '../../domain/format';
 import type { MissedDay, Session } from '../../domain/schemas';
@@ -17,10 +17,12 @@ import { MonthCalendar } from './MonthCalendar';
 
 function SessionRow({ session }: { session: Session }) {
   const duration = sessionDurationMs(session);
+  const times = sessionTimes(session);
   const detail = [
     formatShortDate(session.date),
     DAY_TYPE_LABELS[session.dayType],
     ...(duration === null ? [] : [formatDuration(duration)]),
+    ...(times ? [`${formatDuration(times.workingMs)} working`] : []),
   ].join(' · ');
   return (
     <IonItem routerLink={`/tabs/history/${session.id}`} detail>

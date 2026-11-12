@@ -2,6 +2,7 @@ import { resolveChoiceBlock, saveChoice } from '../domain/choice';
 import { resolvePlan } from '../domain/plan';
 import { detectPrs, type PrFlag, type SessionSets } from '../domain/prs';
 import { lastRotationIndex, nextRotationIndex, rotationIndexForPick } from '../domain/schedule';
+import { restSpentMs } from '../domain/rest';
 import { targetForSet } from '../domain/set-plan';
 import {
   LoggedSetSchema,
@@ -147,6 +148,7 @@ export async function startPlannedSession(
           status: 'active',
           notes: '',
           planSnapshot: snapshot,
+          restMs: 0,
         }),
       );
       const rows = buildSessionRows({ sessionId: session.id, snapshot, newId: ctx.newId });
@@ -179,6 +181,7 @@ export async function startEmptySession(ctx: DataContext): Promise<SessionView> 
       status: 'active',
       notes: '',
       planSnapshot: null,
+      restMs: 0,
     });
     await ctx.db.sessions.add(session);
     return session.id;
@@ -532,12 +535,15 @@ export async function finishSession(
   const session = await ctx.db.transaction('rw', [ctx.db.sessions, ctx.db.restTimer], async () => {
     const current = await requireSession(ctx, sessionId);
     if (current.status !== 'active') throw new Error('This workout is already finished.');
+    const timer = await ctx.db.restTimer.get('current');
+    const running = timer?.sessionId === sessionId ? restSpentMs(timer, ctx.clock.now()) : 0;
     const finished = SessionSchema.parse(
       clean({
         ...current,
         status: 'finished',
         finishedAt: ctx.clock.now(),
         notes: notes ?? current.notes,
+        restMs: (current.restMs ?? 0) + running,
       }),
     );
     await ctx.db.sessions.put(finished);

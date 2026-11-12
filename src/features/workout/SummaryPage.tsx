@@ -15,7 +15,7 @@ import { useData, useLive } from '../../app/DataProvider';
 import { loadExerciseMap } from '../../data/exercises';
 import { addSessionAsDay, getActiveProgram, saveSessionAsProgram } from '../../data/programs';
 import { getSessionView, sessionPrs, updateSession } from '../../data/sessions';
-import { sessionDurationMs } from '../../domain/consistency';
+import { sessionDurationMs, sessionTimes } from '../../domain/consistency';
 import { formatDuration, formatPr } from '../../domain/format';
 import { workingSetsDone } from '../../domain/log-layout';
 import { PageShell } from '../../ui/PageShell';
@@ -64,6 +64,7 @@ export function SummaryPage() {
   const { session } = view;
   const isTest = session.dayType === 'test';
   const duration = sessionDurationMs(session);
+  const times = sessionTimes(session);
   const lines = (prs ?? []).flatMap((pr) => {
     const exercise = exercises?.get(pr.exerciseId);
     return exercise ? [formatPr(pr, exercise)] : [];
@@ -76,9 +77,21 @@ export function SummaryPage() {
           <IonLabel>{session.name}</IonLabel>
         </IonListHeader>
         <IonItem>
-          <IonLabel>Duration</IonLabel>
+          <IonLabel>{times ? 'Total time' : 'Duration'}</IonLabel>
           <IonNote slot="end">{duration === null ? '' : formatDuration(duration)}</IonNote>
         </IonItem>
+        {times && (
+          <>
+            <IonItem>
+              <IonLabel>Working time</IonLabel>
+              <IonNote slot="end">{formatDuration(times.workingMs)}</IonNote>
+            </IonItem>
+            <IonItem>
+              <IonLabel>Rest time</IonLabel>
+              <IonNote slot="end">{formatDuration(times.restMs)}</IonNote>
+            </IonItem>
+          </>
+        )}
         <IonItem>
           <IonLabel>Working sets</IonLabel>
           <IonNote slot="end">
