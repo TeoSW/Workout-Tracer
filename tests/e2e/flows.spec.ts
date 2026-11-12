@@ -65,7 +65,8 @@ test('flow 2: log a full Heavy day with rest, finish, and find it in History', a
   await page.clock.resume();
   await finishWorkout(page);
 
-  await expect(visibleText(page, 'Duration')).toBeVisible();
+  await expect(visibleText(page, 'Total time')).toBeVisible();
+  await expect(visibleText(page, 'Working time')).toBeVisible();
   await expect(card(page, 'Working sets')).toContainText('Working sets18');
   await visibleText(page, 'Close').click();
   await expect(visibleText(page, 'Done: Heavy (planche first)')).toBeVisible();
