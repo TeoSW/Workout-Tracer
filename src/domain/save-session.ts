@@ -20,12 +20,35 @@ function targetFromSet(set: LoggedSet): SetTarget {
   return target;
 }
 
+/** The planned rest, and the workout's note or else the planned block note. */
+function restAndNote(
+  entry: { exerciseId: string; note: string; blockId?: string | null },
+  planBlocks: readonly Block[] | undefined,
+): { restSec?: number; note?: string } {
+  const planned = planBlocks?.find(
+    (b) => b.id === entry.blockId && b.kind === 'exercise' && b.exerciseId === entry.exerciseId,
+  );
+  const note = entry.note !== '' ? entry.note : planned?.note;
+  return {
+    ...(planned?.restSec === undefined ? {} : { restSec: planned.restSec }),
+    ...(note === undefined || note === '' ? {} : { note }),
+  };
+}
+
 /**
  * A program day made from a workout: one block per exercise, with as many sets as were done,
  * aimed at the first working set's values. Each set keeps its effort and note as its own plan.
  */
 export function dayFromSession(input: {
-  exercises: readonly { exerciseId: string; order: number; note: string; sets: LoggedSet[] }[];
+  exercises: readonly {
+    exerciseId: string;
+    order: number;
+    note: string;
+    blockId?: string | null;
+    sets: LoggedSet[];
+  }[];
+  /** The blocks the workout was planned with, so their rest and notes carry over. */
+  planBlocks?: readonly Block[];
   programId: string;
   name: string;
   newId: NewId;
@@ -53,7 +76,7 @@ export function dayFromSession(input: {
       // Done sets give real values; a workout with nothing logged keeps its plan.
       target: done.length > 0 ? targetFromSet(first) : structuredClone(first.target ?? {}),
       warmupSets: warmups,
-      ...(entry.note === '' ? {} : { note: entry.note }),
+      ...restAndNote(entry, input.planBlocks),
       ...(hasPlans ? { setTargets: plans } : {}),
     });
   }

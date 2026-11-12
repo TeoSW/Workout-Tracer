@@ -111,7 +111,9 @@ export function weeklyCharts(input: Input): ChartSpec[] {
   const current = weeks.at(-1);
   const last = weeks.at(-2);
   if (!current || weeks.every((w) => w.workouts === 0)) return [];
-  const previous4 = weeks.slice(-5, -1);
+  // Only weeks since the first workout, so a new user's average isn't pulled down by empty ones.
+  const firstActive = weeks.findIndex((w) => w.workouts > 0);
+  const previous4 = weeks.slice(Math.max(firstActive, weeks.length - 5), -1);
   const kg = (v: number) => formatChartValue(Math.round(v), 'kg');
   const row = (w: WeekStats) => ({ day: dayNumber(w.weekStart) });
 
@@ -142,9 +144,9 @@ export function weeklyCharts(input: Input): ChartSpec[] {
   ];
   if (weeks.some((w) => w.totalMinutes > 0)) {
     const timed = weeks.filter((w) => w.totalMinutes > 0);
-    const perWorkout = average(
-      timed.flatMap((w) => (w.workouts > 0 ? [w.totalMinutes / w.workouts] : [])),
-    );
+    const timedWorkouts = timed.reduce((n, w) => n + w.workouts, 0);
+    const perWorkout =
+      timedWorkouts === 0 ? 0 : timed.reduce((n, w) => n + w.totalMinutes, 0) / timedWorkouts;
     charts.push({
       id: 'time',
       title: 'Time per week',

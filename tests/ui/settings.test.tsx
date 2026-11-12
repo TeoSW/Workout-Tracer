@@ -6,7 +6,8 @@ import { listBands } from '../../src/data/bands';
 import { setBodyweight, listBodyweight } from '../../src/data/bodyweight';
 import { activateProgram, createProgramFromTemplate } from '../../src/data/programs';
 import { seedIfNeeded } from '../../src/data/seed';
-import { CALISTHENICS_5_WEEK } from '../../src/domain/fixtures/templates';
+import { finishSession, startPlannedSession } from '../../src/data/sessions';
+import { CALISTHENICS_5_WEEK, PROGRAM_C } from '../../src/domain/fixtures/templates';
 import { getSettings } from '../../src/data/settings';
 import { testContext } from '../unit/data/helpers';
 import { buttonLabelled, ionEvent, renderApp, selectLabelled } from './helpers';
@@ -148,6 +149,45 @@ describe('workout reminders', () => {
     expect(text).toContain('SUMMARY:Heavy 1\\, planche (intensity)');
     expect(text).toContain('TRIGGER:-PT60M');
     expect(click).toHaveBeenCalledOnce();
+    click.mockRestore();
+  });
+});
+
+describe('workout reminders after training today', () => {
+  it('start from tomorrow when today is already done', async () => {
+    const ctx = testContext();
+    await seedIfNeeded(ctx);
+    const { program, dayTemplates } = await createProgramFromTemplate(ctx, PROGRAM_C);
+    await activateProgram(ctx, program.id, 'this_week');
+    const heavy = dayTemplates.find((d) => d.name === 'Heavy (planche first)');
+    const started = await startPlannedSession(ctx, {
+      programId: program.id,
+      dayTemplateId: heavy?.id ?? '',
+    });
+    await finishSession(ctx, started.session.id);
+    const blobs: Blob[] = [];
+    Object.assign(URL, {
+      createObjectURL: (blob: Blob) => {
+        blobs.push(blob);
+        return 'blob:calendar';
+      },
+      revokeObjectURL: vi.fn(),
+    });
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+    const { user } = renderApp('/tabs/settings', ctx);
+    await user.click(await screen.findByText('Add reminders to Calendar'));
+    await screen.findByText(/training days\. Tap Add All in Calendar\./);
+    const blob = blobs[0];
+    if (!blob) throw new Error('no calendar file');
+    const text = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.readAsText(blob);
+    });
+    expect(text).not.toContain('DTSTART:20261102');
+    expect(text).toContain('DTSTART:20261104');
     click.mockRestore();
   });
 });

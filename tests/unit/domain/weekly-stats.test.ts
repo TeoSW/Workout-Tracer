@@ -102,6 +102,34 @@ describe('weekly statistics', () => {
   });
 });
 
+describe('averages', () => {
+  it('leave out the weeks before the first workout, and divide time by workouts', () => {
+    const one = makeSession({ date: '2026-11-03', restMs: 0 });
+    one.finishedAt = one.startedAt + 30 * 60_000;
+    const busy = [10, 11, 12, 13].map((d) => {
+      const s = makeSession({ date: `2026-11-${d}`, restMs: 0 });
+      s.finishedAt = s.startedAt + 90 * 60_000;
+      return s;
+    });
+    const sets = [
+      makeSet({ sessionId: one.id, exerciseId: 'squat', kg: 100, reps: 10 }),
+      ...busy.map((s) => makeSet({ sessionId: s.id, exerciseId: 'squat', kg: 100, reps: 10 })),
+    ];
+    const charts = weeklyCharts({
+      sessions: [one, ...busy],
+      sets,
+      exercisesById: exercises,
+      bodyweight: [],
+      today: '2026-11-13',
+      weeks: 8,
+    });
+    // Only one full week before this one: its 1,000kg, not 1,000 spread over 4 weeks.
+    expect(charts[0]?.readout).toMatch(/4-week average 1000kg$/);
+    // 30 + 4 x 90 = 390 minutes over 5 workouts.
+    expect(charts[2]?.readout).toMatch(/about 1h 18m per workout$/);
+  });
+});
+
 describe('time and rest', () => {
   it('split a workout into rest and working time', () => {
     const s = makeSession({ date: '2026-11-10', restMs: 25 * 60_000 });

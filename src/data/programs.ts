@@ -375,7 +375,15 @@ export async function saveSessionAsProgram(
   const exercises = await sessionExercisesWithSets(ctx, sessionId);
   const programId = ctx.newId();
   const day = DayTemplateSchema.parse(
-    clean(dayFromSession({ exercises, programId, name: trimmed, newId: ctx.newId })),
+    clean(
+      dayFromSession({
+        exercises,
+        planBlocks: (await ctx.db.sessions.get(sessionId))?.planSnapshot?.blocks ?? [],
+        programId,
+        name: trimmed,
+        newId: ctx.newId,
+      }),
+    ),
   );
   if (day.blocks.length === 0) throw new Error('This workout has no sets to save.');
   const program = validProgram(
@@ -413,7 +421,15 @@ export async function addSessionAsDay(
   if (trimmed === '') throw new Error('Give the day a name.');
   const exercises = await sessionExercisesWithSets(ctx, sessionId);
   const day = DayTemplateSchema.parse(
-    clean(dayFromSession({ exercises, programId, name: trimmed, newId: ctx.newId })),
+    clean(
+      dayFromSession({
+        exercises,
+        planBlocks: (await ctx.db.sessions.get(sessionId))?.planSnapshot?.blocks ?? [],
+        programId,
+        name: trimmed,
+        newId: ctx.newId,
+      }),
+    ),
   );
   if (day.blocks.length === 0) throw new Error('This workout has no sets to save.');
   await ctx.db.transaction('rw', [ctx.db.programs, ctx.db.dayTemplates], async () => {

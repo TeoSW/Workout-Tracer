@@ -6,6 +6,17 @@ import { sessionTimes } from '../../../src/domain/consistency';
 import { testContext } from './helpers';
 
 describe('rest time', () => {
+  it('counts a rest ended by hand until then, even past the timer', async () => {
+    const ctx = testContext();
+    await seedIfNeeded(ctx);
+    const { session } = await startEmptySession(ctx);
+    await startRestTimer(ctx, session.id, 60);
+    ctx.clock.advance(100_000);
+    await skipRestTimer(ctx);
+    const { session: finished } = await finishSession(ctx, session.id);
+    expect(finished.restMs).toBe(100_000);
+  });
+
   it('adds up rests skipped early, cut short by the next set, and running at the end', async () => {
     const ctx = testContext();
     await seedIfNeeded(ctx);

@@ -3,14 +3,19 @@ import { useState } from 'react';
 import { useData } from '../../app/DataProvider';
 import { getTodayOverview } from '../../data/today';
 import { calendarFile, plannedEvents } from '../../domain/calendar-file';
+import { addDays } from '../../domain/dates';
 import { Stepper } from '../../ui/Stepper';
 import { ErrorNote, useGuard } from '../../ui/useGuard';
 
-/** Opens a calendar file the way iOS shows "Add All" for it, instead of saving it to Files. */
+/**
+ * Opens a calendar file the way iOS shows "Add All" for it, instead of saving it to Files. A new
+ * tab, because in the installed app that opens over the app with a Done button to come back.
+ */
 function openCalendar(text: string): void {
   const url = URL.createObjectURL(new Blob([text], { type: 'text/calendar' }));
   const link = document.createElement('a');
   link.href = url;
+  link.target = '_blank';
   link.rel = 'noopener';
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
@@ -44,10 +49,12 @@ export function RemindersSection() {
       }
       const next =
         plan?.today.status === 'planned' ? plan.today.day.rotationIndex : plan?.next?.rotationIndex;
+      // A day already trained or skipped needs no reminder, so start from tomorrow then.
+      const todayOpen = plan?.today.status === 'planned' || plan?.today.status === 'rest';
       const events = plannedEvents({
         program,
         days,
-        from: ctx.clock.today(),
+        from: todayOpen ? ctx.clock.today() : addDays(ctx.clock.today(), 1),
         weeks,
         ...(next === null || next === undefined ? {} : { nextRotationIndex: next }),
       });
