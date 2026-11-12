@@ -144,6 +144,8 @@ describe('schemas', () => {
     expect(DEFAULT_SETTINGS).toEqual({
       effortMode: 'rir',
       sound: true,
+      alarmSound: 'beeps',
+      alarmRepeats: 2,
       keepAwake: true,
       backupReminderDays: 14,
       muscleReference: { min: 10, max: 20 },

@@ -133,7 +133,7 @@ export function formatDayLabel(date: DateStr, sessions: readonly { name: string 
 
 export const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
-export type ChartUnit = 'kg' | 'seconds' | 'reps' | 'band' | 'share' | 'count';
+export type ChartUnit = 'kg' | 'seconds' | 'reps' | 'band' | 'share' | 'count' | 'minutes';
 
 export function formatChartValue(value: number, unit: ChartUnit, suffix = ''): string {
   switch (unit) {
@@ -149,6 +149,8 @@ export function formatChartValue(value: number, unit: ChartUnit, suffix = ''): s
       return `${Math.round(value * 100)}%`;
     case 'count':
       return `${value}`;
+    case 'minutes':
+      return formatDuration(value * 60_000);
   }
 }
 

@@ -1,4 +1,11 @@
-import type { DayType, MissedReason, Muscle, SplitType, TrackingType } from '../domain/schemas';
+import type {
+  AlarmSound,
+  DayType,
+  MissedReason,
+  Muscle,
+  SplitType,
+  TrackingType,
+} from '../domain/schemas';
 
 export const MUSCLE_LABELS: Record<Muscle, string> = {
   chest: 'Chest',
@@ -57,4 +64,11 @@ export const MISSED_REASON_LABELS: Record<MissedReason, string> = {
   pain: 'Pain',
   travel: 'Travel',
   other: 'Other',
+};
+
+export const ALARM_SOUND_LABELS: Record<AlarmSound, string> = {
+  beeps: 'Beeps',
+  bell: 'Bell',
+  chime: 'Chime',
+  rising: 'Rising',
 };

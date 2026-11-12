@@ -6,13 +6,16 @@ import {
   IonListHeader,
   IonNote,
   IonTextarea,
+  useIonAlert,
   useIonRouter,
 } from '@ionic/react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useData, useLive } from '../../app/DataProvider';
 import { loadExerciseMap } from '../../data/exercises';
+import { addSessionAsDay, getActiveProgram, saveSessionAsProgram } from '../../data/programs';
 import { getSessionView, sessionPrs, updateSession } from '../../data/sessions';
-import { sessionDurationMs } from '../../domain/consistency';
+import { sessionDurationMs, sessionTimes } from '../../domain/consistency';
 import { formatDuration, formatPr } from '../../domain/format';
 import { workingSetsDone } from '../../domain/log-layout';
 import { PageShell } from '../../ui/PageShell';
@@ -25,14 +28,43 @@ export function SummaryPage() {
   const ctx = useData();
   const router = useIonRouter();
   const { error, guard } = useGuard();
+  const [saved, setSaved] = useState<string | null>(null);
   const view = useLive((c) => getSessionView(c, id), [id]);
   const prs = useLive((c) => sessionPrs(c, id), [id]);
   const exercises = useLive(loadExerciseMap);
+  const active = useLive(getActiveProgram);
+  const [presentAlert] = useIonAlert();
+
+  /** Asks for a name, then saves the workout as a program or as a day of the active one. */
+  function askName(header: string, save: (name: string) => Promise<string>) {
+    void presentAlert({
+      header,
+      inputs: [
+        {
+          name: 'name',
+          type: 'text',
+          value: view?.session.name ?? '',
+          attributes: { 'aria-label': 'Name' },
+        },
+      ],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Save',
+          handler: (values: { name: string }) =>
+            void guard(async () => {
+              setSaved(await save(values.name));
+            }),
+        },
+      ],
+    });
+  }
 
   if (!view) return <PageShell title="Summary" back={TODAY} children={null} />;
   const { session } = view;
   const isTest = session.dayType === 'test';
   const duration = sessionDurationMs(session);
+  const times = sessionTimes(session);
   const lines = (prs ?? []).flatMap((pr) => {
     const exercise = exercises?.get(pr.exerciseId);
     return exercise ? [formatPr(pr, exercise)] : [];
@@ -45,9 +77,21 @@ export function SummaryPage() {
           <IonLabel>{session.name}</IonLabel>
         </IonListHeader>
         <IonItem>
-          <IonLabel>Duration</IonLabel>
+          <IonLabel>{times ? 'Total time' : 'Duration'}</IonLabel>
           <IonNote slot="end">{duration === null ? '' : formatDuration(duration)}</IonNote>
         </IonItem>
+        {times && (
+          <>
+            <IonItem>
+              <IonLabel>Working time</IonLabel>
+              <IonNote slot="end">{formatDuration(times.workingMs)}</IonNote>
+            </IonItem>
+            <IonItem>
+              <IonLabel>Rest time</IonLabel>
+              <IonNote slot="end">{formatDuration(times.restMs)}</IonNote>
+            </IonItem>
+          </>
+        )}
         <IonItem>
           <IonLabel>Working sets</IonLabel>
           <IonNote slot="end">
@@ -86,6 +130,42 @@ export function SummaryPage() {
             }}
           />
         </IonItem>
+      </IonList>
+      <IonList inset>
+        <IonListHeader>
+          <IonLabel>Keep this workout</IonLabel>
+        </IonListHeader>
+        <IonItem
+          button
+          detail={false}
+          onClick={() =>
+            askName('Save as a new program', async (name) => {
+              const { program } = await saveSessionAsProgram(ctx, id, name);
+              return `Saved as ${program.name}, under Programs.`;
+            })
+          }
+        >
+          <IonLabel color="primary">Save as a new program</IonLabel>
+        </IonItem>
+        {active && active.id !== session.programId && (
+          <IonItem
+            button
+            detail={false}
+            onClick={() =>
+              askName(`Add to ${active.name}`, async (name) => {
+                await addSessionAsDay(ctx, id, active.id, name);
+                return `Added to ${active.name} as a day.`;
+              })
+            }
+          >
+            <IonLabel color="primary">{`Add to ${active.name} as a day`}</IonLabel>
+          </IonItem>
+        )}
+        {saved && (
+          <IonItem>
+            <IonNote role="status">{saved}</IonNote>
+          </IonItem>
+        )}
       </IonList>
       <ErrorNote error={error} />
 

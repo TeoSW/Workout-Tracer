@@ -10,6 +10,11 @@ export function startRest(sessionId: string, durationSec: number, nowMs: number)
   };
 }
 
+/** How long a rest lasted by `nowMs`: up to its end, or less when it was skipped early. */
+export function restSpentMs(timer: RestTimer, nowMs: number): number {
+  return Math.max(0, Math.min(nowMs, timer.endsAt) - timer.startedAt);
+}
+
 /** Computed from `endsAt`, so it stays right after the phone sleeps. */
 export function restRemainingMs(timer: RestTimer, nowMs: number): number {
   return Math.max(0, timer.endsAt - nowMs);

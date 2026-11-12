@@ -291,6 +291,8 @@ export const SessionSchema = z.object({
   status: z.enum(['active', 'finished']),
   notes: z.string(),
   planSnapshot: PlanSnapshotSchema.nullable(),
+  /** Time spent resting, from the rest timer, in milliseconds. Older workouts have none. */
+  restMs: count.optional(),
 });
 
 export const SessionExerciseSchema = z.object({
@@ -388,9 +390,15 @@ export const RestTimerSchema = z.object({
   durationSec: count,
 });
 
+export const ALARM_SOUNDS = ['beeps', 'bell', 'chime', 'rising'] as const;
+export const AlarmSoundSchema = z.enum(ALARM_SOUNDS);
+
 export const AppSettingsSchema = z.object({
   effortMode: EffortModeSchema,
   sound: z.boolean(),
+  alarmSound: AlarmSoundSchema,
+  /** How many times the alarm plays when a rest ends. */
+  alarmRepeats: z.number().int().min(1).max(5),
   keepAwake: z.boolean(),
   backupReminderDays: z.number().int().min(1),
   muscleReference: z.object({ min: z.number().nonnegative(), max: z.number().nonnegative() }),
@@ -431,6 +439,7 @@ export type LoggedPart = z.infer<typeof LoggedPartSchema>;
 export type LoggedSet = z.infer<typeof LoggedSetSchema>;
 export type MissedReason = z.infer<typeof MissedReasonSchema>;
 export type Profile = z.infer<typeof ProfileSchema>;
+export type AlarmSound = z.infer<typeof AlarmSoundSchema>;
 export type Client = z.infer<typeof ClientSchema>;
 export type MissedDay = z.infer<typeof MissedDaySchema>;
 export type BodyweightEntry = z.infer<typeof BodyweightEntrySchema>;
@@ -442,6 +451,8 @@ export type SettingRow = z.infer<typeof SettingRowSchema>;
 export const DEFAULT_SETTINGS: AppSettings = {
   effortMode: 'rir',
   sound: true,
+  alarmSound: 'beeps',
+  alarmRepeats: 2,
   keepAwake: true,
   backupReminderDays: 14,
   muscleReference: { min: 10, max: 20 },

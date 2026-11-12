@@ -1,4 +1,4 @@
-import { extendRest, setRestRemaining, startRest } from '../domain/rest';
+import { extendRest, restSpentMs, setRestRemaining, startRest } from '../domain/rest';
 import type { RestTimer } from '../domain/schemas';
 import type { DataContext } from './context';
 
@@ -10,9 +10,31 @@ export async function startRestTimer(
   sessionId: string,
   durationSec: number,
 ): Promise<RestTimer> {
-  const timer = startRest(sessionId, durationSec, ctx.clock.now());
-  await ctx.db.restTimer.put(timer);
-  return timer;
+  return ctx.db.transaction('rw', [ctx.db.restTimer, ctx.db.sessions], async () => {
+    // A rest cut short by the next set still counts for the time it ran.
+    const previous = await ctx.db.restTimer.get(TIMER_ID);
+    if (previous) await accrueRest(ctx, previous);
+    const timer = startRest(sessionId, durationSec, ctx.clock.now());
+    await ctx.db.restTimer.put(timer);
+    return timer;
+  });
+}
+
+/**
+ * Adds the time a rest ran to its workout. `untilNow` is for Skip and Dismiss: the user says the
+ * rest ended now, even past the timer. When the next set's rest replaces it, it counts up to its
+ * end, since the time after that went into the set.
+ */
+export async function accrueRest(
+  ctx: DataContext,
+  timer: RestTimer,
+  untilNow = false,
+): Promise<void> {
+  const session = await ctx.db.sessions.get(timer.sessionId);
+  if (!session) return;
+  const now = ctx.clock.now();
+  const spent = untilNow ? Math.max(0, now - timer.startedAt) : restSpentMs(timer, now);
+  await ctx.db.sessions.put({ ...session, restMs: (session.restMs ?? 0) + spent });
 }
 
 export async function getRestTimer(ctx: DataContext): Promise<RestTimer | undefined> {
@@ -41,5 +63,9 @@ export async function setRestTimerRemaining(ctx: DataContext, seconds: number): 
 }
 
 export async function skipRestTimer(ctx: DataContext): Promise<void> {
-  await ctx.db.restTimer.delete(TIMER_ID);
+  await ctx.db.transaction('rw', [ctx.db.restTimer, ctx.db.sessions], async () => {
+    const timer = await ctx.db.restTimer.get(TIMER_ID);
+    if (timer) await accrueRest(ctx, timer, true);
+    await ctx.db.restTimer.delete(TIMER_ID);
+  });
 }

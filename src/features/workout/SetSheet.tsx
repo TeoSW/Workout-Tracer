@@ -8,6 +8,7 @@ import {
   IonModal,
   IonSelect,
   IonSelectOption,
+  IonTextarea,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -253,6 +254,7 @@ function Fields(props: {
           />
           <BandChips bands={bands} draft={draft} onChange={onChange} />
           <LevelAndClean exercise={exercise} draft={draft} onChange={onChange} />
+          {effort}
         </IonList>
       );
     case 'complex':
@@ -273,10 +275,16 @@ function Fields(props: {
           ))}
           <BandChips bands={bands} draft={draft} onChange={onChange} />
           <LevelAndClean exercise={exercise} draft={draft} onChange={onChange} />
+          {effort}
         </IonList>
       );
     case 'attempts':
-      return <AttemptFields draft={draft} onChange={onChange} />;
+      return (
+        <>
+          <AttemptFields draft={draft} onChange={onChange} />
+          <IonList>{effort}</IonList>
+        </>
+      );
     case 'checklist':
       return null;
   }
@@ -358,6 +366,21 @@ function SheetBody(props: {
             nowMs={nowMs}
             onChange={change}
           />
+          {open.exercise.trackingType !== 'checklist' && (
+            <IonList>
+              <IonItem>
+                <IonTextarea
+                  aria-label="Set note"
+                  label="Note"
+                  labelPlacement="stacked"
+                  placeholder="How this set went"
+                  autoGrow
+                  value={draft.note}
+                  onIonInput={(e) => change({ note: e.detail.value ?? '' })}
+                />
+              </IonItem>
+            </IonList>
+          )}
           <ErrorNote error={error} />
         </div>
       </IonContent>

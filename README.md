@@ -28,6 +28,10 @@ On Today, tap Start workout. You see the day from your program and its exercises
 
 Each exercise in a program day can plan an effort (RIR or RPE, following Settings) for every set, plus its own effort and note per set. The logger shows the plan under each set and prefills the effort.
 
+In the logger, the copy button on a logged set repeats it in one tap, each set can have a note, and the pencil on each exercise edits its note. After a custom workout, the summary can save it as a new program or as a day of your active program. The summary and History show total, working and rest minutes, and Progress shows volume (kg x reps), sets and reps, and time per week. Each exercise shows its volume per workout and how many sets you did with each band.
+
+In Settings you can pick the alarm sound and how many times it plays, and add reminders for your training days to the iPhone Calendar, which alerts you even with the app closed.
+
 ## Coach profile
 
 In Settings, switch Profile to Coach. Your own training stays as it is in My training. As a coach you add clients, build a program for each one from a preset or from scratch, and tap Send to send it as a WhatsApp message or a file. The client pastes the code under Programs, Import program. The coach profile has its own backup file.

@@ -13,6 +13,8 @@ export type SetDraft = {
   cleanAttempts: number;
   clean: boolean;
   rir: number | null;
+  /** Your note on this set, e.g. "left shoulder felt off". */
+  note: string;
 };
 
 function partsFor(target: SetTarget, last: LoggedSet | null): LoggedPart[] {
@@ -45,6 +47,7 @@ export function draftFor(input: {
     clean: last?.clean ?? false,
     // The planned effort is the goal for today, so it comes before last time's.
     rir: input.effortMode === 'off' ? null : (target.rir ?? last?.rir ?? null),
+    note: '',
   };
 }
 
@@ -65,6 +68,11 @@ export function draftProblem(draft: SetDraft, exercise: Exercise): string | null
 
 /** The values to store for a finished set, for this exercise's tracking type only. */
 export function draftToPatch(draft: SetDraft, exercise: Exercise): Partial<LoggedSet> {
+  const note = draft.note.trim();
+  return { ...valuesPatch(draft, exercise), note: note === '' ? undefined : note };
+}
+
+function valuesPatch(draft: SetDraft, exercise: Exercise): Partial<LoggedSet> {
   switch (exercise.trackingType) {
     case 'weight_reps':
       return { kg: draft.kg ?? 0, reps: draft.reps ?? 0, rir: draft.rir, done: true };
@@ -115,5 +123,7 @@ export function draftFromSet(set: LoggedSet, exercise: Exercise): SetDraft {
     parts: set.parts ?? [],
     attempts: set.attempts ?? 0,
     cleanAttempts: set.cleanAttempts ?? 0,
+    rir: set.rir,
+    note: set.note ?? '',
   };
 }

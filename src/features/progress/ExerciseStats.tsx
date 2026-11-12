@@ -15,6 +15,8 @@ import { setLabel } from '../../domain/log-layout';
 import { currentRecords } from '../../domain/prs';
 import type { Exercise } from '../../domain/schemas';
 import { SpecChart } from './SpecChart';
+import { bandUsage, volumeChart } from '../../domain/weekly-stats';
+import { ChartCard } from '../../ui/ChartCard';
 
 const LOG_PAGE = 20;
 /** Most reps gives one record per load, which gets long. The biggest records come first. */
@@ -32,6 +34,8 @@ export default function ExerciseStats({ exercise }: { exercise: Exercise }) {
   if (log.length === 0) return <p className="section-note">No sets logged yet.</p>;
 
   const charts = exerciseCharts({ ...stats, exercise });
+  const volume = volumeChart({ ...stats, exercise });
+  const bands = bandUsage({ ...stats, exercise });
   const records = currentRecords({ ...stats, exercise, sessions: log });
 
   return (
@@ -57,6 +61,8 @@ export default function ExerciseStats({ exercise }: { exercise: Exercise }) {
       {charts.map((chart) => (
         <SpecChart key={chart.id} spec={chart} />
       ))}
+      {volume && <SpecChart spec={volume} />}
+      {bands && <ChartCard title="Bands" readout={bands.readout} />}
       <IonList inset>
         <IonListHeader>
           <IonLabel>Set history</IonLabel>

@@ -21,6 +21,7 @@ import { startRestTimer } from '../../data/rest-timer';
 import {
   addSet,
   deleteSession,
+  duplicateSet,
   getActiveSession,
   lastSetsByExercise,
   moveExercise,
@@ -220,6 +221,14 @@ export function WorkoutPage() {
       unlockAudio();
       editor.setActions.openSet(entry, set, last);
     },
+    duplicateSet: (set) => {
+      unlockAudio();
+      void guard(async () => {
+        await duplicateSet(ctx, set.id);
+        await startRestFor(set.sessionExerciseId);
+      });
+    },
+    editNote: (entry) => editor.editNote(entry),
     quickLog: (entry, set, last) => {
       unlockAudio();
       const exercise = exercises.get(entry.exerciseId);

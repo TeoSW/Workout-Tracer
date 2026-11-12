@@ -49,6 +49,39 @@ export function sessionDurationMs(session: Session): number | null {
   return session.finishedAt === null ? null : session.finishedAt - session.startedAt;
 }
 
+export type SessionTimes = { totalMs: number; restMs: number; workingMs: number };
+
+/**
+ * Total, rest and working time of a finished workout. Working time is the total minus the rest,
+ * so it includes moving between exercises. Null for a workout still running, or one from before
+ * rest was recorded.
+ */
+export function sessionTimes(session: Session): SessionTimes | null {
+  const totalMs = sessionDurationMs(session);
+  if (totalMs === null || session.restMs === undefined) return null;
+  const restMs = Math.min(session.restMs, totalMs);
+  return { totalMs, restMs, workingMs: totalMs - restMs };
+}
+
+/** Times added up over the finished workouts in a week that recorded rest. */
+export function weekTimes(
+  sessions: readonly Session[],
+  weekStart: DateStr,
+): SessionTimes & { workouts: number } {
+  const weekEnd = addDays(weekStart, 6);
+  const sum = { totalMs: 0, restMs: 0, workingMs: 0, workouts: 0 };
+  for (const s of sessions) {
+    if (s.status !== 'finished' || s.date < weekStart || s.date > weekEnd) continue;
+    const times = sessionTimes(s);
+    if (!times) continue;
+    sum.totalMs += times.totalMs;
+    sum.restMs += times.restMs;
+    sum.workingMs += times.workingMs;
+    sum.workouts += 1;
+  }
+  return sum;
+}
+
 export type ConsistencyWeek = { weekStart: DateStr; planned: number | null; finished: number };
 
 /**

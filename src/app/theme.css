@@ -664,3 +664,18 @@ ion-label .set-plan-line {
     color: var(--ion-color-warning);
   }
 }
+
+/* While the rest bar shows, pages get room so their last button isn't under it. */
+body.rest-showing ion-content {
+  --padding-bottom: 96px;
+}
+
+.set-note {
+  margin-top: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--ion-color-step-50, rgba(0, 0, 0, 0.04));
+  color: var(--ion-text-color);
+  font-size: 14px;
+  white-space: normal;
+}

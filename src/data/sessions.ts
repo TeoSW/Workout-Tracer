@@ -2,6 +2,7 @@ import { resolveChoiceBlock, saveChoice } from '../domain/choice';
 import { resolvePlan } from '../domain/plan';
 import { detectPrs, type PrFlag, type SessionSets } from '../domain/prs';
 import { lastRotationIndex, nextRotationIndex, rotationIndexForPick } from '../domain/schedule';
+import { restSpentMs } from '../domain/rest';
 import { targetForSet } from '../domain/set-plan';
 import {
   LoggedSetSchema,
@@ -147,6 +148,7 @@ export async function startPlannedSession(
           status: 'active',
           notes: '',
           planSnapshot: snapshot,
+          restMs: 0,
         }),
       );
       const rows = buildSessionRows({ sessionId: session.id, snapshot, newId: ctx.newId });
@@ -179,6 +181,7 @@ export async function startEmptySession(ctx: DataContext): Promise<SessionView> 
       status: 'active',
       notes: '',
       planSnapshot: null,
+      restMs: 0,
     });
     await ctx.db.sessions.add(session);
     return session.id;
@@ -248,6 +251,50 @@ export async function addSet(ctx: DataContext, sessionExerciseId: string): Promi
       return set;
     },
   );
+}
+
+/**
+ * Logs the same set again: same reps, load, band, time, parts, effort and note. It fills the next
+ * set still to do, keeping that set's plan, or adds one after the last when none is left.
+ */
+export async function duplicateSet(ctx: DataContext, setId: string): Promise<LoggedSet> {
+  return ctx.db.transaction('rw', [ctx.db.sessionExercises, ctx.db.sets], async () => {
+    const source = await ctx.db.sets.get(setId);
+    if (!source) throw new Error(`No set ${setId}`);
+    const sets = await ctx.db.sets
+      .where('sessionExerciseId')
+      .equals(source.sessionExerciseId)
+      .toArray();
+    const pending = sets
+      .filter((s) => !s.done && s.kind === source.kind && s.order > source.order)
+      .sort((a, b) => a.order - b.order)[0];
+    if (pending) {
+      const filled = LoggedSetSchema.parse(
+        clean({
+          ...structuredClone(source),
+          id: pending.id,
+          order: pending.order,
+          target: pending.target,
+          done: true,
+          completedAt: ctx.clock.now(),
+        }),
+      );
+      await ctx.db.sets.put(filled);
+      return filled;
+    }
+    const lastOrder = Math.max(...sets.map((s) => s.order));
+    const copy = LoggedSetSchema.parse(
+      clean({
+        ...structuredClone(source),
+        id: ctx.newId(),
+        order: lastOrder + 1,
+        done: true,
+        completedAt: ctx.clock.now(),
+      }),
+    );
+    await ctx.db.sets.add(copy);
+    return copy;
+  });
 }
 
 export async function removeSet(ctx: DataContext, setId: string): Promise<void> {
@@ -505,12 +552,15 @@ export async function finishSession(
   const session = await ctx.db.transaction('rw', [ctx.db.sessions, ctx.db.restTimer], async () => {
     const current = await requireSession(ctx, sessionId);
     if (current.status !== 'active') throw new Error('This workout is already finished.');
+    const timer = await ctx.db.restTimer.get('current');
+    const running = timer?.sessionId === sessionId ? restSpentMs(timer, ctx.clock.now()) : 0;
     const finished = SessionSchema.parse(
       clean({
         ...current,
         status: 'finished',
         finishedAt: ctx.clock.now(),
         notes: notes ?? current.notes,
+        restMs: (current.restMs ?? 0) + running,
       }),
     );
     await ctx.db.sessions.put(finished);

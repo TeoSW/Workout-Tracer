@@ -1,4 +1,6 @@
 import { IonItem, IonLabel, IonList, IonListHeader, IonNote } from '@ionic/react';
+import { SpecChart } from './SpecChart';
+import { weeklyCharts } from '../../domain/weekly-stats';
 import { useToday } from '../../app/DataProvider';
 import { loadStatsData, type StatsData } from '../../data/stats';
 import { recentPrs } from '../../domain/exercise-series';
@@ -52,6 +54,8 @@ export default function ProgressContent() {
           today={today}
         />
       )}
+      {hasWorkouts &&
+        weeklyCharts({ ...data, today }).map((spec) => <SpecChart key={spec.id} spec={spec} />)}
       {hasWorkouts && <MuscleSection data={data} today={today} />}
       {hasWorkouts && <RecentPrs data={data} />}
       <IonList inset>
