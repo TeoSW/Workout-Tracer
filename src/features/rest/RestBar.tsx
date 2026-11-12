@@ -70,6 +70,13 @@ export function RestBar() {
     if (sound && justEnded && document.visibilityState === 'visible') playRestTone();
   }, [ctx, over, timer, sound]);
 
+  const showing = timer !== undefined && remaining !== null;
+  useEffect(() => {
+    // Pages scroll behind the bar, so give them room to bring their last button above it.
+    document.body.classList.toggle('rest-showing', showing);
+    return () => document.body.classList.remove('rest-showing');
+  }, [showing]);
+
   if (!timer || remaining === null) return null;
 
   function openChooser() {

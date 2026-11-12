@@ -250,6 +250,33 @@ export async function addSet(ctx: DataContext, sessionExerciseId: string): Promi
   );
 }
 
+/**
+ * Adds the same set again after the last one, already logged: same reps, load, band, time,
+ * parts, effort and note. For doing one more like the last.
+ */
+export async function duplicateSet(ctx: DataContext, setId: string): Promise<LoggedSet> {
+  return ctx.db.transaction('rw', [ctx.db.sessionExercises, ctx.db.sets], async () => {
+    const source = await ctx.db.sets.get(setId);
+    if (!source) throw new Error(`No set ${setId}`);
+    const sets = await ctx.db.sets
+      .where('sessionExerciseId')
+      .equals(source.sessionExerciseId)
+      .toArray();
+    const lastOrder = Math.max(...sets.map((s) => s.order));
+    const copy = LoggedSetSchema.parse(
+      clean({
+        ...structuredClone(source),
+        id: ctx.newId(),
+        order: lastOrder + 1,
+        done: true,
+        completedAt: ctx.clock.now(),
+      }),
+    );
+    await ctx.db.sets.add(copy);
+    return copy;
+  });
+}
+
 export async function removeSet(ctx: DataContext, setId: string): Promise<void> {
   await ctx.db.sets.delete(setId);
 }

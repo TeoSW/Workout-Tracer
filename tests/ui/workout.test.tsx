@@ -233,6 +233,51 @@ describe('set sheet', () => {
     );
   });
 
+  it('repeats a logged set in one tap, logged, and starts the rest', async () => {
+    const { ctx, session } = await empty('squat');
+    const view = await getActiveSession(ctx);
+    await updateSet(ctx, view?.exercises[0]?.sets[0]?.id ?? '', {
+      kg: 40,
+      reps: 8,
+      rir: 2,
+      done: true,
+    });
+    const { user } = renderApp(WORKOUT, ctx);
+    await user.click(await buttonLabelled('Repeat set 1 of Squat'));
+    await waitFor(async () => {
+      const sets = (await getActiveSession(ctx))?.exercises[0]?.sets ?? [];
+      expect(sets.filter((s) => s.done).map((s) => [s.kg, s.reps, s.rir])).toEqual([
+        [40, 8, 2],
+        [40, 8, 2],
+      ]);
+    });
+    await waitFor(async () =>
+      expect(await getRestTimer(ctx)).toMatchObject({ sessionId: session.id }),
+    );
+  });
+
+  it('saves a note on a set and shows it under the set', async () => {
+    const { ctx } = await empty('squat');
+    const view = await getActiveSession(ctx);
+    await updateSet(ctx, view?.exercises[0]?.sets[0]?.id ?? '', {
+      target: { repsMin: 8, loadMinKg: 20 },
+    });
+    const { user } = renderApp(WORKOUT, ctx);
+    await user.click(await screen.findByText('Set 1'));
+    ionEvent(await screen.findByLabelText('Set note'), 'ionInput', { value: 'Knee caved' });
+    await user.click(await doneButton());
+    expect(await screen.findByText('Knee caved')).toHaveClass('set-note');
+    expect((await getActiveSession(ctx))?.exercises[0]?.sets[0]?.note).toBe('Knee caved');
+  });
+
+  it('offers effort in the sheet for a hold', async () => {
+    const { ctx } = await empty('plank');
+    const { user } = renderApp(WORKOUT, ctx);
+    await user.click(await screen.findByText('Set 1'));
+    await doneButton();
+    expect(screen.getByText('RIR 2')).toBeInTheDocument();
+  });
+
   it('logs an effort on a hold too, not only on reps', async () => {
     const { ctx } = await empty('plank');
     const view = await getActiveSession(ctx);

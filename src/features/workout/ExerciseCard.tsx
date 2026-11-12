@@ -13,6 +13,8 @@ import {
 import {
   checkmark,
   checkmarkCircleOutline,
+  copyOutline,
+  createOutline,
   ellipsisHorizontal,
   informationCircleOutline,
 } from 'ionicons/icons';
@@ -38,6 +40,10 @@ export type CardActions = {
   deleteSet: (set: LoggedSet) => void;
   toggleWarmup: (set: LoggedSet) => void;
   addSet: (entry: SessionExerciseView) => void;
+  /** Logs the same set again. Only a running workout has it. */
+  duplicateSet?: (set: LoggedSet) => void;
+  /** Edits the exercise's note for this workout. */
+  editNote?: (entry: SessionExerciseView) => void;
   openInfo?: (entry: SessionExerciseView) => void;
   openMenu: (entry: SessionExerciseView) => void;
 };
@@ -64,7 +70,12 @@ function SetRow(props: {
       <IonItem button detail={false} onClick={() => actions.openSet(entry, set, last)}>
         <IonLabel>
           {set.done ? (
-            `${label.text} · ${formatSetResult(set, exercise, effortMode, bands)}`
+            <>
+              {`${label.text} · ${formatSetResult(set, exercise, effortMode, bands)}`}
+              {set.note !== undefined && set.note !== '' && (
+                <div className="set-note">{set.note}</div>
+              )}
+            </>
           ) : (
             <>
               {label.text}
@@ -74,6 +85,20 @@ function SetRow(props: {
           )}
         </IonLabel>
         {set.done && <IonIcon slot="end" icon={checkmark} color="success" aria-label="Done" />}
+        {set.done && actions.duplicateSet && (
+          <IonButton
+            slot="end"
+            fill="clear"
+            className="set-check"
+            aria-label={`Repeat ${label.text.toLowerCase()} of ${exercise.name}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              actions.duplicateSet?.(set);
+            }}
+          >
+            <IonIcon slot="icon-only" icon={copyOutline} aria-hidden="true" />
+          </IonButton>
+        )}
         {!set.done && actions.quickLog && (
           <IonButton
             slot="end"
@@ -155,6 +180,16 @@ function ExerciseRows(props: {
             </div>
           ))}
         </IonLabel>
+        {actions.editNote && (
+          <IonButton
+            slot="end"
+            fill="clear"
+            aria-label={`Note for ${exercise.name}`}
+            onClick={() => actions.editNote?.(entry)}
+          >
+            <IonIcon slot="icon-only" icon={createOutline} aria-hidden="true" />
+          </IonButton>
+        )}
         {actions.openInfo && (
           <IonButton
             slot="end"
