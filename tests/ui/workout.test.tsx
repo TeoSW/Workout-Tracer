@@ -490,6 +490,21 @@ describe('rest bar', () => {
   });
 });
 
+describe('keeping a custom workout', () => {
+  it('saves it as a new program from the summary', async () => {
+    const { ctx, session } = await empty('squat');
+    const view = await getActiveSession(ctx);
+    await updateSet(ctx, view?.exercises[0]?.sets[0]?.id ?? '', { kg: 50, reps: 5, done: true });
+    await finishSession(ctx, session.id);
+    const { user } = renderApp(`/tabs/today/summary/${session.id}`, ctx);
+    await user.click(await screen.findByText('Save as a new program'));
+    await confirmAlert(user, 'Save');
+    expect(await screen.findByText('Saved as Empty workout, under Programs.')).toBeInTheDocument();
+    const { listPrograms } = await import('../../src/data/programs');
+    expect((await listPrograms(ctx)).map((p) => p.name)).toEqual(['Empty workout']);
+  });
+});
+
 describe('finish', () => {
   it('confirms, then shows the summary with PRs and saves notes', async () => {
     const { ctx, session } = await empty('squat');

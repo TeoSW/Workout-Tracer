@@ -14,6 +14,7 @@ import {
   type Program,
   type Schedule,
 } from '../domain/schemas';
+import { dayFromSession } from '../domain/save-session';
 import { instantiateTemplate } from '../domain/templates';
 import { clean } from './clean';
 import type { DataContext } from './context';
@@ -361,4 +362,71 @@ export async function startFromPreset(
   const { program } = await createProgramFromTemplate(ctx, template);
   const active = await activateProgram(ctx, program.id, 'this_week');
   return week > 1 ? setProgramCurrentWeek(ctx, active.id, week) : active;
+}
+
+/** Makes a new program with one day: the exercises and sets of a workout, as its plan. */
+export async function saveSessionAsProgram(
+  ctx: DataContext,
+  sessionId: string,
+  name: string,
+): Promise<ProgramWithDays> {
+  const trimmed = name.trim();
+  if (trimmed === '') throw new Error('Give the program a name.');
+  const exercises = await sessionExercisesWithSets(ctx, sessionId);
+  const programId = ctx.newId();
+  const day = DayTemplateSchema.parse(
+    clean(dayFromSession({ exercises, programId, name: trimmed, newId: ctx.newId })),
+  );
+  if (day.blocks.length === 0) throw new Error('This workout has no sets to save.');
+  const program = validProgram(
+    {
+      id: programId,
+      name: trimmed,
+      splitType: 'custom',
+      schedule: { kind: 'rotation', sequence: [day.id], sessionsPerWeek: 3 },
+      cycleWeeks: null,
+      deloadWeeks: [],
+      anchorDate: null,
+      choiceSelections: [],
+      manualDeloadWeeks: [],
+      note: '',
+      active: false,
+      archived: false,
+    },
+    new Set([day.id]),
+  );
+  await ctx.db.transaction('rw', [ctx.db.programs, ctx.db.dayTemplates], async () => {
+    await ctx.db.programs.add(program);
+    await ctx.db.dayTemplates.add(day);
+  });
+  return { program, dayTemplates: [day] };
+}
+
+/** Adds a workout's exercises and sets to a program as a new day, outside its schedule. */
+export async function addSessionAsDay(
+  ctx: DataContext,
+  sessionId: string,
+  programId: string,
+  name: string,
+): Promise<DayTemplate> {
+  const trimmed = name.trim();
+  if (trimmed === '') throw new Error('Give the day a name.');
+  const exercises = await sessionExercisesWithSets(ctx, sessionId);
+  const day = DayTemplateSchema.parse(
+    clean(dayFromSession({ exercises, programId, name: trimmed, newId: ctx.newId })),
+  );
+  if (day.blocks.length === 0) throw new Error('This workout has no sets to save.');
+  await ctx.db.transaction('rw', [ctx.db.programs, ctx.db.dayTemplates], async () => {
+    await requireProgram(ctx, programId);
+    await ctx.db.dayTemplates.add(day);
+  });
+  return day;
+}
+
+async function sessionExercisesWithSets(ctx: DataContext, sessionId: string) {
+  const [exercises, sets] = await Promise.all([
+    ctx.db.sessionExercises.where('sessionId').equals(sessionId).toArray(),
+    ctx.db.sets.where('sessionId').equals(sessionId).toArray(),
+  ]);
+  return exercises.map((e) => ({ ...e, sets: sets.filter((s) => s.sessionExerciseId === e.id) }));
 }
