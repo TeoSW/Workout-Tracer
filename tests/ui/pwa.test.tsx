@@ -95,7 +95,13 @@ describe('rest tone', () => {
       destination = {};
       resume = resume;
       createOscillator() {
-        return { type: 'sine', frequency: { value: 0 }, connect: vi.fn(), start, stop: vi.fn() };
+        return {
+          type: 'sine',
+          frequency: { value: 0, setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+          connect: vi.fn(),
+          start,
+          stop: vi.fn(),
+        };
       }
       createGain() {
         return {
@@ -151,7 +157,18 @@ describe('rest tone', () => {
     const { start } = stubAudio();
     const { user } = renderApp('/tabs/settings');
     await user.click(await screen.findByText('Play test alarm'));
-    await waitFor(() => expect(start).toHaveBeenCalledTimes(6));
+    // Beeps, twice by default: two plays of three double beeps.
+    await waitFor(() => expect(start).toHaveBeenCalledTimes(12));
+  });
+
+  it('plays the chosen sound the chosen number of times', () => {
+    const { start } = stubAudio();
+    unlockAudio();
+    playRestTone({ sound: 'chime', repeats: 3 });
+    expect(start).toHaveBeenCalledTimes(9);
+    start.mockClear();
+    playRestTone({ sound: 'bell', repeats: 1 });
+    expect(start).toHaveBeenCalledTimes(2);
   });
 
   it('does nothing where Web Audio is missing', () => {

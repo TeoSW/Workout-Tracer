@@ -8,13 +8,58 @@ let context: AudioContext | null = null;
 let listening = false;
 let restoreTimer: ReturnType<typeof setTimeout> | null = null;
 
-/** Three double beeps: high, then higher. Loud enough to hear across a gym. */
-const BEEPS: readonly { at: number; frequency: number }[] = [0, 0.6, 1.2].flatMap((start) => [
-  { at: start, frequency: 1047 },
-  { at: start + 0.22, frequency: 1319 },
-]);
-const BEEP_SECONDS = 0.18;
-const ALARM_SECONDS = 1.6;
+export type AlarmSound = 'beeps' | 'bell' | 'chime' | 'rising';
+
+type Note = {
+  at: number;
+  frequency: number;
+  seconds: number;
+  wave: OscillatorType;
+  /** Glides to this pitch over the note, for the rising sound. */
+  to?: number;
+  /** Rings out slowly, like a bell. */
+  ring?: boolean;
+};
+
+/** One play of each sound, and how long it lasts before the next repeat. */
+const PATTERNS: Record<AlarmSound, { notes: Note[]; length: number }> = {
+  beeps: {
+    notes: [0, 0.6, 1.2].flatMap((start) => [
+      { at: start, frequency: 1047, seconds: 0.18, wave: 'square' as const },
+      { at: start + 0.22, frequency: 1319, seconds: 0.18, wave: 'square' as const },
+    ]),
+    length: 1.8,
+  },
+  bell: {
+    notes: [
+      { at: 0, frequency: 880, seconds: 1.4, wave: 'sine', ring: true },
+      { at: 0, frequency: 2428, seconds: 0.9, wave: 'sine', ring: true },
+    ],
+    length: 1.5,
+  },
+  chime: {
+    notes: [1047, 1319, 1568].map((frequency, i) => ({
+      at: i * 0.22,
+      frequency,
+      seconds: 0.5,
+      wave: 'triangle' as const,
+      ring: true,
+    })),
+    length: 1.1,
+  },
+  rising: {
+    notes: [0, 0.55].map((at) => ({
+      at,
+      frequency: 600,
+      to: 1500,
+      seconds: 0.45,
+      wave: 'square' as const,
+    })),
+    length: 1.2,
+  },
+};
+
+export type AlarmOptions = { sound?: AlarmSound; repeats?: number };
 
 function audioSession(): { type: AudioSessionType } | undefined {
   return (navigator as NavigatorWithSession).audioSession;
@@ -58,34 +103,49 @@ export function unlockAudio(): void {
  * silent mode, then the page goes back to mixing with other audio. Returns false when audio
  * is not unlocked or not available.
  */
-export function playRestTone(): boolean {
+export function playRestTone(options: AlarmOptions = {}): boolean {
   if (!context || context.state !== 'running') return false;
+  const pattern = PATTERNS[options.sound ?? 'beeps'];
+  const repeats = Math.min(5, Math.max(1, Math.round(options.repeats ?? 1)));
   setSessionType('playback');
   const now = context.currentTime;
   const out = context.createGain();
   out.gain.setValueAtTime(0.9, now);
   out.connect(context.destination);
-  for (const beep of BEEPS) {
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    const start = now + beep.at;
-    oscillator.type = 'square';
-    oscillator.frequency.value = beep.frequency;
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(0.5, start + 0.01);
-    gain.gain.setValueAtTime(0.5, start + BEEP_SECONDS - 0.03);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + BEEP_SECONDS);
-    oscillator.connect(gain);
-    gain.connect(out);
-    oscillator.start(start);
-    oscillator.stop(start + BEEP_SECONDS);
+  for (let r = 0; r < repeats; r++) {
+    for (const note of pattern.notes) {
+      playNote(context, out, note, now + r * pattern.length);
+    }
   }
   if (restoreTimer !== null) clearTimeout(restoreTimer);
-  restoreTimer = setTimeout(() => {
-    restoreTimer = null;
-    setSessionType('ambient');
-  }, ALARM_SECONDS * 1000);
+  restoreTimer = setTimeout(
+    () => {
+      restoreTimer = null;
+      setSessionType('ambient');
+    },
+    (repeats * pattern.length + 0.2) * 1000,
+  );
   return true;
+}
+
+function playNote(audio: AudioContext, out: GainNode, note: Note, at: number): void {
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
+  const end = at + note.seconds;
+  oscillator.type = note.wave;
+  oscillator.frequency.value = note.frequency;
+  if (note.to !== undefined && oscillator.frequency.exponentialRampToValueAtTime) {
+    oscillator.frequency.setValueAtTime(note.frequency, at);
+    oscillator.frequency.exponentialRampToValueAtTime(note.to, end);
+  }
+  gain.gain.setValueAtTime(0.0001, at);
+  gain.gain.exponentialRampToValueAtTime(note.ring ? 0.7 : 0.5, at + 0.01);
+  if (!note.ring) gain.gain.setValueAtTime(0.5, end - 0.03);
+  gain.gain.exponentialRampToValueAtTime(0.0001, end);
+  oscillator.connect(gain);
+  gain.connect(out);
+  oscillator.start(at);
+  oscillator.stop(end);
 }
 
 export function resetAudioForTests(): void {

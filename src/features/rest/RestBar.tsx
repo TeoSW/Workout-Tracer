@@ -67,8 +67,10 @@ export function RestBar() {
     announced.current = timer.endsAt;
     // Coming back long after rest ended shows Rest over, without a sound.
     const justEnded = ctx.clock.now() - timer.endsAt < TONE_WINDOW_MS;
-    if (sound && justEnded && document.visibilityState === 'visible') playRestTone();
-  }, [ctx, over, timer, sound]);
+    if (sound && justEnded && document.visibilityState === 'visible') {
+      playRestTone({ sound: settings?.alarmSound, repeats: settings?.alarmRepeats });
+    }
+  }, [ctx, over, timer, sound, settings]);
 
   const showing = timer !== undefined && remaining !== null;
   useEffect(() => {

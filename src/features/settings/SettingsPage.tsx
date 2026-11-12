@@ -13,10 +13,11 @@ import { useState } from 'react';
 import { version } from '../../../package.json';
 import { useData, useLive } from '../../app/DataProvider';
 import { getSettings, setSetting } from '../../data/settings';
-import type { EffortMode } from '../../domain/schemas';
+import { ALARM_SOUNDS, type AlarmSound, type EffortMode } from '../../domain/schemas';
 import { playRestTone, unlockAudio } from '../../pwa/audio';
 import { getStorageStatus, type StorageStatus } from '../../pwa/storage';
 import { PageShell } from '../../ui/PageShell';
+import { ALARM_SOUND_LABELS } from '../../ui/labels';
 import { Stepper } from '../../ui/Stepper';
 import { BackupSection } from './BackupSection';
 import { ProfileSection } from './ProfileSection';
@@ -84,13 +85,42 @@ export function SettingsPage() {
                   Sound
                 </IonToggle>
               </IonItem>
+              <IonItem>
+                <IonSelect
+                  aria-label="Alarm sound"
+                  label="Alarm sound"
+                  interface="action-sheet"
+                  value={settings.alarmSound}
+                  onIonChange={(e) =>
+                    void setSetting(ctx, 'alarmSound', e.detail.value as AlarmSound)
+                  }
+                >
+                  {ALARM_SOUNDS.map((s) => (
+                    <IonSelectOption key={s} value={s}>
+                      {ALARM_SOUND_LABELS[s]}
+                    </IonSelectOption>
+                  ))}
+                </IonSelect>
+              </IonItem>
+              <Stepper
+                label="Alarm repeats"
+                noun="repeats"
+                value={settings.alarmRepeats}
+                min={1}
+                max={5}
+                onChange={(n) => void setSetting(ctx, 'alarmRepeats', n)}
+              />
               <IonItem
                 button
                 detail={false}
                 onClick={() => {
                   unlockAudio();
                   // The tap starts the sound; the alarm itself plays just after.
-                  setTimeout(() => playRestTone(), 50);
+                  setTimeout(
+                    () =>
+                      playRestTone({ sound: settings.alarmSound, repeats: settings.alarmRepeats }),
+                    50,
+                  );
                 }}
               >
                 <IonLabel color="primary">Play test alarm</IonLabel>
