@@ -21,6 +21,7 @@ import { ALARM_SOUND_LABELS } from '../../ui/labels';
 import { Stepper } from '../../ui/Stepper';
 import { BackupSection } from './BackupSection';
 import { ProfileSection } from './ProfileSection';
+import { RemindersSection } from './RemindersSection';
 
 const MB = 1_000_000;
 
@@ -139,6 +140,8 @@ export function SettingsPage() {
               </IonItem>
             </IonList>
           )}
+
+          {ctx.profile !== 'coach' && <RemindersSection />}
 
           <BackupSection settings={settings} />
 

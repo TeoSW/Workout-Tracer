@@ -4,7 +4,9 @@ import { version } from '../../package.json';
 import { exportBackup, backupToJson, hasUndoSnapshot } from '../../src/data/backup';
 import { listBands } from '../../src/data/bands';
 import { setBodyweight, listBodyweight } from '../../src/data/bodyweight';
+import { activateProgram, createProgramFromTemplate } from '../../src/data/programs';
 import { seedIfNeeded } from '../../src/data/seed';
+import { CALISTHENICS_5_WEEK } from '../../src/domain/fixtures/templates';
 import { getSettings } from '../../src/data/settings';
 import { testContext } from '../unit/data/helpers';
 import { buttonLabelled, ionEvent, renderApp, selectLabelled } from './helpers';
@@ -112,5 +114,40 @@ describe('backup', () => {
       expect(await listBodyweight(ctx)).toEqual([{ date: '2026-11-02', kg: 40 }]),
     );
     await waitFor(() => expect(screen.queryByText('Undo last restore')).not.toBeInTheDocument());
+  });
+});
+
+describe('workout reminders', () => {
+  it('hands Calendar a file of the training days, each with an alert', async () => {
+    const ctx = testContext();
+    await seedIfNeeded(ctx);
+    const { program } = await createProgramFromTemplate(ctx, CALISTHENICS_5_WEEK);
+    await activateProgram(ctx, program.id, 'this_week');
+    const blobs: Blob[] = [];
+    const create = vi.fn((blob: Blob) => {
+      blobs.push(blob);
+      return 'blob:calendar';
+    });
+    Object.assign(URL, { createObjectURL: create, revokeObjectURL: vi.fn() });
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+    const { user } = renderApp('/tabs/settings', ctx);
+    await user.click(await screen.findByText('Add reminders to Calendar'));
+    expect(
+      await screen.findByText('32 training days. Tap Add All in Calendar.'),
+    ).toBeInTheDocument();
+    expect(blobs[0]?.type).toBe('text/calendar');
+    const blob = blobs[0];
+    if (!blob) throw new Error('no calendar file');
+    const text = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.readAsText(blob);
+    });
+    expect(text).toContain('SUMMARY:Heavy 1\\, planche (intensity)');
+    expect(text).toContain('TRIGGER:-PT60M');
+    expect(click).toHaveBeenCalledOnce();
+    click.mockRestore();
   });
 });
